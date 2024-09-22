@@ -1,13 +1,21 @@
 import Image from "next/image";
 import Logo01 from "@/public/images/logo-01.svg";
 import Logo02 from "@/public/images/logo-02.svg";
-import Logo03 from "@/public/images/logo-03.svg";
-import Logo04 from "@/public/images/logo-04.svg";
+//import Logo03 from "@/public/images/logo-03.svg";
+//import Logo04 from "@/public/images/logo-04.svg";
 import Logo05 from "@/public/images/logo-05.svg";
 import Logo06 from "@/public/images/logo-06.svg";
-import Logo07 from "@/public/images/logo-07.svg";
+//import Logo07 from "@/public/images/logo-07.svg";
 import Logo08 from "@/public/images/logo-08.svg";
-import Logo09 from "@/public/images/logo-09.svg";
+//import Logo09 from "@/public/images/logo-09.svg";
+
+import Avatar01 from "@/public/images/avatar-01.jpg";
+import Avatar02 from "@/public/images/avatar-02.jpg";
+import Avatar03 from "@/public/images/avatar-03.jpg";
+import Avatar04 from "@/public/images/avatar-04.jpg";
+import Avatar05 from "@/public/images/avatar-05.jpg";
+import Avatar06 from "@/public/images/avatar-06.jpg";
+
 
 export default function BusinessCategories() {
   return (
@@ -194,10 +202,10 @@ export default function BusinessCategories() {
                   <div className="animate-[breath_7s_ease-in-out_3s_infinite_both]">
                     <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-lg shadow-black/[0.03] before:absolute before:inset-0 before:m-[8.334%] before:rounded-[inherit] before:border before:border-gray-700/5 before:bg-gray-200/60 before:[mask-image:linear-gradient(to_bottom,black,transparent)]">
                       <Image
-                        className="relative"
-                        src={Logo02}
-                        width={23}
-                        height={22}
+                        className="relative box-content rounded-full border-2 border-gray-50"
+                        src={Avatar01}
+                        width={40}
+                        height={40}
                         alt="Logo 02"
                       />
                     </div>
@@ -207,10 +215,10 @@ export default function BusinessCategories() {
                   <div className="animate-[breath_7s_ease-in-out_3.5s_infinite_both]">
                     <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-lg shadow-black/[0.03] before:absolute before:inset-0 before:m-[8.334%] before:rounded-[inherit] before:border before:border-gray-700/5 before:bg-gray-200/60 before:[mask-image:linear-gradient(to_bottom,black,transparent)]">
                       <Image
-                        className="relative"
-                        src={Logo03}
-                        width={22}
-                        height={22}
+                        className="relative box-content rounded-full border-2 border-gray-50"
+                        src={Avatar02}
+                        width={40}
+                        height={40}
                         alt="Logo 03"
                       />
                     </div>
@@ -220,10 +228,10 @@ export default function BusinessCategories() {
                   <div className="animate-[breath_6s_ease-in-out_3.5s_infinite_both]">
                     <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-lg shadow-black/[0.03] before:absolute before:inset-0 before:m-[8.334%] before:rounded-[inherit] before:border before:border-gray-700/5 before:bg-gray-200/60 before:[mask-image:linear-gradient(to_bottom,black,transparent)]">
                       <Image
-                        className="relative"
-                        src={Logo04}
-                        width={24}
-                        height={22}
+                        className="relative box-content rounded-full border-2 border-gray-50"
+                        src={Avatar03}
+                        width={50}
+                        height={50}
                         alt="Logo 04"
                       />
                     </div>
@@ -233,10 +241,10 @@ export default function BusinessCategories() {
                   <div className="animate-[breath_6s_ease-in-out_1.5s_infinite_both]">
                     <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-lg shadow-black/[0.03] before:absolute before:inset-0 before:m-[8.334%] before:rounded-[inherit] before:border before:border-gray-700/5 before:bg-gray-200/60 before:[mask-image:linear-gradient(to_bottom,black,transparent)]">
                       <Image
-                        className="relative"
-                        src={Logo05}
-                        width={25}
-                        height={25}
+                        className="relative box-content rounded-full border-2 border-gray-50"
+                        src={Avatar04}
+                        width={50}
+                        height={50}
                         alt="Logo 05"
                       />
                     </div>
@@ -246,10 +254,10 @@ export default function BusinessCategories() {
                   <div className="animate-[breath_6s_ease-in-out_2s_infinite_both]">
                     <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-lg shadow-black/[0.03] before:absolute before:inset-0 before:m-[8.334%] before:rounded-[inherit] before:border before:border-gray-700/5 before:bg-gray-200/60 before:[mask-image:linear-gradient(to_bottom,black,transparent)]">
                       <Image
-                        className="relative"
-                        src={Logo06}
-                        width={20}
-                        height={18}
+                        className="relative box-content rounded-full border-2 border-gray-50"
+                        src={Avatar05}
+                        width={50}
+                        height={50}
                         alt="Logo 06"
                       />
                     </div>
@@ -259,10 +267,10 @@ export default function BusinessCategories() {
                   <div className="animate-[breath_6s_ease-in-out_2.5s_infinite_both]">
                     <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-lg shadow-black/[0.03] before:absolute before:inset-0 before:m-[8.334%] before:rounded-[inherit] before:border before:border-gray-700/5 before:bg-gray-200/60 before:[mask-image:linear-gradient(to_bottom,black,transparent)]">
                       <Image
-                        className="relative"
-                        src={Logo07}
-                        width={25}
-                        height={25}
+                        className="relative box-content rounded-full border-2 border-gray-50"
+                        src={Avatar06}
+                        width={50}
+                        height={50}
                         alt="Logo 07"
                       />
                     </div>
@@ -272,8 +280,8 @@ export default function BusinessCategories() {
                   <div className="animate-[breath_6s_ease-in-out_2s_infinite_both]">
                     <div className="flex h-12 w-12 items-center justify-center rounded-full border border-gray-200/60 bg-white shadow-lg">
                       <Image
-                        className="relative"
-                        src={Logo08}
+                        className="relative box-content rounded-full border-2 border-gray-50"
+                        src={Avatar04}
                         width={20}
                         height={20}
                         alt="Logo 08"
@@ -285,10 +293,10 @@ export default function BusinessCategories() {
                   <div className="animate-[breath_6s_ease-in-out_4s_infinite_both]">
                     <div className="flex h-12 w-12 items-center justify-center rounded-full border border-gray-200/60 bg-white shadow-lg">
                       <Image
-                        className="relative"
-                        src={Logo09}
-                        width={21}
-                        height={13}
+                        className="relative box-content rounded-full border-2 border-gray-50"
+                        src={Avatar03}
+                        width={20}
+                        height={20}
                         alt="Logo 09"
                       />
                     </div>
