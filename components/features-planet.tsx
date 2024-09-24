@@ -36,7 +36,7 @@ export default function FeaturesPlanet() {
                     height={755}
                     alt="Planet decoration"
                   />
-                  <div>
+                  {/* <div>
                     <Image
                       className="absolute -left-28 top-16 z-10 animate-[float_4s_ease-in-out_infinite_both] opacity-80 transition-opacity duration-500"
                       src={PlanetTagImg01}
@@ -65,7 +65,7 @@ export default function FeaturesPlanet() {
                       height={56}
                       alt="Tag 04"
                     />
-                  </div>
+                  </div> */}
                 </div>
               </div>
             </div>
