@@ -18,11 +18,11 @@ export default function Logo() {
         />
       </svg> */}
       <svg height="100" width="300" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="50" cy="50" r="20" stroke="black" stroke-width="2" fill="lightgray" />
+        <circle cx="50" cy="50" r="20" stroke="black" strokeWidth="2" fill="lightgray" />
         
-        <line x1="50" y1="30" x2="50" y2="70" stroke="black" stroke-width="2" />
-        <line x1="50" y1="50" x2="65" y2="36" stroke="black" stroke-width="2" />
-        <line x1="50" y1="50" x2="65" y2="64" stroke="black" stroke-width="2" />
+        <line x1="50" y1="30" x2="50" y2="70" stroke="black" strokeWidth="2" />
+        <line x1="50" y1="50" x2="65" y2="36" stroke="black" strokeWidth="2" />
+        <line x1="50" y1="50" x2="65" y2="64" stroke="black" strokeWidth="2" />
 
         <text x="90" y="60" font-family="Georgia" font-size="30" fill="black">Genealogie</text>
       </svg>

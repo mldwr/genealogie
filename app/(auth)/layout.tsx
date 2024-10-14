@@ -60,31 +60,33 @@ export default function AuthLayout({
               <div className="aspect-video w-full rounded-2xl bg-gray-900 px-5 py-3 shadow-xl transition duration-300">
                 <div className="relative mb-8 flex items-center justify-between before:block before:h-[9px] before:w-[41px] before:bg-[length:16px_9px] before:[background-image:radial-gradient(circle_at_4.5px_4.5px,_theme(colors.gray.600)_4.5px,_transparent_0)] after:w-[41px]">
                   <span className="text-[13px] font-medium text-white">
-                    cruip.com
+                    genealogie.com
                   </span>
                 </div>
                 <div className="font-mono text-sm text-gray-500 transition duration-300 [&_span]:opacity-0">
                   <span className="animate-[code-1_10s_infinite] text-gray-200">
-                    npm login
-                  </span>{" "}
+                    Familie
+                  </span>
+                  <br />
                   <span className="animate-[code-2_10s_infinite]">
-                    --registry=https://npm.pkg.github.com
+                    Vater
                   </span>
                   <br />
                   <span className="animate-[code-3_10s_infinite]">
-                    --scope=@phanatic
-                  </span>{" "}
+                    Mutter
+                  </span>
+                  <br />
                   <span className="animate-[code-4_10s_infinite]">
-                    Successfully logged-in.
+                    Kind
                   </span>
                   <br />
                   <br />
                   <span className="animate-[code-5_10s_infinite] text-gray-200">
-                    npm publish
+                    Erbe
                   </span>
                   <br />
                   <span className="animate-[code-6_10s_infinite]">
-                    Package published.
+                    Generationen
                   </span>
                 </div>
               </div>
