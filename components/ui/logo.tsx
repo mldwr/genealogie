@@ -24,7 +24,7 @@ export default function Logo() {
         <line x1="50" y1="50" x2="65" y2="36" stroke="black" strokeWidth="2" />
         <line x1="50" y1="50" x2="65" y2="64" stroke="black" strokeWidth="2" />
 
-        <text x="90" y="60" font-family="Georgia" font-size="30" fill="black">Genealogie</text>
+        <text x="90" y="60" fontFamily="Georgia" fontSize="30" fill="black">Genealogie</text>
       </svg>
 
     </Link>
