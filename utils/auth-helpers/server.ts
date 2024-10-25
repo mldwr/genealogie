@@ -174,7 +174,6 @@ export async function signUp(formData: FormData) {
   const password = String(formData.get('password')).trim();
   let redirectPath: string;
 
-  console.log('getURL',callbackURL, email, password);
 
   if (!isValidEmail(email)) {
     redirectPath = getErrorRedirect(
@@ -183,6 +182,9 @@ export async function signUp(formData: FormData) {
       'Please try again.'
     );
   }
+
+
+  console.log('getURL',callbackURL, email, password, isValidEmail(email));
 
   const supabase = createClient();
   const { error, data } = await supabase.auth.signUp({

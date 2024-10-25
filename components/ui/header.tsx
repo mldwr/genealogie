@@ -1,7 +1,18 @@
+"use client";
+
 import Link from "next/link";
 import Logo from "./logo";
+import { SignOut } from '@/utils/auth-helpers/server';
+import { handleRequest } from '@/utils/auth-helpers/client';
+import { usePathname, useRouter } from 'next/navigation';
 
-export default function Header() {
+interface NavlinksProps {
+  user?: any;
+}
+
+export default  function Header({ user }: NavlinksProps) {
+  const router = useRouter();
+
   return (
     <header className="fixed top-2 z-30 w-full md:top-6">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
@@ -13,6 +24,16 @@ export default function Header() {
 
           {/* Desktop sign in links */}
           <ul className="flex flex-1 items-center justify-end gap-3">
+          {user ? (
+            <li>
+              <form onSubmit={(e) => handleRequest(e, SignOut, router)}>
+                <input type="hidden" name="pathName" value={usePathname()} />
+                <button type="submit" className="btn-sm bg-white text-gray-800 shadow hover:bg-gray-50">
+                  Logout
+                </button>
+              </form>
+            </li>
+          ):(
             <li>
               <Link
                 href="/signin"
@@ -21,6 +42,17 @@ export default function Header() {
                 Login
               </Link>
             </li>
+            )}
+            {user ? (
+            <li>
+              <Link
+                href="/account"
+                className="btn-sm bg-gray-800 text-gray-200 shadow hover:bg-gray-900"
+              >
+                Account
+              </Link>
+            </li>
+            ):(
             <li>
               <Link
                 href="/signup"
@@ -29,6 +61,7 @@ export default function Header() {
                 Register
               </Link>
             </li>
+            )}
           </ul>
         </div>
       </div>
