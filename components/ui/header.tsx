@@ -33,7 +33,7 @@ export default  function Header({ user }: NavlinksProps) {
               {/* Middle links */}
               <ul className="flex flex-1 justify-center gap-12">
                 <li>
-                  <Link href="/about" className="text-gray-800 hover:text-gray-600">
+                  <Link href="/deport" className="text-gray-800 hover:text-gray-600">
                     Deportationen
                   </Link>
                 </li>
