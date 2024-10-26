@@ -34,7 +34,7 @@ export default async function RootLayout({
         className={`${inter.variable} bg-gray-50 font-inter tracking-tight text-gray-900 antialiased`}
       >
 
-      <Header user={user}/>
+        <Header user={user}/>
 
         <div className="flex min-h-screen flex-col overflow-hidden supports-[overflow:clip]:overflow-clip">
           {children}
