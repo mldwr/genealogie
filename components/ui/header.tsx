@@ -20,6 +20,7 @@ export default  function Header({ user }: NavlinksProps) {
 
   return (
     <>
+    {/* Conditionally render Header, it will be not shown on signup and signin pages */}
     {!hideHeaderRoutes.includes(pathname) && 
       <header className="fixed top-2 z-30 w-full md:top-6">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
@@ -29,6 +30,25 @@ export default  function Header({ user }: NavlinksProps) {
               <Logo />
             </div>
 
+              {/* Middle links */}
+              <ul className="flex flex-1 justify-center gap-12">
+                <li>
+                  <Link href="/about" className="text-gray-800 hover:text-gray-600">
+                    Deportationen
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/services" className="text-gray-800 hover:text-gray-600">
+                    Services
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/contact" className="text-gray-800 hover:text-gray-600">
+                    Contact
+                  </Link>
+                </li>
+            </ul>
+            
             {/* Desktop sign in links */}
             <ul className="flex flex-1 items-center justify-end gap-3">
             {user ? (
