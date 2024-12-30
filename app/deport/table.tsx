@@ -45,6 +45,7 @@ export default async function InvoicesTable({
                     <p>{person.Geschlecht}</p>
                     <p>{person.Geburtsjahr}</p>
                     <p>{person.Geburtsort}</p>
+                    <p>{person.Arbeitsort}</p>
                   </div>
                   {/* <div className="flex justify-end gap-2">
                     <ViewInvoice id={invoice.id} />
@@ -91,6 +92,9 @@ export default async function InvoicesTable({
                 <th scope="col" className="px-3 py-5 font-medium">
                   Geburtsort
                 </th>
+                <th scope="col" className="px-3 py-5 font-medium">
+                  Arbeitsort
+                </th>
                 {/* <th scope="col" className="relative py-3 pl-6 pr-3">
                   <span className="sr-only">Edit</span>
                 </th> */}
@@ -134,6 +138,9 @@ export default async function InvoicesTable({
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
                     {person.Geburtsort}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-3">
+                    {person.Arbeitsort}
                   </td>
                   {/* <td className="whitespace-nowrap px-3 py-3">
                     <InvoiceStatus status={invoice.status} />

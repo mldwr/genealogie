@@ -11,6 +11,7 @@ export type Deported = {
     Geburtsjahr: string | null
     Geschlecht: string | null
     Geburtsort: string | null
+    Arbeitsort: string | null
     Seite: number | null
     Vatersname: string | null
     Vorname: string | null
