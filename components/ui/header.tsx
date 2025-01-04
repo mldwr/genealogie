@@ -5,15 +5,16 @@ import Logo from "./logo";
 import { SignOut } from '@/utils/auth-helpers/server';
 import { handleRequest } from '@/utils/auth-helpers/client';
 import { usePathname, useRouter } from 'next/navigation';
+import { useState } from "react";
 
 interface NavlinksProps {
   user?: any;
 }
 
-export default  function Header({ user }: NavlinksProps) {
+export default function Header({ user }: NavlinksProps) {
   const router = useRouter();
-
   const pathname = usePathname();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Define routes where the Header should NOT be displayed
   const hideHeaderRoutes = ['/signin', '/signup']; 
@@ -22,7 +23,7 @@ export default  function Header({ user }: NavlinksProps) {
     <>
     {/* Conditionally render Header, it will be not shown on signup and signin pages */}
     {!hideHeaderRoutes.includes(pathname) && 
-      <header className="fixed top-2 z-30 w-full md:top-6">
+      <header className="fixed top-2 z-30 w-full lg:top-6">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="relative flex h-14 items-center justify-between gap-3 rounded-2xl bg-white/90 px-3 shadow-lg shadow-black/[0.03] backdrop-blur-sm before:pointer-events-none before:absolute before:inset-0 before:rounded-[inherit] before:border before:border-transparent before:[background:linear-gradient(theme(colors.gray.100),theme(colors.gray.200))_border-box] before:[mask-composite:exclude_!important] before:[mask:linear-gradient(white_0_0)_padding-box,_linear-gradient(white_0_0)]">
             {/* Site branding */}
@@ -30,66 +31,159 @@ export default  function Header({ user }: NavlinksProps) {
               <Logo />
             </div>
 
-              {/* Middle links */}
-              <ul className="flex flex-1 justify-center gap-12">
-                <li>
-                  <Link href="/deport" className="text-gray-800 hover:text-gray-600">
-                    Deportationen
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/services" className="text-gray-800 hover:text-gray-600">
-                    Services
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/contact" className="text-gray-800 hover:text-gray-600">
-                    Contact
-                  </Link>
-                </li>
+            {/* Hamburger menu button */}
+            <button
+              type="button"
+              className="lg:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-800 hover:text-gray-600"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              <span className="sr-only">Open main menu</span>
+              <svg
+                className={`h-6 w-6 ${mobileMenuOpen ? 'hidden' : 'block'}`}
+                stroke="currentColor"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              </svg>
+              <svg
+                className={`h-6 w-6 ${mobileMenuOpen ? 'block' : 'hidden'}`}
+                stroke="currentColor"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+
+            {/* Desktop Navigation */}
+            <ul className="hidden lg:flex flex-1 justify-center gap-12">
+              <li>
+                <Link href="/deport" className="text-gray-800 hover:text-gray-600">
+                  Deportationen
+                </Link>
+              </li>
+              <li>
+                <Link href="/services" className="text-gray-800 hover:text-gray-600">
+                  Services
+                </Link>
+              </li>
+              <li>
+                <Link href="/contact" className="text-gray-800 hover:text-gray-600">
+                  Contact
+                </Link>
+              </li>
             </ul>
             
             {/* Desktop sign in links */}
-            <ul className="flex flex-1 items-center justify-end gap-3">
-            {user ? (
-              <li>
-                <form onSubmit={(e) => handleRequest(e, SignOut, router)}>
-                  <input type="hidden" name="pathName" value={usePathname()} />
-                  <button type="submit" className="btn-sm bg-white text-gray-800 shadow hover:bg-gray-50">
-                    Logout
-                  </button>
-                </form>
-              </li>
-            ):(
-              <li>
-                <Link
-                  href="/signin"
-                  className="btn-sm bg-white text-gray-800 shadow hover:bg-gray-50"
-                >
-                  Login
-                </Link>
-              </li>
+            <ul className="hidden lg:flex flex-1 items-center justify-end gap-3">
+              {user ? (
+                <li>
+                  <form onSubmit={(e) => handleRequest(e, SignOut, router)}>
+                    <input type="hidden" name="pathName" value={usePathname()} />
+                    <button type="submit" className="btn-sm bg-white text-gray-800 shadow hover:bg-gray-50">
+                      Logout
+                    </button>
+                  </form>
+                </li>
+              ) : (
+                <li>
+                  <Link
+                    href="/signin"
+                    className="btn-sm bg-white text-gray-800 shadow hover:bg-gray-50"
+                  >
+                    Login
+                  </Link>
+                </li>
               )}
               {user ? (
-              <li>
-                <Link
-                  href="/account"
-                  className="btn-sm bg-gray-800 text-gray-200 shadow hover:bg-gray-900"
-                >
-                  Account
-                </Link>
-              </li>
-              ):(
-              <li>
-                <Link
-                  href="/signup"
-                  className="btn-sm bg-gray-800 text-gray-200 shadow hover:bg-gray-900"
-                >
-                  Register
-                </Link>
-              </li>
+                <li>
+                  <Link
+                    href="/account"
+                    className="btn-sm bg-gray-800 text-gray-200 shadow hover:bg-gray-900"
+                  >
+                    Account
+                  </Link>
+                </li>
+              ) : (
+                <li>
+                  <Link
+                    href="/signup"
+                    className="btn-sm bg-gray-800 text-gray-200 shadow hover:bg-gray-900"
+                  >
+                    Register
+                  </Link>
+                </li>
               )}
             </ul>
+
+            {/* Mobile menu */}
+            <div className={`${mobileMenuOpen ? 'block' : 'hidden'} lg:hidden absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-lg`}>
+              <div className="px-2 pt-2 pb-3 space-y-1">
+                <Link
+                  href="/deport"
+                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-800 hover:text-gray-600 hover:bg-gray-50"
+                >
+                  Deportationen
+                </Link>
+                <Link
+                  href="/services"
+                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-800 hover:text-gray-600 hover:bg-gray-50"
+                >
+                  Services
+                </Link>
+                <Link
+                  href="/contact"
+                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-800 hover:text-gray-600 hover:bg-gray-50"
+                >
+                  Contact
+                </Link>
+                {user ? (
+                  <>
+                    <Link
+                      href="/account"
+                      className="block px-3 py-2 rounded-md text-base font-medium text-gray-800 hover:text-gray-600 hover:bg-gray-50"
+                    >
+                      Account
+                    </Link>
+                    <form onSubmit={(e) => handleRequest(e, SignOut, router)}>
+                      <input type="hidden" name="pathName" value={usePathname()} />
+                      <button
+                        type="submit"
+                        className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-800 hover:text-gray-600 hover:bg-gray-50"
+                      >
+                        Logout
+                      </button>
+                    </form>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      href="/signin"
+                      className="block px-3 py-2 rounded-md text-base font-medium text-gray-800 hover:text-gray-600 hover:bg-gray-50"
+                    >
+                      Login
+                    </Link>
+                    <Link
+                      href="/signup"
+                      className="block px-3 py-2 rounded-md text-base font-medium text-gray-800 hover:text-gray-600 hover:bg-gray-50"
+                    >
+                      Register
+                    </Link>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </header>
