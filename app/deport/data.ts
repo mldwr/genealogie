@@ -23,11 +23,11 @@ import {
     try {
   
         const { data, error } = await supabase
-        .from('deport')
-        .select()
-        .or(`Familienname.ilike.%${query}%,Vorname.ilike.%${query}%,Vatersname.ilike.%${query}%,Familienrolle.ilike.%${query}%,Geburtsort.ilike.%${query}%,Geburtsjahr.ilike.%${query}%`)
-        .range(offset, offset + ITEMS_PER_PAGE - 1);
-        
+          .from('deport')
+          .select()
+          .or(`Familienname.ilike.%${query}%,Vorname.ilike.%${query}%,Vatersname.ilike.%${query}%,Familienrolle.ilike.%${query}%,Geburtsort.ilike.%${query}%,Geburtsjahr.ilike.%${query}%`)
+          .eq('Seite', currentPage)
+          .order('Laufendenr', { ascending: true });
   
       return data ?? [];
     } catch (error) {
@@ -43,14 +43,17 @@ import {
   
     try {
   
-      const { count, error } = await supabase
+      const { data, error } = await supabase
         .from('deport')
-        .select('*', { count: 'exact' })
-        .or(`Familienname.ilike.%${query}%,Vorname.ilike.%${query}%,Vatersname.ilike.%${query}%,Familienrolle.ilike.%${query}%,Geburtsort.ilike.%${query}%,Geburtsjahr.ilike.%${query}%`)
-        .range(offset, offset + ITEMS_PER_PAGE - 1);
-  
+        .select('Seite', { count: 'exact' })
+        .order('Seite', { ascending: false })
+        .limit(1);
+
+      const totalPages = data?.[0]?.Seite ?? 0;
+      console.log('totalPages', totalPages);
         
-      const totalPages = Math.ceil(Number(count) / ITEMS_PER_PAGE);
+        
+      //const totalPages = Math.ceil(Number(count) / ITEMS_PER_PAGE);
       return totalPages;
     } catch (error) {
       console.error('Database Error:', error);
