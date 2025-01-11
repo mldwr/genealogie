@@ -22,6 +22,7 @@ import {
   
     try {
   
+      if (query === '') {
         const { data, error } = await supabase
           .from('deport')
           .select()
@@ -29,7 +30,16 @@ import {
           .eq('Seite', currentPage)
           .order('Laufendenr', { ascending: true });
   
-      return data ?? [];
+        return data ?? [];
+      }else{
+        const { data, error } = await supabase
+          .from('deport')
+          .select()
+          .or(`Familienname.ilike.%${query}%,Vorname.ilike.%${query}%,Vatersname.ilike.%${query}%,Familienrolle.ilike.%${query}%,Geburtsort.ilike.%${query}%,Geburtsjahr.ilike.%${query}%`)
+          .range(offset, offset + ITEMS_PER_PAGE - 1)
+
+        return data ?? [];
+      }
     } catch (error) {
       console.error('Database Error:', error);
       throw new Error('Failed to fetch revenue data.');
@@ -40,21 +50,31 @@ import {
     noStore();
   
     const offset = (currentPage - 1) * ITEMS_PER_PAGE;
+
   
     try {
   
-      const { data, error } = await supabase
-        .from('deport')
-        .select('Seite', { count: 'exact' })
-        .order('Seite', { ascending: false })
-        .limit(1);
+      if (query === '') {
+        const { data, error } = await supabase
+          .from('deport')
+          .select('Seite', { count: 'exact' })
+          .order('Seite', { ascending: false })
+          .limit(1);
+  
+        const totalPages = data?.[0]?.Seite ?? 0;
+        return totalPages;
+      }else{
 
-      const totalPages = data?.[0]?.Seite ?? 0;
-      console.log('totalPages', totalPages);
-        
-        
-      //const totalPages = Math.ceil(Number(count) / ITEMS_PER_PAGE);
-      return totalPages;
+        const { count, error } = await supabase
+          .from('deport')
+          .select('Seite', { count: 'exact' })
+          .or(`Familienname.ilike.%${query}%,Vorname.ilike.%${query}%,Vatersname.ilike.%${query}%,Familienrolle.ilike.%${query}%,Geburtsort.ilike.%${query}%,Geburtsjahr.ilike.%${query}%`)
+          .range(offset, offset + ITEMS_PER_PAGE - 1)
+
+        const totalPages = Math.ceil(Number(count) / ITEMS_PER_PAGE);
+        return totalPages;
+      }
+
     } catch (error) {
       console.error('Database Error:', error);
       throw new Error('Failed to fetch revenue data.');
