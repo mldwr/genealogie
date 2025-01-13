@@ -74,13 +74,13 @@ export default function Header({ user }: NavlinksProps) {
                 </Link>
               </li>
               <li>
-                <Link href="/services" className="text-gray-800 hover:text-gray-600">
-                  Services
+                <Link href="/info" className="text-gray-800 hover:text-gray-600">
+                  Dateninformationen
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="text-gray-800 hover:text-gray-600">
-                  Contact
+                <Link href="/participate" className="text-gray-800 hover:text-gray-600">
+                  Mitmachen
                 </Link>
               </li>
             </ul>
