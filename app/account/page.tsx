@@ -32,7 +32,7 @@ export default function Account() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-4 mt-20">
+    <div className="max-w-2xl mx-auto p-4 mt-28">
       <h1 className="text-2xl font-bold mb-4">Account Information</h1>
       <div className="mb-4">
         <p><strong>Name:</strong> {user.name}</p>
