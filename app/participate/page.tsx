@@ -2,7 +2,7 @@ import React from 'react';
 
 const ParticipatePage: React.FC = () => {
     return (
-        <div className="flex justify-center items-center min-h-screen mt-28">
+        <div className="font-sans p-5 max-w-xl mx-auto bg-gray-100 rounded-lg shadow-lg mt-28">
             <div className="flex flex-col p-4">
                 <h1 className="text-4xl font-bold mb-8">Teilnahme am Projekt</h1>
                 <section className="mb-8">
