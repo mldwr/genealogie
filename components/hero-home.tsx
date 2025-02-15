@@ -88,7 +88,7 @@ export default function HeroHome() {
                 >
                   <a
                     className="btn group mb-4 w-full bg-gradient-to-t from-blue-600 to-blue-500 bg-[length:100%_100%] bg-[bottom] text-white shadow hover:bg-[length:100%_150%] sm:mb-0 sm:w-auto"
-                    href="#0"
+                    href="participate"
                   >
                     <span className="relative inline-flex items-center">
                       Mitmachen{" "}
@@ -97,12 +97,12 @@ export default function HeroHome() {
                       </span>
                     </span>
                   </a>
-                  <a
+                  {/* <a
                     className="btn w-full bg-white text-gray-800 shadow hover:bg-gray-50 sm:ml-4 sm:w-auto"
                     href="#0"
                   >
                     Mehr erfahren
-                  </a>
+                  </a> */}
                 </div>
               </div>
             </div>
