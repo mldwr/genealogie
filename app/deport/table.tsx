@@ -3,6 +3,7 @@ import { ViewInvoice, UpdateInvoice, DeleteInvoice } from '@/app/ui/invoices/but
 import InvoiceStatus from '@/app/ui/invoices/status';
 import { formatDateToLocal, formatCurrency } from '@/app/lib/utils'; */
 import { fetchInvoicesUser, fetchDeported } from '@/app/deport/data';
+import {EditRow, DeleteRow } from '@/app/deport/buttons';
 
 export default async function InvoicesTable({
   query,
@@ -60,6 +61,9 @@ export default async function InvoicesTable({
             <thead className="rounded-lg text-left text-sm font-normal">
               <tr>
                 <th scope="col" className="px-3 py-5 font-medium">
+                  Seite
+                </th>
+                <th scope="col" className="px-3 py-5 font-medium">
                   Familiennr
                 </th>
                 <th scope="col" className="px-3 py-5 font-medium">
@@ -67,9 +71,6 @@ export default async function InvoicesTable({
                 </th>
                 <th scope="col" className="px-3 py-5 font-medium">
                   Laufendenr
-                </th>
-                <th scope="col" className="px-3 py-5 font-medium">
-                  Seite
                 </th>
                 <th scope="col" className="px-3 py-5 font-medium">
                   Familienname
@@ -95,9 +96,9 @@ export default async function InvoicesTable({
                 <th scope="col" className="px-3 py-5 font-medium">
                   Arbeitsort
                 </th>
-                {/* <th scope="col" className="relative py-3 pl-6 pr-3">
+                <th scope="col" className="relative py-3 pl-6 pr-3">
                   <span className="sr-only">Edit</span>
-                </th> */}
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white">
@@ -107,6 +108,9 @@ export default async function InvoicesTable({
                   className="w-full border-b py-3 text-sm last-of-type:border-none [&:first-child>td:first-child]:rounded-tl-lg [&:first-child>td:last-child]:rounded-tr-lg [&:last-child>td:first-child]:rounded-bl-lg [&:last-child>td:last-child]:rounded-br-lg"
                 >
                   <td className="whitespace-nowrap px-3 py-3">
+                    {person.Seite}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-3">
                     {person.Familiennr}
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
@@ -114,9 +118,6 @@ export default async function InvoicesTable({
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
                     {person.Laufendenr}
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-3">
-                    {person.Seite}
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
                     {person.Familienname}
@@ -145,13 +146,12 @@ export default async function InvoicesTable({
                   {/* <td className="whitespace-nowrap px-3 py-3">
                     <InvoiceStatus status={invoice.status} />
                   </td> */}
-                  {/* <td className="whitespace-nowrap py-3 pl-6 pr-3">
+                  <td className="whitespace-nowrap py-3 pl-6 pr-3">
                     <div className="flex justify-end gap-3">
-                      <ViewInvoice id={invoice.id}  />
-                      <UpdateInvoice id={invoice.id} invoices={invoices} />
-                      <DeleteInvoice id={invoice.id} invoices={invoices} />
+                      <EditRow id={person.id} />
+                      <DeleteRow id={person.id} />
                     </div>
-                  </td> */}
+                  </td>
                 </tr>
               ))}
             </tbody>
