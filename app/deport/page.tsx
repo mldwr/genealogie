@@ -22,8 +22,6 @@ export default async function Page({
     };
   }) {
 
-    const sessionUserEmail = 'waldemar@gwv.de';
-
     const query = searchParams?.query || '';
     const currentPage = Number(searchParams?.page) || 1;
 
@@ -47,7 +45,7 @@ export default async function Page({
         {/* <CreateInvoice /> */}
       </div>
       <Suspense key={query + currentPage} fallback={<InvoicesTableSkeleton />}>
-        <Table query={query} currentPage={currentPage} sessionUserEmail={sessionUserEmail} authUser={user}/>
+        <Table query={query} currentPage={currentPage} authUser={user}/>
       </Suspense> 
       <div className="mt-5 flex w-full justify-center">
         <Pagination totalPages={totalPages} />

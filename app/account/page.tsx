@@ -2,24 +2,41 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 export default function Account() {
   const router = useRouter();
+  const supabase = createClientComponentClient();
   const [user, setUser] = useState<{ name: string, email: string } | null>(null);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
   useEffect(() => {
-    // Fetch user data from API or session
-    const fetchUserData = async () => {
-      // Replace with actual API call or session retrieval logic
-      const userData = { name: 'John Doe', email: 'john.doe@example.com' };
+    const checkUser = async () => {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error || !session) {
+        router.push('/signin'); // Redirect to login if not authenticated
+        return;
+      }
+
+      // Fetch user data from Supabase
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('name, email')
+        .single();
+
+      if (userError) {
+        console.error('Error fetching user data:', userError);
+        return;
+      }
+
       setUser(userData);
     };
 
-    fetchUserData();
-  }, []);
+    checkUser();
+  }, [router, supabase]);
 
   const handlePasswordChange = (e: React.FormEvent) => {
     e.preventDefault();

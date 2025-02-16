@@ -8,15 +8,12 @@ import {EditRow, DeleteRow } from '@/app/deport/buttons';
 export default async function InvoicesTable({
   query,
   currentPage,
-  sessionUserEmail,
   authUser,
 }: {
   query: string;
   currentPage: number;
-  sessionUserEmail: string;
   authUser: any;
 }) {
-  /* const invoices = await fetchInvoicesUser(query, currentPage, sessionUserEmail); */
   const people = await fetchDeported(query, currentPage);
 
   return (
