@@ -9,10 +9,12 @@ export default async function InvoicesTable({
   query,
   currentPage,
   sessionUserEmail,
+  authUser,
 }: {
   query: string;
   currentPage: number;
   sessionUserEmail: string;
+  authUser: any;
 }) {
   /* const invoices = await fetchInvoicesUser(query, currentPage, sessionUserEmail); */
   const people = await fetchDeported(query, currentPage);
@@ -96,9 +98,11 @@ export default async function InvoicesTable({
                 <th scope="col" className="px-3 py-5 font-medium">
                   Arbeitsort
                 </th>
-                <th scope="col" className="relative py-3 pl-6 pr-3">
-                  <span className="sr-only">Edit</span>
-                </th>
+                {authUser && (
+                  <th scope="col" className="relative py-3 pl-6 pr-3">
+                    <span className="sr-only">Edit</span>
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody className="bg-white">
@@ -146,12 +150,14 @@ export default async function InvoicesTable({
                   {/* <td className="whitespace-nowrap px-3 py-3">
                     <InvoiceStatus status={invoice.status} />
                   </td> */}
-                  <td className="whitespace-nowrap py-3 pl-6 pr-3">
-                    <div className="flex justify-end gap-3">
-                      <EditRow id={person.id} />
-                      <DeleteRow id={person.id} />
-                    </div>
-                  </td>
+                  {authUser && (
+                    <td className="whitespace-nowrap py-3 pl-6 pr-3">
+                      <div className="flex justify-end gap-3">
+                        <EditRow id={person.id} />
+                        <DeleteRow id={person.id} />
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
