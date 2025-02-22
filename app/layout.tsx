@@ -5,6 +5,7 @@ import { Toaster } from '@/components/ui/Toasts/toaster';
 import { Suspense } from 'react';
 import Header from "@/components/ui/header";
 import { createClient } from '@/utils/supabase/server';
+import { AuthProvider } from '@/components/providers/AuthProvider';
 
 const inter = Inter({
   subsets: ["latin"],
@@ -33,16 +34,15 @@ export default async function RootLayout({
       <body
         className={`${inter.variable} bg-gray-50 font-inter tracking-tight text-gray-900 antialiased`}
       >
-
-        <Header user={user}/>
-
-        <div className="flex min-h-screen flex-col overflow-hidden supports-[overflow:clip]:overflow-clip">
-          {children}
-        </div>
-
-        <Suspense>
-          <Toaster />
-        </Suspense>
+        <AuthProvider>
+          <Header initialUser={user} />
+          <div className="flex min-h-screen flex-col overflow-hidden supports-[overflow:clip]:overflow-clip">
+            {children}
+          </div>
+          <Suspense>
+            <Toaster />
+          </Suspense>
+        </AuthProvider>
       </body>
     </html>
   );

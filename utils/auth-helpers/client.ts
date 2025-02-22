@@ -10,18 +10,13 @@ export async function handleRequest(
   requestFunc: (formData: FormData) => Promise<string>,
   router: AppRouterInstance | null = null
 ): Promise<boolean | void> {
-  // Prevent default form submission refresh
   e.preventDefault();
-  console.log('currentTarget',e.currentTarget);
-
   const formData = new FormData(e.currentTarget);
   const redirectUrl: string = await requestFunc(formData);
 
-  console.log('formData',formData.get('email'));
   if (router) {
-    // If client-side router is provided, use it to redirect
     return router.push(redirectUrl);
-  } 
+  }
 }
 
 export async function signInWithOAuth(e: React.FormEvent<HTMLFormElement>) {

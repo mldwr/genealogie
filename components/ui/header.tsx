@@ -6,18 +6,26 @@ import { SignOut } from '@/utils/auth-helpers/server';
 import { handleRequest } from '@/utils/auth-helpers/client';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from "react";
+import { useAuth } from '@/components/providers/AuthProvider';
 
 interface NavlinksProps {
-  user?: any;
+  initialUser?: any;
 }
 
-export default function Header({ user }: NavlinksProps) {
+export default function Header({ initialUser }: NavlinksProps) {
+  const { user, signOut } = useAuth();
+  const currentUser = user || initialUser;  // Use context user or fall back to initial server-side user
   const router = useRouter();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Define routes where the Header should NOT be displayed
   const hideHeaderRoutes = ['/signin', '/signup']; 
+
+  const handleSignOut = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    await signOut();
+  };
 
   return (
     <>
@@ -87,10 +95,9 @@ export default function Header({ user }: NavlinksProps) {
             
             {/* Desktop sign in links */}
             <ul className="hidden lg:flex flex-1 items-center justify-end gap-3">
-              {user ? (
+              {currentUser ? (
                 <li>
-                  <form onSubmit={(e) => handleRequest(e, SignOut, router)}>
-                    <input type="hidden" name="pathName" value={usePathname()} />
+                  <form onSubmit={handleSignOut}>
                     <button type="submit" className="btn-sm bg-white text-gray-800 shadow hover:bg-gray-50">
                       Logout
                     </button>
@@ -106,7 +113,7 @@ export default function Header({ user }: NavlinksProps) {
                   </Link>
                 </li>
               )}
-              {user ? (
+              {currentUser ? (
                 <li>
                   <Link
                     href="/account"
@@ -148,7 +155,7 @@ export default function Header({ user }: NavlinksProps) {
                 >
                   Contact
                 </Link>
-                {user ? (
+                {currentUser ? (
                   <>
                     <Link
                       href="/account"
@@ -156,8 +163,7 @@ export default function Header({ user }: NavlinksProps) {
                     >
                       Account
                     </Link>
-                    <form onSubmit={(e) => handleRequest(e, SignOut, router)}>
-                      <input type="hidden" name="pathName" value={usePathname()} />
+                    <form onSubmit={handleSignOut}>
                       <button
                         type="submit"
                         className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-800 hover:text-gray-600 hover:bg-gray-50"

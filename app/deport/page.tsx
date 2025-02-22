@@ -6,32 +6,22 @@ import { InvoicesTableSkeleton } from '@/app/deport/skeletons';
 import { Suspense } from 'react';
 import { fetchDeportedPages } from '@/app/deport/data';
 import { Metadata } from 'next';
-import { createClient } from '@/utils/supabase/server';
 
 export const metadata: Metadata = {
   title: 'People',
 };
  
-//export default async function Page() {
 export default async function Page({
-    searchParams,
-  }: {
-    searchParams?: {
-      query?: string;
-      page?: string;
-    };
-  }) {
-
-    const query = searchParams?.query || '';
-    const currentPage = Number(searchParams?.page) || 1;
-
-    const totalPages = await fetchDeportedPages(query, currentPage);
-
-    const supabase = createClient();
-
-    const {
-      data: { user }
-    } = await supabase.auth.getUser();
+  searchParams,
+}: {
+  searchParams?: {
+    query?: string;
+    page?: string;
+  };
+}) {
+  const query = searchParams?.query || '';
+  const currentPage = Number(searchParams?.page) || 1;
+  const totalPages = await fetchDeportedPages(query, currentPage);
 
   return (
     <div className="w-full">
@@ -45,7 +35,7 @@ export default async function Page({
         {/* <CreateInvoice /> */}
       </div>
       <Suspense key={query + currentPage} fallback={<InvoicesTableSkeleton />}>
-        <Table query={query} currentPage={currentPage} authUser={user}/>
+        <Table query={query} currentPage={currentPage} />
       </Suspense> 
       <div className="mt-5 flex w-full justify-center">
         <Pagination totalPages={totalPages} />
