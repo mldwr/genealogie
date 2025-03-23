@@ -24,9 +24,9 @@ export default function TableClient({ people }: { people: Person[] }) {
 
   return (
     <div className="mt-6 flow-root">
-      <div className="inline-block min-w-full align-middle">
+      <div className="block align-middle overflow-x-auto">
         <div className="rounded-lg bg-gray-50 p-2 md:pt-0">
-          <table className="hidden min-w-full text-gray-900 md:table">
+          <table className="min-w-full text-gray-900 table ">
             <thead className="rounded-lg text-left text-sm font-normal">
               <tr>
                 <th scope="col" className="px-3 py-5 font-medium">Seite</th>
@@ -79,4 +79,4 @@ export default function TableClient({ people }: { people: Person[] }) {
       </div>
     </div>
   );
-} 
+}
