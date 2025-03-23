@@ -82,11 +82,6 @@ export default function Header({ initialUser }: NavlinksProps) {
                 </Link>
               </li>
               <li>
-                <Link href="/info" className="text-gray-800 hover:text-gray-600">
-                  Dateninformationen
-                </Link>
-              </li>
-              <li>
                 <Link href="/participate" className="text-gray-800 hover:text-gray-600">
                   Mitmachen
                 </Link>
@@ -144,16 +139,10 @@ export default function Header({ initialUser }: NavlinksProps) {
                   Deportationen
                 </Link>
                 <Link
-                  href="/services"
+                  href="/participate"
                   className="block px-3 py-2 rounded-md text-base font-medium text-gray-800 hover:text-gray-600 hover:bg-gray-50"
                 >
-                  Services
-                </Link>
-                <Link
-                  href="/contact"
-                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-800 hover:text-gray-600 hover:bg-gray-50"
-                >
-                  Contact
+                  Mitmachen
                 </Link>
                 {currentUser ? (
                   <>
@@ -174,18 +163,20 @@ export default function Header({ initialUser }: NavlinksProps) {
                   </>
                 ) : (
                   <>
-                    <Link
-                      href="/signin"
-                      className="block px-3 py-2 rounded-md text-base font-medium text-gray-800 hover:text-gray-600 hover:bg-gray-50"
-                    >
-                      Login
-                    </Link>
-                    <Link
-                      href="/signup"
-                      className="block px-3 py-2 rounded-md text-base font-medium text-gray-800 hover:text-gray-600 hover:bg-gray-50"
-                    >
-                      Register
-                    </Link>
+                    <div className="flex flex-col gap-2">
+                      <Link
+                        href="/signin"
+                        className="btn-sm bg-white text-gray-800 shadow hover:bg-gray-50 w-fit"
+                      >
+                        Login
+                      </Link>
+                      <Link
+                        href="/signup"
+                        className="btn-sm bg-gray-800 text-gray-200 shadow hover:bg-gray-900 w-fit"
+                      >
+                        Register
+                      </Link>
+                    </div>
                   </>
                 )}
               </div>
