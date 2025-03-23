@@ -24,12 +24,11 @@ export default async function Page({
   const totalPages = await fetchDeportedPages(query, currentPage);
 
   return (
-    <div className="w-full">
-      {/* <div className="flex w-full justify-between">
-        <h1 className={`${lusitana.className} text-2xl`}>
-          Deportierte
-        </h1>
-      </div> */}
+    <div className="w-full mt-4">
+      <div className="flex w-full justify-between border p-6 bg-white rounded-xl shadow-md">
+        Liste der deportierten Personen aus dem Kanton Pallasovka der Autonomen Sozialistischen Sowjetrepublik der Wolgadeutschen (ASSRdW) in die Region Altai (Zug Nr. 858).
+        Beginn der Deportation am 04.09.1941 an der Station Pallasovka; Ende der Deportation am 14.09.1941 an der StationTretjakovo (Третьяково); Anzahl Personen: 2314.
+      </div>
       <div className="mt-4 flex items-center justify-between gap-2 md:mt-8">
         <Search placeholder="Suche ..." />
         {/* <CreateInvoice /> */}
