@@ -14,6 +14,49 @@ import {
   import { unstable_noStore as noStore } from 'next/cache';
   import supabase from '@/app/deport/supabase';
   
+  export async function updateDeportedPerson(person: {
+    id: string;
+    Seite?: string;
+    Familiennr?: string;
+    Eintragsnr?: string;
+    Laufendenr?: string;
+    Familienname?: string;
+    Vorname?: string;
+    Vatersname?: string;
+    Familienrolle?: string;
+    Geschlecht?: string;
+    Geburtsjahr?: string;
+    Geburtsort?: string;
+    Arbeitsort?: string;
+  }) {
+    
+  
+  
+    const { data, error } = await supabase
+      .from('deport')
+      .update({
+        Seite: person.Seite,
+        Familiennr: person.Familiennr,
+        Eintragsnr: person.Eintragsnr,
+        Laufendenr: person.Laufendenr,
+        Familienname: person.Familienname,
+        Vorname: person.Vorname,
+        Vatersname: person.Vatersname,
+        Familienrolle: person.Familienrolle,
+        Geschlecht: person.Geschlecht,
+        Geburtsjahr: person.Geburtsjahr,
+        Geburtsort: person.Geburtsort,
+        Arbeitsort: person.Arbeitsort,
+      })
+      .eq('id', person.id);
+  
+    if (error) {
+      throw new Error('Failed to update person');
+    }
+  
+    return data;
+  }
+
   
   export async function fetchDeported(query: string, currentPage: number): Promise<Deported[]> {
     noStore();
