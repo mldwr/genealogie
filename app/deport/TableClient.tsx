@@ -4,8 +4,9 @@ import { useAuth } from '@/components/providers/AuthProvider';
 import { EditRow, DeleteRow } from '@/app/deport/buttons';
 import { Button } from '@headlessui/react';
 import { PencilIcon, PlusIcon, TrashIcon, StopIcon, CheckIcon } from '@heroicons/react/24/outline';
-import React, { useState, useEffect } from 'react';
-import { fetchDeported, updateDeportedPerson } from '@/app/deport/data';
+import React, { useState, useEffect, useRef } from 'react';
+import { fetchDeported, updateDeportedPerson, createDeportedPerson } from '@/app/deport/data';
+import { useToast } from '@/components/ui/Toasts/use-toast';
 
 interface Person {
   id: string;
@@ -26,9 +27,12 @@ interface Person {
 interface TableClientProps {
   people: Person[];
   refreshData: () => void;
+  currentPage?: number;
 }
 
-export default function TableClient({ people, refreshData }: TableClientProps) {
+export default function TableClient({ people: initialPeople, refreshData }: TableClientProps) {
+  const [people, setPeople] = useState<Person[]>(initialPeople);
+  const [isAddingNewRow, setIsAddingNewRow] = useState(false);
   const [editIdx, setEditIdx] = useState(-1);
   const [formData, setFormData] = useState<{
     id?: string;
@@ -46,9 +50,22 @@ export default function TableClient({ people, refreshData }: TableClientProps) {
     Arbeitsort?: string;
   }>({});
   const [originalData, setOriginalData] = useState<any>({});
-
+  const firstInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
   const { user } = useAuth();
+  
+  // Update local people state when initialPeople changes
+  useEffect(() => {
+    setPeople(initialPeople);
+  }, [initialPeople]);
+  
+  // Focus on first input when adding a new row
+  useEffect(() => {
+    if (editIdx === 0 && isAddingNewRow && firstInputRef.current) {
+      firstInputRef.current.focus();
+    }
+  }, [editIdx, isAddingNewRow]);
   
   const handleEdit = (idx: number, person: any) => {
     setEditIdx(idx);
@@ -65,22 +82,60 @@ export default function TableClient({ people, refreshData }: TableClientProps) {
   };
 
   const handleSave = async () => {
-    if (formData.id) {
-      await updateDeportedPerson(formData as { 
-        id: string; 
-        Seite?: string;
-        Familiennr?: string;
-        Eintragsnr?: string;
-        Laufendenr?: string;
-        Familienname?: string;
-        Vorname?: string;
-        Vatersname?: string;
-        Familienrolle?: string;
-        Geschlecht?: string;
-        Geburtsjahr?: string;
-        Geburtsort?: string;
-        Arbeitsort?: string;
-      });
+    if (isAddingNewRow) {
+      // Create new person in the database
+      try {
+        await createDeportedPerson({
+          Seite: formData.Seite,
+          Familiennr: formData.Familiennr,
+          Eintragsnr: formData.Eintragsnr,
+          Laufendenr: formData.Laufendenr,
+          Familienname: formData.Familienname,
+          Vorname: formData.Vorname,
+          Vatersname: formData.Vatersname,
+          Familienrolle: formData.Familienrolle,
+          Geschlecht: formData.Geschlecht,
+          Geburtsjahr: formData.Geburtsjahr,
+          Geburtsort: formData.Geburtsort,
+          Arbeitsort: formData.Arbeitsort
+        });
+        setIsAddingNewRow(false);
+      } catch (error) {
+        console.error('Table: Failed to create new person:', error);
+        toast({
+          title: 'Fehler beim Erstellen',
+          description: error instanceof Error ? error.message : 'Ein unbekannter Fehler ist aufgetreten',
+          variant: 'destructive'
+        });
+        return; // Prevent clearing edit mode on error
+      }
+    } else if (formData.id) {
+      // Update existing person
+      try {
+        await updateDeportedPerson(formData as { 
+          id: string; 
+          Seite?: string;
+          Familiennr?: string;
+          Eintragsnr?: string;
+          Laufendenr?: string;
+          Familienname?: string;
+          Vorname?: string;
+          Vatersname?: string;
+          Familienrolle?: string;
+          Geschlecht?: string;
+          Geburtsjahr?: string;
+          Geburtsort?: string;
+          Arbeitsort?: string;
+        });
+      } catch (error) {
+        console.error('Table: Failed to update person:', error);
+        toast({
+          title: 'Fehler beim Aktualisieren',
+          description: error instanceof Error ? error.message : 'Ein unbekannter Fehler ist aufgetreten',
+          variant: 'destructive'
+        });
+        return; // Prevent clearing edit mode on error
+      }
     }
     setEditIdx(-1);
     refreshData();
@@ -89,12 +144,72 @@ export default function TableClient({ people, refreshData }: TableClientProps) {
   const handleCancel = () => {
     setFormData(originalData);
     setEditIdx(-1);
+    
+    if (isAddingNewRow) {
+      setIsAddingNewRow(false);
+      refreshData(); // Refresh data when canceling a new row addition
+    }
+  };
+
+  const handleAddRow = () => {
+    // Create a new empty person with default values and a temporary ID
+    const newPerson = {
+      id: 'temp-' + Date.now(), // Temporary ID to identify this row
+      Seite: null,
+      Familiennr: null,
+      Eintragsnr: null,
+      Laufendenr: null,
+      Familienname: null,
+      Vorname: null,
+      Vatersname: null,
+      Familienrolle: null,
+      Geschlecht: null,
+      Geburtsjahr: null,
+      Geburtsort: null,
+      Arbeitsort: null
+    };
+    
+    // Add the new person to the top of the local state
+    const updatedPeople = [newPerson, ...people];
+    setPeople(updatedPeople);
+    
+    // Set the new row in edit mode (index 0 since it's at the top)
+    setEditIdx(0);
+    // Convert null values to empty strings for formData which expects string | undefined
+    setFormData({
+      id: newPerson.id,
+      Seite: newPerson.Seite !== null ? String(newPerson.Seite) : '',
+      Familiennr: newPerson.Familiennr !== null ? String(newPerson.Familiennr) : '',
+      Eintragsnr: newPerson.Eintragsnr !== null ? String(newPerson.Eintragsnr) : '',
+      Laufendenr: newPerson.Laufendenr !== null ? String(newPerson.Laufendenr) : '',
+      Familienname: newPerson.Familienname || '',
+      Vorname: newPerson.Vorname || '',
+      Vatersname: newPerson.Vatersname || '',
+      Familienrolle: newPerson.Familienrolle || '',
+      Geschlecht: newPerson.Geschlecht || '',
+      Geburtsjahr: newPerson.Geburtsjahr || '',
+      Geburtsort: newPerson.Geburtsort || '',
+      Arbeitsort: newPerson.Arbeitsort || ''
+    });
+    setOriginalData(newPerson);
+    setIsAddingNewRow(true);
   };
 
   return (
     <div className="mt-6 flow-root">
       <div className="block align-middle overflow-x-auto">
         <div className="rounded-lg bg-gray-50 p-2 md:pt-0">
+          {user && (
+            <div className="flex justify-end p-4">
+              <Button
+                onClick={handleAddRow}
+                className="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-500 flex items-center"
+              >
+                <PlusIcon className="w-5 h-5 mr-2" />
+                Person hinzufügen
+              </Button>
+            </div>
+          )}
           <table className="min-w-full text-gray-900 table ">
             <thead className="rounded-lg text-left text-sm font-normal">
               <tr>
@@ -129,6 +244,7 @@ export default function TableClient({ people, refreshData }: TableClientProps) {
                           value={formData.Seite}
                           onChange={handleChange}
                           className="w-20"
+                          ref={idx === 0 ? firstInputRef : null}
                         />
                       ) : (
                         person.Seite

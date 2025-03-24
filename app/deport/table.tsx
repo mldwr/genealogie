@@ -27,5 +27,5 @@ export default function Table({
     fetchData();
   };
   
-  return <TableClient people={people} refreshData={refreshData} />;
+  return <TableClient people={people} refreshData={refreshData} currentPage={currentPage} />;
 }

@@ -57,6 +57,46 @@ import {
     return data;
   }
 
+export async function createDeportedPerson(person: {
+    Seite?: string;
+    Familiennr?: string;
+    Eintragsnr?: string;
+    Laufendenr?: string;
+    Familienname?: string;
+    Vorname?: string;
+    Vatersname?: string;
+    Familienrolle?: string;
+    Geschlecht?: string;
+    Geburtsjahr?: string;
+    Geburtsort?: string;
+    Arbeitsort?: string;
+  }) {
+    
+    const { data, error } = await supabase
+      .from('deport')
+      .insert({
+        Seite: person.Seite,
+        Familiennr: person.Familiennr,
+        Eintragsnr: person.Eintragsnr,
+        Laufendenr: person.Laufendenr,
+        Familienname: person.Familienname,
+        Vorname: person.Vorname,
+        Vatersname: person.Vatersname,
+        Familienrolle: person.Familienrolle,
+        Geschlecht: person.Geschlecht,
+        Geburtsjahr: person.Geburtsjahr,
+        Geburtsort: person.Geburtsort,
+        Arbeitsort: person.Arbeitsort,
+      })
+      .select();
+  
+    if (error) {
+      throw new Error(`Supabase: Failed to create person: ${error.message}`);
+    }
+  
+    return data[0];
+  }
+
   
   export async function fetchDeported(query: string, currentPage: number): Promise<Deported[]> {
     noStore();
@@ -121,6 +161,79 @@ import {
     } catch (error) {
       console.error('Database Error:', error);
       throw new Error('Failed to fetch revenue data.');
+    }
+  }
+
+export async function fetchDeportationStatistics() {
+    noStore();
+    
+    try {
+      // Get total number of persons
+      const { count: totalPersons, error: countError } = await supabase
+        .from('deport')
+        .select('*', { count: 'exact', head: true });
+      
+      if (countError) throw countError;
+      
+      // Get gender distribution
+      const { data: genderData, error: genderError } = await supabase
+        .from('deport')
+        .select('Geschlecht')
+        .not('Geschlecht', 'is', null);
+      
+      if (genderError) throw genderError;
+      
+      let maleCount = 0;
+      let femaleCount = 0;
+      
+      genderData?.forEach(person => {
+        if (person.Geschlecht?.toLowerCase() === 'männlich') maleCount++;
+        else if (person.Geschlecht?.toLowerCase() === 'weiblich') femaleCount++;
+      });
+      
+      // Calculate average age (based on birth year)
+      const { data: birthYearData, error: birthYearError } = await supabase
+        .from('deport')
+        .select('Geburtsjahr')
+        .not('Geburtsjahr', 'is', null);
+      
+      if (birthYearError) throw birthYearError;
+      
+      let validYears = 0;
+      let totalYears = 0;
+      const deportationYear = 1941; // Year of deportation
+      
+      birthYearData?.forEach(person => {
+        const birthYear = parseInt(person.Geburtsjahr || '');
+        if (!isNaN(birthYear) && birthYear > 1800 && birthYear < deportationYear) {
+          totalYears += (deportationYear - birthYear);
+          validYears++;
+        }
+      });
+      
+      const averageAge = validYears > 0 ? Math.round(totalYears / validYears) : undefined;
+      
+      // Get highest page number for total pages
+      const { data: pageData, error: pageError } = await supabase
+        .from('deport')
+        .select('Seite')
+        .order('Seite', { ascending: false })
+        .limit(1);
+      
+      if (pageError) throw pageError;
+      
+      const totalPages = pageData?.[0]?.Seite ?? 0;
+      
+      return {
+        totalPersons: totalPersons || 0,
+        totalPages,
+        maleCount,
+        femaleCount,
+        averageAge
+      };
+    } catch (error) {
+      console.error('Database Error:', error);
+      throw new Error('Failed to fetch deportation statistics.');
     }
   }
   
