@@ -6,223 +6,342 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export interface Database {
+export type Database = {
   public: {
     Tables: {
-      customers: {
+      deport: {
         Row: {
-          id: string
-          stripe_customer_id: string | null
+          Arbeitsort: string | null
+          Eintragsnr: number
+          Familienname: string | null
+          Familiennr: number | null
+          Familienrolle: string | null
+          Geburtsjahr: string | null
+          Geburtsort: string | null
+          Geschlecht: string | null
+          id: string | null
+          Laufendenr: number
+          logical_id: string | null
+          Seite: number | null
+          updated_at: string | null
+          updated_by: string | null
+          Vatersname: string | null
+          version: Database["public"]["Enums"]["version_state"]
+          Vorname: string | null
         }
         Insert: {
-          id: string
-          stripe_customer_id?: string | null
+          Arbeitsort?: string | null
+          Eintragsnr: number
+          Familienname?: string | null
+          Familiennr?: number | null
+          Familienrolle?: string | null
+          Geburtsjahr?: string | null
+          Geburtsort?: string | null
+          Geschlecht?: string | null
+          id?: string | null
+          Laufendenr: number
+          logical_id?: string | null
+          Seite?: number | null
+          updated_at?: string | null
+          updated_by?: string | null
+          Vatersname?: string | null
+          version?: Database["public"]["Enums"]["version_state"]
+          Vorname?: string | null
         }
         Update: {
-          id?: string
-          stripe_customer_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "customers_id_fkey"
-            columns: ["id"]
-            isOneToOne: true
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      prices: {
-        Row: {
-          active: boolean | null
-          currency: string | null
-          id: string
-          interval: Database["public"]["Enums"]["pricing_plan_interval"] | null
-          interval_count: number | null
-          product_id: string | null
-          trial_period_days: number | null
-          type: Database["public"]["Enums"]["pricing_type"] | null
-          unit_amount: number | null
-        }
-        Insert: {
-          active?: boolean | null
-          currency?: string | null
-          id: string
-          interval?: Database["public"]["Enums"]["pricing_plan_interval"] | null
-          interval_count?: number | null
-          product_id?: string | null
-          trial_period_days?: number | null
-          type?: Database["public"]["Enums"]["pricing_type"] | null
-          unit_amount?: number | null
-        }
-        Update: {
-          active?: boolean | null
-          currency?: string | null
-          id?: string
-          interval?: Database["public"]["Enums"]["pricing_plan_interval"] | null
-          interval_count?: number | null
-          product_id?: string | null
-          trial_period_days?: number | null
-          type?: Database["public"]["Enums"]["pricing_type"] | null
-          unit_amount?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "prices_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      products: {
-        Row: {
-          active: boolean | null
-          description: string | null
-          id: string
-          image: string | null
-          metadata: Json | null
-          name: string | null
-        }
-        Insert: {
-          active?: boolean | null
-          description?: string | null
-          id: string
-          image?: string | null
-          metadata?: Json | null
-          name?: string | null
-        }
-        Update: {
-          active?: boolean | null
-          description?: string | null
-          id?: string
-          image?: string | null
-          metadata?: Json | null
-          name?: string | null
+          Arbeitsort?: string | null
+          Eintragsnr?: number
+          Familienname?: string | null
+          Familiennr?: number | null
+          Familienrolle?: string | null
+          Geburtsjahr?: string | null
+          Geburtsort?: string | null
+          Geschlecht?: string | null
+          id?: string | null
+          Laufendenr?: number
+          logical_id?: string | null
+          Seite?: number | null
+          updated_at?: string | null
+          updated_by?: string | null
+          Vatersname?: string | null
+          version?: Database["public"]["Enums"]["version_state"]
+          Vorname?: string | null
         }
         Relationships: []
       }
-      subscriptions: {
+      profiles: {
         Row: {
-          cancel_at: string | null
-          cancel_at_period_end: boolean | null
-          canceled_at: string | null
-          created: string
-          current_period_end: string
-          current_period_start: string
-          ended_at: string | null
+          email: string
           id: string
-          metadata: Json | null
-          price_id: string | null
-          quantity: number | null
-          status: Database["public"]["Enums"]["subscription_status"] | null
-          trial_end: string | null
-          trial_start: string | null
-          user_id: string
+          last_login: string | null
+          role: string
         }
         Insert: {
-          cancel_at?: string | null
-          cancel_at_period_end?: boolean | null
-          canceled_at?: string | null
-          created?: string
-          current_period_end?: string
-          current_period_start?: string
-          ended_at?: string | null
+          email: string
           id: string
-          metadata?: Json | null
-          price_id?: string | null
-          quantity?: number | null
-          status?: Database["public"]["Enums"]["subscription_status"] | null
-          trial_end?: string | null
-          trial_start?: string | null
-          user_id: string
+          last_login?: string | null
+          role?: string
         }
         Update: {
-          cancel_at?: string | null
-          cancel_at_period_end?: boolean | null
-          canceled_at?: string | null
-          created?: string
-          current_period_end?: string
-          current_period_start?: string
-          ended_at?: string | null
+          email?: string
           id?: string
-          metadata?: Json | null
-          price_id?: string | null
-          quantity?: number | null
-          status?: Database["public"]["Enums"]["subscription_status"] | null
-          trial_end?: string | null
-          trial_start?: string | null
-          user_id?: string
+          last_login?: string | null
+          role?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "subscriptions_price_id_fkey"
-            columns: ["price_id"]
-            isOneToOne: false
-            referencedRelation: "prices"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "subscriptions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      users: {
-        Row: {
-          avatar_url: string | null
-          billing_address: Json | null
-          full_name: string | null
-          id: string
-          payment_method: Json | null
-        }
-        Insert: {
-          avatar_url?: string | null
-          billing_address?: Json | null
-          full_name?: string | null
-          id: string
-          payment_method?: Json | null
-        }
-        Update: {
-          avatar_url?: string | null
-          billing_address?: Json | null
-          full_name?: string | null
-          id?: string
-          payment_method?: Json | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "users_id_fkey"
-            columns: ["id"]
-            isOneToOne: true
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          }
-        ]
+        Relationships: []
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      approve_invoice: {
+        Args: { invoice_id: string; approve_id: string }
+        Returns: boolean
+      }
+      change_password: {
+        Args: { email_param: string; new_password_param: string }
+        Returns: boolean
+      }
+      count_matching_invoices: {
+        Args:
+          | { query_param: string }
+          | { query_param: string; sparte_param: string }
+        Returns: number
+      }
+      count_matching_invoices_for_user: {
+        Args: { query_param: string; sessionuseremail_param: string }
+        Returns: number
+      }
+      count_matching_invoices_with_email: {
+        Args: { query_param: string; session_email_param: string }
+        Returns: number
+      }
+      delete_invoice: {
+        Args: { invoice_id: string }
+        Returns: boolean
+      }
+      edit_invoice: {
+        Args: {
+          customer_id_param: string
+          division_param: string
+          hours_param: number
+          date_param: string
+          id_param: string
+        }
+        Returns: boolean
+      }
+      get_customers: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          name: string
+          email: string
+        }[]
+      }
+      get_invoice_by_id: {
+        Args: { id_param: string }
+        Returns: {
+          id: string
+          customer_id: string
+          amount: number
+          hours: number
+          date: string
+          status: string
+          groupid: string
+        }[]
+      }
+      get_invoice_customer_counts: {
+        Args: { sessionuseremail: string }
+        Returns: {
+          invoice_count: number
+          customer_count: number
+          paid: number
+          pending: number
+        }[]
+      }
+      get_invoices_by_user_month: {
+        Args: { session_email_param: string }
+        Returns: {
+          id: string
+          amount: number
+          hours: number
+          date: string
+          status: string
+          name: string
+          email: string
+          image_url: string
+          groupid: string
+        }[]
+      }
+      get_invoices_with_email_and_pagination: {
+        Args: {
+          query_param: string
+          session_email_param: string
+          items_per_page_param: number
+          offset_param: number
+        }
+        Returns: {
+          id: string
+          amount: number
+          hours: number
+          date: string
+          status: string
+          name: string
+          email: string
+          image_url: string
+          groupid: string
+        }[]
+      }
+      get_latest_invoice: {
+        Args: { sessionuseremail: string }
+        Returns: {
+          amount: number
+          name: string
+          image_url: string
+          email: string
+          id: string
+          date: string
+        }[]
+      }
+      get_past_invoices_amount: {
+        Args: { session_email_param: string }
+        Returns: {
+          total_amount: number
+        }[]
+      }
+      get_revenue_data: {
+        Args: { sessionuseremail: string }
+        Returns: {
+          year: string
+          month: string
+          revenue: number
+        }[]
+      }
+      get_user: {
+        Args: { sessionuseremail: string }
+        Returns: {
+          id: string
+          name: string
+          email: string
+          password: string
+          image: string
+        }[]
+      }
+      insert_invoice: {
+        Args: {
+          customer_id: string
+          status: string
+          date: string
+          division: string
+          hours: number
+        }
+        Returns: boolean
+      }
+      log_change_password: {
+        Args: { email_param: string }
+        Returns: boolean
+      }
+      log_last_login: {
+        Args: { email_param: string }
+        Returns: boolean
+      }
+      search_customer_by_id: {
+        Args: { customer_id_param: string }
+        Returns: {
+          id: string
+          name: string
+          email: string
+        }[]
+      }
+      search_customers: {
+        Args: { query_param: string; sparte_param: string }
+        Returns: {
+          id: string
+          name: string
+          email: string
+          image_url: string
+          groupid: string
+          total_ausstehend: number
+          total_geprueft: number
+          total_genehmigt: number
+          rate: number
+        }[]
+      }
+      search_customers_summary: {
+        Args: { query_param: string }
+        Returns: {
+          id: string
+          name: string
+          email: string
+          image_url: string
+          total_ausstehend: number
+          total_geprueft: number
+          total_genehmigt: number
+          rate: number
+        }[]
+      }
+      search_customers_summary_for_user: {
+        Args: { query_param: string; sessionuseremail_param: string }
+        Returns: {
+          id: string
+          name: string
+          email: string
+          image_url: string
+          total_ausstehend: number
+          total_geprueft: number
+          total_genehmigt: number
+          rate: number
+        }[]
+      }
+      search_invoices: {
+        Args: {
+          query_param: string
+          items_per_page_param: number
+          offset_param: number
+        }
+        Returns: {
+          id: string
+          amount: number
+          hours: number
+          date: string
+          status: string
+          name: string
+          email: string
+          image_url: string
+          groupid: string
+        }[]
+      }
+      search_invoices_division: {
+        Args: {
+          query_param: string
+          sparte_param: string
+          items_per_page_param: number
+          offset_param: number
+        }
+        Returns: {
+          id: string
+          amount: number
+          hours: number
+          date: string
+          status: string
+          name: string
+          email: string
+          image_url: string
+          groupid: string
+        }[]
+      }
+      search_sparten: {
+        Args: { query_param: string }
+        Returns: {
+          spartenname: string
+          spartenleiter: string
+          spartenleiter_email: string
+        }[]
+      }
     }
     Enums: {
-      pricing_plan_interval: "day" | "week" | "month" | "year"
-      pricing_type: "one_time" | "recurring"
-      subscription_status:
-        | "trialing"
-        | "active"
-        | "canceled"
-        | "incomplete"
-        | "incomplete_expired"
-        | "past_due"
-        | "unpaid"
-        | "paused"
+      version_state: "inserted" | "updated" | "deleted"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -230,82 +349,115 @@ export interface Database {
   }
 }
 
+type DefaultSchema = Database[Extract<keyof Database, "public">]
+
 export type Tables<
-  PublicTableNameOrOptions extends
-    | keyof (Database["public"]["Tables"] & Database["public"]["Views"])
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-        Database[PublicTableNameOrOptions["schema"]]["Views"])
-    : never = never
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-      Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
+  ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
     : never
-  : PublicTableNameOrOptions extends keyof (Database["public"]["Tables"] &
-      Database["public"]["Views"])
-  ? (Database["public"]["Tables"] &
-      Database["public"]["Views"])[PublicTableNameOrOptions] extends {
-      Row: infer R
-    }
-    ? R
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
     : never
-  : never
 
 export type TablesInsert<
-  PublicTableNameOrOptions extends
-    | keyof Database["public"]["Tables"]
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
     | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
-    : never = never
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
+  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
     : never
-  : PublicTableNameOrOptions extends keyof Database["public"]["Tables"]
-  ? Database["public"]["Tables"][PublicTableNameOrOptions] extends {
-      Insert: infer I
-    }
-    ? I
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
     : never
-  : never
 
 export type TablesUpdate<
-  PublicTableNameOrOptions extends
-    | keyof Database["public"]["Tables"]
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
     | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
-    : never = never
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
+  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
     : never
-  : PublicTableNameOrOptions extends keyof Database["public"]["Tables"]
-  ? Database["public"]["Tables"][PublicTableNameOrOptions] extends {
-      Update: infer U
-    }
-    ? U
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
     : never
-  : never
 
 export type Enums<
-  PublicEnumNameOrOptions extends
-    | keyof Database["public"]["Enums"]
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
     | { schema: keyof Database },
-  EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
-    : never = never
-> = PublicEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : PublicEnumNameOrOptions extends keyof Database["public"]["Enums"]
-  ? Database["public"]["Enums"][PublicEnumNameOrOptions]
-  : never
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends { schema: keyof Database }
+  ? Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof Database },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      version_state: ["inserted", "updated", "deleted"],
+    },
+  },
+} as const

@@ -195,11 +195,43 @@ export default function TableClient({ people: initialPeople, refreshData }: Tabl
     setIsAddingNewRow(true);
   };
 
+  const handleDelete = async (id: string) => {
+    try {
+      const response = await fetch('/api/deport/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete person');
+      }
+
+      // Assuming successful deletion, refresh the data
+      refreshData();
+      toast({
+        title: 'Erfolgreich gelöscht',
+        description: 'Der Eintrag wurde erfolgreich gelöscht.',
+      });
+
+    } catch (error) {
+      console.error('Table: Failed to delete person:', error);
+      toast({
+        title: 'Fehler beim Löschen',
+        description: error instanceof Error ? error.message : 'Ein unbekannter Fehler ist aufgetreten',
+        variant: 'destructive'
+      });
+    }
+  };
+
   return (
     <div className="mt-6 flow-root">
       <div className="block align-middle overflow-x-auto">
         <div className="rounded-lg bg-gray-50 p-2 md:pt-0">
-          {user && (
+          {user && user.role === 'admin' && (
             <div className="flex justify-end p-4">
               <Button
                 onClick={handleAddRow}
@@ -225,7 +257,7 @@ export default function TableClient({ people: initialPeople, refreshData }: Tabl
                 <th scope="col" className="px-3 py-5 font-medium">Geburtsjahr</th>
                 <th scope="col" className="px-3 py-5 font-medium">Geburtsort</th>
                 <th scope="col" className="px-3 py-5 font-medium">Arbeitsort</th>
-                {user && (
+                {user && user.role === 'admin' && (
                   <th scope="col" className="relative py-3 pl-6 pr-3">
                     <span className="sr-only">Edit</span>
                   </th>
@@ -234,7 +266,7 @@ export default function TableClient({ people: initialPeople, refreshData }: Tabl
             </thead>
             <tbody className="bg-white">
               {people?.map((person,idx) => (
-                <tr key={person.id} 
+                <tr key={person.id}
                 className={`w-full border-b py-3 text-sm last-of-type:border-none ${editIdx === idx ? 'bg-gray-200' : ''} [&:first-child>td:first-child]:rounded-tl-lg [&:first-child>td:last-child]:rounded-tr-lg [&:last-child>td:first-child]:rounded-bl-lg [&:last-child>td:last-child]:rounded-br-lg`}>
                   <td className="whitespace-nowrap px-3 py-3">
                   {editIdx === idx ? (
@@ -393,7 +425,7 @@ export default function TableClient({ people: initialPeople, refreshData }: Tabl
                         person.Arbeitsort
                       )}
                   </td>
-                  {user && (
+                  {user && user.role === 'admin' && (
                     <td className="whitespace-nowrap py-3 pl-6 pr-3">
                       <div className="flex justify-end gap-3">
                         {editIdx === idx ? (
@@ -412,12 +444,20 @@ export default function TableClient({ people: initialPeople, refreshData }: Tabl
                         </Button>
                         </>
                       ) : (
+                        <>
                         <Button
                           onClick={() => handleEdit(idx, person)}
                           className="rounded-md border p-2 hover:bg-gray-100"
                         >
                           <PencilIcon className="w-5" />
                         </Button>
+                        <Button
+                          onClick={() => handleDelete(person.id)}
+                          className="rounded-md border p-2 hover:bg-gray-100"
+                        >
+                          <TrashIcon className="w-5" />
+                        </Button>
+                        </>
                       )}
                       </div>
                     </td>
