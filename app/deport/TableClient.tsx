@@ -257,7 +257,7 @@ export default function TableClient({ people: initialPeople, refreshData }: Tabl
                 <th scope="col" className="px-3 py-5 font-medium">Geburtsjahr</th>
                 <th scope="col" className="px-3 py-5 font-medium">Geburtsort</th>
                 <th scope="col" className="px-3 py-5 font-medium">Arbeitsort</th>
-                {user && user.role === 'admin' && (
+                {user && (
                   <th scope="col" className="relative py-3 pl-6 pr-3">
                     <span className="sr-only">Edit</span>
                   </th>
@@ -425,7 +425,7 @@ export default function TableClient({ people: initialPeople, refreshData }: Tabl
                         person.Arbeitsort
                       )}
                   </td>
-                  {user && user.role === 'admin' && (
+                  {user && (
                     <td className="whitespace-nowrap py-3 pl-6 pr-3">
                       <div className="flex justify-end gap-3">
                         {editIdx === idx ? (
@@ -445,18 +445,22 @@ export default function TableClient({ people: initialPeople, refreshData }: Tabl
                         </>
                       ) : (
                         <>
-                        <Button
-                          onClick={() => handleEdit(idx, person)}
-                          className="rounded-md border p-2 hover:bg-gray-100"
-                        >
-                          <PencilIcon className="w-5" />
-                        </Button>
-                        <Button
-                          onClick={() => handleDelete(person.id)}
-                          className="rounded-md border p-2 hover:bg-gray-100"
-                        >
-                          <TrashIcon className="w-5" />
-                        </Button>
+                        {user && (
+                          <Button
+                            onClick={() => handleEdit(idx, person)}
+                            className="rounded-md border p-2 hover:bg-gray-100"
+                          >
+                            <PencilIcon className="w-5" />
+                          </Button>
+                        )}
+                        {user && user.role === 'admin' && (
+                          <Button
+                            onClick={() => handleDelete(person.id)}
+                            className="rounded-md border p-2 hover:bg-gray-100"
+                          >
+                            <TrashIcon className="w-5" />
+                          </Button>
+                        )}
                         </>
                       )}
                       </div>
