@@ -145,7 +145,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
           Geburtsjahr: formData.Geburtsjahr,
           Geburtsort: formData.Geburtsort,
           Arbeitsort: formData.Arbeitsort
-        });
+        }, user?.email || 'unknown');
         setIsAddingNewRow(false);
       } catch (error) {
         console.error('Table: Failed to create new person:', error);
@@ -173,7 +173,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
           Geburtsjahr?: string;
           Geburtsort?: string;
           Arbeitsort?: string;
-        });
+        }, user?.email || 'unknown');
       } catch (error) {
         console.error('Table: Failed to update person:', error);
         toast({

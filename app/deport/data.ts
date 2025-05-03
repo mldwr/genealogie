@@ -28,9 +28,7 @@ import {
     Geburtsjahr?: string;
     Geburtsort?: string;
     Arbeitsort?: string;
-  }) {
-
-
+  }, userEmail: string) {
 
     const { data, error } = await supabase
       .from('deport')
@@ -47,6 +45,9 @@ import {
         Geburtsjahr: person.Geburtsjahr,
         Geburtsort: person.Geburtsort,
         Arbeitsort: person.Arbeitsort,
+        version: 'updated',
+        updated_at: new Date().toISOString(),
+        updated_by: userEmail
       })
       .eq('id', person.id);
 
@@ -70,7 +71,7 @@ export async function createDeportedPerson(person: {
     Geburtsjahr?: string;
     Geburtsort?: string;
     Arbeitsort?: string;
-  }) {
+  }, userEmail: string) {
 
     const { data, error } = await supabase
       .from('deport')
@@ -87,6 +88,9 @@ export async function createDeportedPerson(person: {
         Geburtsjahr: person.Geburtsjahr,
         Geburtsort: person.Geburtsort,
         Arbeitsort: person.Arbeitsort,
+        version: 'created',
+        updated_at: new Date().toISOString(),
+        updated_by: userEmail
       })
       .select();
 
