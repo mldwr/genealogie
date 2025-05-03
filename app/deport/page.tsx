@@ -11,7 +11,7 @@ import { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'People',
 };
- 
+
 export default async function Page({
   searchParams,
 }: {
@@ -22,7 +22,7 @@ export default async function Page({
 }) {
   const query = searchParams?.query || '';
   const currentPage = Number(searchParams?.page) || 1;
-  const totalPages = await fetchDeportedPages(query, currentPage);
+  const totalPages = await fetchDeportedPages(query);
   const stats = await fetchDeportationStatistics();
 
   return (
@@ -31,8 +31,8 @@ export default async function Page({
         Liste der deportierten Personen aus dem Kanton Pallasovka der Autonomen Sozialistischen Sowjetrepublik der Wolgadeutschen (ASSRdW) in die Region Altai (Zug Nr. 858). Start des Zuges am 04.09.1941 an der Station Pallasovka; Ankunft des Zuges am 14.09.1941 an der Station Tretjakovo (Третьяково); Verteilung der Deportierten im Smeinogorskij Rayon (Змеиногорский pайон); Anzahl der deportierten Personen: 2314.
       </div>
       <div className="mt-4">
-        <Statistics 
-          totalPersons={stats.totalPersons} 
+        <Statistics
+          totalPersons={stats.totalPersons}
           totalPages={totalPages}
           maleCount={stats.maleCount}
           femaleCount={stats.femaleCount}
@@ -44,7 +44,7 @@ export default async function Page({
       </div>
       <Suspense key={query + currentPage} fallback={<InvoicesTableSkeleton />}>
         <Table query={query} currentPage={currentPage} />
-      </Suspense> 
+      </Suspense>
       <div className="mt-5 flex w-full justify-center">
         <Pagination totalPages={totalPages} />
       </div>

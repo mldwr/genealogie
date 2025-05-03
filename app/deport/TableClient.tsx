@@ -245,7 +245,8 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
   const handleDelete = async (id: string) => {
     try {
       // Use the direct Supabase client function instead of the API endpoint
-      await deleteDeportedPerson(id);
+      // Pass the current user's email for the updated_by field
+      await deleteDeportedPerson(id, user?.email || 'unknown');
 
       // Refresh the data after successful deletion
       fetchData();

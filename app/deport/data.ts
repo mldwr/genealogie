@@ -97,12 +97,15 @@ export async function createDeportedPerson(person: {
     return data[0];
   }
 
-export async function deleteDeportedPerson(id: string) {
-  // The actual DELETE operation will be intercepted by the trigger
-  // which will perform a logical delete by setting version = 'deleted'
+export async function deleteDeportedPerson(id: string, userEmail: string) {
+  // Perform logical deletion by updating the record instead of deleting it
   const { error } = await supabase
     .from('deport')
-    .delete()
+    .update({
+      version: 'deleted',
+      updated_at: new Date().toISOString(),
+      updated_by: userEmail // Using the current user's email
+    })
     .eq('id', id);
 
   if (error) {
@@ -119,22 +122,23 @@ export async function deleteDeportedPerson(id: string) {
     const offset = (currentPage - 1) * ITEMS_PER_PAGE;
 
     try {
+      // Base query that excludes logically deleted records
+      let baseQuery = supabase
+        .from('deport')
+        .select()
+        .not('version', 'eq', 'deleted'); // Exclude logically deleted records
 
       if (query === '') {
-        const { data, error } = await supabase
-          .from('deport')
-          .select()
+        const { data } = await baseQuery
           .or(`Familienname.ilike.%${query}%,Vorname.ilike.%${query}%,Vatersname.ilike.%${query}%,Familienrolle.ilike.%${query}%,Geburtsort.ilike.%${query}%,Geburtsjahr.ilike.%${query}%`)
           .eq('Seite', currentPage)
           .order('Laufendenr', { ascending: true });
 
         return data ?? [];
-      }else{
-        const { data, error } = await supabase
-          .from('deport')
-          .select()
+      } else {
+        const { data } = await baseQuery
           .or(`Familienname.ilike.%${query}%,Vorname.ilike.%${query}%,Vatersname.ilike.%${query}%,Familienrolle.ilike.%${query}%,Geburtsort.ilike.%${query}%,Geburtsjahr.ilike.%${query}%`)
-          .range(offset, offset + ITEMS_PER_PAGE - 1)
+          .range(offset, offset + ITEMS_PER_PAGE - 1);
 
         return data ?? [];
       }
@@ -144,30 +148,28 @@ export async function deleteDeportedPerson(id: string) {
     }
   }
 
-  export async function fetchDeportedPages(query: string, currentPage: number){
+  export async function fetchDeportedPages(query: string){
     noStore();
 
-    const offset = (currentPage - 1) * ITEMS_PER_PAGE;
-
-
     try {
-
       if (query === '') {
-        const { data, error } = await supabase
+        // Get the highest page number
+        const { data } = await supabase
           .from('deport')
-          .select('Seite', { count: 'exact' })
+          .select('Seite')
+          .neq('version', 'deleted') // Exclude logically deleted records
           .order('Seite', { ascending: false })
           .limit(1);
 
         const totalPages = data?.[0]?.Seite ?? 0;
         return totalPages;
-      }else{
-
-        const { count, error } = await supabase
+      } else {
+        // Count matching records
+        const { count } = await supabase
           .from('deport')
-          .select('Seite', { count: 'exact' })
-          .or(`Familienname.ilike.%${query}%,Vorname.ilike.%${query}%,Vatersname.ilike.%${query}%,Familienrolle.ilike.%${query}%,Geburtsort.ilike.%${query}%,Geburtsjahr.ilike.%${query}%`)
-          .range(offset, offset + ITEMS_PER_PAGE - 1)
+          .select('*', { count: 'exact', head: true })
+          .neq('version', 'deleted') // Exclude logically deleted records
+          .or(`Familienname.ilike.%${query}%,Vorname.ilike.%${query}%,Vatersname.ilike.%${query}%,Familienrolle.ilike.%${query}%,Geburtsort.ilike.%${query}%,Geburtsjahr.ilike.%${query}%`);
 
         const totalPages = Math.ceil(Number(count) / ITEMS_PER_PAGE);
         return totalPages;
@@ -183,17 +185,19 @@ export async function fetchDeportationStatistics() {
     noStore();
 
     try {
-      // Get total number of persons
+      // Get total number of persons (excluding logically deleted records)
       const { count: totalPersons, error: countError } = await supabase
         .from('deport')
-        .select('*', { count: 'exact', head: true });
+        .select('*', { count: 'exact', head: true })
+        .neq('version', 'deleted'); // Exclude logically deleted records
 
       if (countError) throw countError;
 
-      // Get gender distribution
+      // Get gender distribution (excluding logically deleted records)
       const { data: genderData, error: genderError } = await supabase
         .from('deport')
         .select('Geschlecht')
+        .neq('version', 'deleted') // Exclude logically deleted records
         .not('Geschlecht', 'is', null);
 
       if (genderError) throw genderError;
@@ -206,10 +210,11 @@ export async function fetchDeportationStatistics() {
         else if (person.Geschlecht?.toLowerCase() === 'weiblich') femaleCount++;
       });
 
-      // Calculate average age (based on birth year)
+      // Calculate average age (based on birth year) (excluding logically deleted records)
       const { data: birthYearData, error: birthYearError } = await supabase
         .from('deport')
         .select('Geburtsjahr')
+        .neq('version', 'deleted') // Exclude logically deleted records
         .not('Geburtsjahr', 'is', null);
 
       if (birthYearError) throw birthYearError;
@@ -228,10 +233,11 @@ export async function fetchDeportationStatistics() {
 
       const averageAge = validYears > 0 ? Math.round(totalYears / validYears) : undefined;
 
-      // Get highest page number for total pages
+      // Get highest page number for total pages (excluding logically deleted records)
       const { data: pageData, error: pageError } = await supabase
         .from('deport')
         .select('Seite')
+        .neq('version', 'deleted') // Exclude logically deleted records
         .order('Seite', { ascending: false })
         .limit(1);
 
