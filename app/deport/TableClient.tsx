@@ -65,13 +65,7 @@ export default function TableClient({ people: initialPeople, refreshData }: Tabl
           .from('profiles')
           .select('role')
           .eq('id', user.id);
-
-console.log('isAdmin: ',data,error);
-console.log('[DEBUG - Profile Query] user:', user);
-console.log('[DEBUG - Profile Query] user.id:', user?.id);
-console.log('[DEBUG - Profile Query] data:', data);
-console.log('[DEBUG - Profile Query] error:', error);
-
+          
         if (error) {
           console.error('Error fetching user role:', error);
           setIsAdmin(false); // Assume not admin on error
