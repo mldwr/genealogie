@@ -2,17 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createBrowserClient } from '@supabase/ssr';
 import { useAuth } from '@/components/providers/AuthProvider';
 
 export default function AccountClient() {
   const router = useRouter();
-  const supabase = createClientComponentClient();
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
   const { user } = useAuth();
   const [userData, setUserData] = useState<{ role: string, email: string } | null>(null);
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
 
   useEffect(() => {
     if (!user) {
@@ -21,26 +21,29 @@ export default function AccountClient() {
     }
 
     const fetchUserData = async () => {
+      if (!user || !user.id) {
+        console.error('No user ID available');
+        return;
+      }
+
       const { data, error } = await supabase
         .from('profiles')
         .select('role, email')
-        .single();
+        .eq('id', user.id)
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching user data:', error);
         return;
       }
 
-      setUserData(data);
+      if (data) {
+        setUserData(data);
+      }
     };
 
     fetchUserData();
   }, [user, supabase, router]);
-
-  const handlePasswordChange = async (e: React.FormEvent) => {
-    e.preventDefault();
-    // Add password change logic here
-  };
 
   if (!user) {
     return <div>Loading...</div>;
@@ -57,4 +60,4 @@ export default function AccountClient() {
       {/* Rest of your form JSX */}
     </div>
   );
-} 
+}
