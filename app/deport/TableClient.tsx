@@ -8,6 +8,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { fetchDeported, updateDeportedPerson, createDeportedPerson } from '@/app/deport/data';
 import { useToast } from '@/components/ui/Toasts/use-toast';
 
+import { createClient } from '@/utils/supabase/client';
 interface Person {
   id: string;
   Seite: number | null;
@@ -54,7 +55,39 @@ export default function TableClient({ people: initialPeople, refreshData }: Tabl
   const { toast } = useToast();
 
   const { user } = useAuth();
-  
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      if (user) {
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id);
+
+console.log('isAdmin: ',data,error);
+console.log('[DEBUG - Profile Query] user:', user);
+console.log('[DEBUG - Profile Query] user.id:', user?.id);
+console.log('[DEBUG - Profile Query] data:', data);
+console.log('[DEBUG - Profile Query] error:', error);
+
+        if (error) {
+          console.error('Error fetching user role:', error);
+          setIsAdmin(false); // Assume not admin on error
+        } else if (data && data.length > 0 && data[0] && 'role' in data[0]) {
+          setIsAdmin((data[0] as any).role === 'admin');
+        } else {
+          setIsAdmin(false); // User not found in profiles table or data is empty or role property is missing
+        }
+      } else {
+        setIsAdmin(false); // Not logged in
+      }
+    };
+
+    fetchUserRole();
+  }, [user]);
+
   // Update local people state when initialPeople changes
   useEffect(() => {
     setPeople(initialPeople);
@@ -231,7 +264,7 @@ export default function TableClient({ people: initialPeople, refreshData }: Tabl
     <div className="mt-6 flow-root">
       <div className="block align-middle overflow-x-auto">
         <div className="rounded-lg bg-gray-50 p-2 md:pt-0">
-          {user && user.role === 'admin' && (
+          {user && (
             <div className="flex justify-end p-4">
               <Button
                 onClick={handleAddRow}
@@ -453,7 +486,7 @@ export default function TableClient({ people: initialPeople, refreshData }: Tabl
                             <PencilIcon className="w-5" />
                           </Button>
                         )}
-                        {user && user.role === 'admin' && (
+                        {user && isAdmin && (
                           <Button
                             onClick={() => handleDelete(person.id)}
                             className="rounded-md border p-2 hover:bg-gray-100"

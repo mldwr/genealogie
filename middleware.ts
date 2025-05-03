@@ -20,6 +20,20 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  // Only run middleware on the account path
-  matcher: ['/account/:path*']
-}; 
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - /signin
+     * - /signup
+     * - /reset-password
+     * - /change-password
+     * - /account (protected route)
+     * - /deport (public route)
+     * - /participate (public route)
+     */
+    '/((?!_next/static|_next/image|favicon.ico|signin|signup|reset-password|change-password|account|deport|participate).*)',
+  ],
+};

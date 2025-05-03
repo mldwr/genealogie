@@ -51,7 +51,7 @@ import {
       .eq('id', person.id);
   
     if (error) {
-      throw new Error('Failed to update person');
+      throw new Error('Failed to update person: '+error.message);
     }
   
     return data;
