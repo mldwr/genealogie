@@ -1,4 +1,4 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
@@ -11,33 +11,24 @@ export async function middleware(req: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return req.cookies.get(name)?.value;
+        getAll: () => {
+          return req.cookies.getAll().map(cookie => ({
+            name: cookie.name,
+            value: cookie.value,
+          }));
         },
-        set(name: string, value: string, options: CookieOptions) {
-          // If the cookie is updated, update the cookies for the request and response
-          req.cookies.set({
-            name,
-            value,
-            ...options,
-          });
-          res.cookies.set({
-            name,
-            value,
-            ...options,
-          });
-        },
-        remove(name: string, options: CookieOptions) {
-          // If the cookie is removed, update the cookies for the request and response
-          req.cookies.set({
-            name,
-            value: '',
-            ...options,
-          });
-          res.cookies.set({
-            name,
-            value: '',
-            ...options,
+        setAll: (cookiesList) => {
+          cookiesList.forEach((cookie) => {
+            req.cookies.set({
+              name: cookie.name,
+              value: cookie.value,
+              ...cookie.options,
+            });
+            res.cookies.set({
+              name: cookie.name,
+              value: cookie.value,
+              ...cookie.options,
+            });
           });
         },
       },
