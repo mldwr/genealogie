@@ -27,11 +27,11 @@ interface Person {
 
 interface TableClientProps {
   people: Person[];
-  refreshData: () => void;
   currentPage?: number;
+  query?: string;
 }
 
-export default function TableClient({ people: initialPeople, refreshData }: TableClientProps) {
+export default function TableClient({ people: initialPeople, currentPage = 1, query = '' }: TableClientProps) {
   const [people, setPeople] = useState<Person[]>(initialPeople);
   const [isAddingNewRow, setIsAddingNewRow] = useState(false);
   const [editIdx, setEditIdx] = useState(-1);
@@ -57,6 +57,21 @@ export default function TableClient({ people: initialPeople, refreshData }: Tabl
   const { user } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
 
+  // Function to fetch data
+  const fetchData = async () => {
+    try {
+      const fetchedPeople = await fetchDeported(query, currentPage);
+      setPeople(fetchedPeople);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      toast({
+        title: 'Fehler beim Laden der Daten',
+        description: error instanceof Error ? error.message : 'Ein unbekannter Fehler ist aufgetreten',
+        variant: 'destructive'
+      });
+    }
+  };
+
   useEffect(() => {
     const fetchUserRole = async () => {
       if (user) {
@@ -65,7 +80,7 @@ export default function TableClient({ people: initialPeople, refreshData }: Tabl
           .from('profiles')
           .select('role')
           .eq('id', user.id);
-          
+
         if (error) {
           console.error('Error fetching user role:', error);
           setIsAdmin(false); // Assume not admin on error
@@ -82,18 +97,23 @@ export default function TableClient({ people: initialPeople, refreshData }: Tabl
     fetchUserRole();
   }, [user]);
 
+  // Fetch data when query or currentPage changes
+  useEffect(() => {
+    fetchData();
+  }, [query, currentPage]);
+
   // Update local people state when initialPeople changes
   useEffect(() => {
     setPeople(initialPeople);
   }, [initialPeople]);
-  
+
   // Focus on first input when adding a new row
   useEffect(() => {
     if (editIdx === 0 && isAddingNewRow && firstInputRef.current) {
       firstInputRef.current.focus();
     }
   }, [editIdx, isAddingNewRow]);
-  
+
   const handleEdit = (idx: number, person: any) => {
     setEditIdx(idx);
     setFormData({ ...person, id: person.id });
@@ -139,8 +159,8 @@ export default function TableClient({ people: initialPeople, refreshData }: Tabl
     } else if (formData.id) {
       // Update existing person
       try {
-        await updateDeportedPerson(formData as { 
-          id: string; 
+        await updateDeportedPerson(formData as {
+          id: string;
           Seite?: string;
           Familiennr?: string;
           Eintragsnr?: string;
@@ -165,16 +185,16 @@ export default function TableClient({ people: initialPeople, refreshData }: Tabl
       }
     }
     setEditIdx(-1);
-    refreshData();
+    fetchData();
   };
 
   const handleCancel = () => {
     setFormData(originalData);
     setEditIdx(-1);
-    
+
     if (isAddingNewRow) {
       setIsAddingNewRow(false);
-      refreshData(); // Refresh data when canceling a new row addition
+      fetchData(); // Refresh data when canceling a new row addition
     }
   };
 
@@ -195,11 +215,11 @@ export default function TableClient({ people: initialPeople, refreshData }: Tabl
       Geburtsort: null,
       Arbeitsort: null
     };
-    
+
     // Add the new person to the top of the local state
     const updatedPeople = [newPerson, ...people];
     setPeople(updatedPeople);
-    
+
     // Set the new row in edit mode (index 0 since it's at the top)
     setEditIdx(0);
     // Convert null values to empty strings for formData which expects string | undefined
@@ -238,7 +258,7 @@ export default function TableClient({ people: initialPeople, refreshData }: Tabl
       }
 
       // Assuming successful deletion, refresh the data
-      refreshData();
+      fetchData();
       toast({
         title: 'Erfolgreich gelöscht',
         description: 'Der Eintrag wurde erfolgreich gelöscht.',

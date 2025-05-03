@@ -23,9 +23,5 @@ export default function Table({
     fetchData();
   }, [query, currentPage]);
 
-  const refreshData = () => {
-    fetchData();
-  };
-  
-  return <TableClient people={people} refreshData={refreshData} currentPage={currentPage} />;
+  return <TableClient people={people} query={query} currentPage={currentPage} />;
 }
