@@ -5,7 +5,7 @@ import { EditRow, DeleteRow } from '@/app/deport/buttons';
 import { Button } from '@headlessui/react';
 import { PencilIcon, PlusIcon, TrashIcon, StopIcon, CheckIcon } from '@heroicons/react/24/outline';
 import React, { useState, useEffect, useRef } from 'react';
-import { fetchDeported, updateDeportedPerson, createDeportedPerson } from '@/app/deport/data';
+import { fetchDeported, updateDeportedPerson, createDeportedPerson, deleteDeportedPerson } from '@/app/deport/data';
 import { useToast } from '@/components/ui/Toasts/use-toast';
 
 import { createClient } from '@/utils/supabase/client';
@@ -244,20 +244,10 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
 
   const handleDelete = async (id: string) => {
     try {
-      const response = await fetch('/api/deport/delete', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ id }),
-      });
+      // Use the direct Supabase client function instead of the API endpoint
+      await deleteDeportedPerson(id);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to delete person');
-      }
-
-      // Assuming successful deletion, refresh the data
+      // Refresh the data after successful deletion
       fetchData();
       toast({
         title: 'Erfolgreich gelöscht',

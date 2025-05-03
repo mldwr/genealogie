@@ -13,7 +13,7 @@ import {
   import { formatCurrency } from './utils';
   import { unstable_noStore as noStore } from 'next/cache';
   import supabase from '@/app/deport/supabase';
-  
+
   export async function updateDeportedPerson(person: {
     id: string;
     Seite?: string;
@@ -29,9 +29,9 @@ import {
     Geburtsort?: string;
     Arbeitsort?: string;
   }) {
-    
-  
-  
+
+
+
     const { data, error } = await supabase
       .from('deport')
       .update({
@@ -49,11 +49,11 @@ import {
         Arbeitsort: person.Arbeitsort,
       })
       .eq('id', person.id);
-  
+
     if (error) {
       throw new Error('Failed to update person: '+error.message);
     }
-  
+
     return data;
   }
 
@@ -71,7 +71,7 @@ export async function createDeportedPerson(person: {
     Geburtsort?: string;
     Arbeitsort?: string;
   }) {
-    
+
     const { data, error } = await supabase
       .from('deport')
       .insert({
@@ -89,22 +89,37 @@ export async function createDeportedPerson(person: {
         Arbeitsort: person.Arbeitsort,
       })
       .select();
-  
+
     if (error) {
       throw new Error(`Supabase: Failed to create person: ${error.message}`);
     }
-  
+
     return data[0];
   }
 
-  
+export async function deleteDeportedPerson(id: string) {
+  // The actual DELETE operation will be intercepted by the trigger
+  // which will perform a logical delete by setting version = 'deleted'
+  const { error } = await supabase
+    .from('deport')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    throw new Error(`Failed to delete person: ${error.message}`);
+  }
+
+  return true;
+}
+
+
   export async function fetchDeported(query: string, currentPage: number): Promise<Deported[]> {
     noStore();
-  
+
     const offset = (currentPage - 1) * ITEMS_PER_PAGE;
-  
+
     try {
-  
+
       if (query === '') {
         const { data, error } = await supabase
           .from('deport')
@@ -112,7 +127,7 @@ export async function createDeportedPerson(person: {
           .or(`Familienname.ilike.%${query}%,Vorname.ilike.%${query}%,Vatersname.ilike.%${query}%,Familienrolle.ilike.%${query}%,Geburtsort.ilike.%${query}%,Geburtsjahr.ilike.%${query}%`)
           .eq('Seite', currentPage)
           .order('Laufendenr', { ascending: true });
-  
+
         return data ?? [];
       }else{
         const { data, error } = await supabase
@@ -128,22 +143,22 @@ export async function createDeportedPerson(person: {
       throw new Error('Failed to fetch revenue data.');
     }
   }
-  
+
   export async function fetchDeportedPages(query: string, currentPage: number){
     noStore();
-  
+
     const offset = (currentPage - 1) * ITEMS_PER_PAGE;
 
-  
+
     try {
-  
+
       if (query === '') {
         const { data, error } = await supabase
           .from('deport')
           .select('Seite', { count: 'exact' })
           .order('Seite', { ascending: false })
           .limit(1);
-  
+
         const totalPages = data?.[0]?.Seite ?? 0;
         return totalPages;
       }else{
@@ -166,43 +181,43 @@ export async function createDeportedPerson(person: {
 
 export async function fetchDeportationStatistics() {
     noStore();
-    
+
     try {
       // Get total number of persons
       const { count: totalPersons, error: countError } = await supabase
         .from('deport')
         .select('*', { count: 'exact', head: true });
-      
+
       if (countError) throw countError;
-      
+
       // Get gender distribution
       const { data: genderData, error: genderError } = await supabase
         .from('deport')
         .select('Geschlecht')
         .not('Geschlecht', 'is', null);
-      
+
       if (genderError) throw genderError;
-      
+
       let maleCount = 0;
       let femaleCount = 0;
-      
+
       genderData?.forEach(person => {
         if (person.Geschlecht?.toLowerCase() === 'männlich') maleCount++;
         else if (person.Geschlecht?.toLowerCase() === 'weiblich') femaleCount++;
       });
-      
+
       // Calculate average age (based on birth year)
       const { data: birthYearData, error: birthYearError } = await supabase
         .from('deport')
         .select('Geburtsjahr')
         .not('Geburtsjahr', 'is', null);
-      
+
       if (birthYearError) throw birthYearError;
-      
+
       let validYears = 0;
       let totalYears = 0;
       const deportationYear = 1941; // Year of deportation
-      
+
       birthYearData?.forEach(person => {
         const birthYear = parseInt(person.Geburtsjahr || '');
         if (!isNaN(birthYear) && birthYear > 1800 && birthYear < deportationYear) {
@@ -210,20 +225,20 @@ export async function fetchDeportationStatistics() {
           validYears++;
         }
       });
-      
+
       const averageAge = validYears > 0 ? Math.round(totalYears / validYears) : undefined;
-      
+
       // Get highest page number for total pages
       const { data: pageData, error: pageError } = await supabase
         .from('deport')
         .select('Seite')
         .order('Seite', { ascending: false })
         .limit(1);
-      
+
       if (pageError) throw pageError;
-      
+
       const totalPages = pageData?.[0]?.Seite ?? 0;
-      
+
       return {
         totalPersons: totalPersons || 0,
         totalPages,
@@ -236,20 +251,20 @@ export async function fetchDeportationStatistics() {
       throw new Error('Failed to fetch deportation statistics.');
     }
   }
-  
-  
+
+
   export async function fetchRevenue(sessionUserEmail: string): Promise<Revenue[]> {
     // Add noStore() here prevent the response from being cached.
     // This is equivalent to in fetch(..., {cache: 'no-store'}).
     noStore();
-  
+
     try {
       // Artificially delay a reponse for demo purposes.
       // Don't do this in real life :)
-  
+
       //console.log('Fetching revenue data...');
       //await new Promise((resolve) => setTimeout(resolve, 3000));
-  
+
       //const data = await sql<Revenue>`SELECT * FROM revenue`;
       /*const data = await sql<Revenue>
       `
@@ -278,7 +293,7 @@ export async function fetchDeportationStatistics() {
         union
         select 12 as NumMonth, 'Dec' as Month
       ), cte_data as (
-        select extract(YEAR FROM date) as year, extract(MONTH FROM date) as nummonth,sum(amount)/100 as revenue 
+        select extract(YEAR FROM date) as year, extract(MONTH FROM date) as nummonth,sum(amount)/100 as revenue
         from invoices
         JOIN customers ON invoices.customer_id = customers.id
         WHERE customers.email ILIKE ${`%${sessionUserEmail}%`}
@@ -291,32 +306,32 @@ export async function fetchDeportationStatistics() {
         on cte_data.nummonth = cte_month.nummonth
         order by year desc, cte_data.nummonth desc
       )
-      select case when maxmon=nummonth then year::varchar(4) else '' end as Year, Month, Revenue  
+      select case when maxmon=nummonth then year::varchar(4) else '' end as Year, Month, Revenue
       from cte_group
-      `;      
+      `;
       */
-  
+
       const sessionuseremail = sessionUserEmail;
       const { data, error } = await supabase.rpc('get_revenue_data', { sessionuseremail });
-  
+
       // console.log('Data fetch',data,error);
-  
+
       //const revenue = data as Revenue;
-  
+
       return data;
     } catch (error) {
       console.error('Database Error:', error);
       throw new Error('Failed to fetch revenue data.');
     }
   }
-  
+
   export async function fetchLatestInvoices(sessionUserEmail: string): Promise<LatestInvoiceRaw[]>  {
     noStore();
-    
+
     try {
-      // REMOVE TODO 
+      // REMOVE TODO
       //await new Promise((resolve) => setTimeout(resolve, 5000));
-  
+
       /*const data = await sql<LatestInvoiceRaw>`
         SELECT invoices.amount, customers.name, customers.image_url, customers.email, invoices.id
         FROM invoices
@@ -324,12 +339,12 @@ export async function fetchDeportationStatistics() {
         WHERE customers.email ILIKE ${`%${sessionUserEmail}%`}
         ORDER BY invoices.date DESC
         LIMIT 5`; */
-  
+
       const sessionuseremail = sessionUserEmail;
       const { data, error } = await supabase.rpc('get_latest_invoice', { sessionuseremail });
-    
-      //console.log('Data invoice',data,error); 
-          
+
+      //console.log('Data invoice',data,error);
+
       //const latestInvoices = invoices.rows.map((invoice) => ({ ...invoice,  amount: formatCurrency(invoice.amount),  }));
       return data;
     } catch (error) {
@@ -337,10 +352,10 @@ export async function fetchDeportationStatistics() {
       throw new Error('Failed to fetch the latest invoices.');
     }
   }
-  
+
   export async function fetchCardData(sessionUserEmail: string) {
     noStore();
-  
+
     try {
       // You can probably combine these into a single SQL query
       // However, we are intentionally splitting them to demonstrate
@@ -350,9 +365,9 @@ export async function fetchDeportationStatistics() {
           FROM invoices
           JOIN customers ON invoices.customer_id = customers.id
           WHERE customers.email ILIKE ${`%${sessionUserEmail}%`}
-          `; 
+          `;
       const customerCountPromise = sql`
-          SELECT COUNT(*) 
+          SELECT COUNT(*)
           FROM customers
           WHERE customers.email ILIKE ${`%${sessionUserEmail}%`}
           `;
@@ -364,30 +379,30 @@ export async function fetchDeportationStatistics() {
           JOIN customers ON invoices.customer_id = customers.id
           WHERE customers.email ILIKE ${`%${sessionUserEmail}%`}
           `;*/
-  
-  
+
+
       const sessionuseremail = sessionUserEmail;
       const { data, error } = await supabase.rpc('get_invoice_customer_counts', { sessionuseremail });
-      
-      // console.log('Data counts',data,error); 
-      // console.log('Data ',data[0].invoice_count); 
-  
+
+      // console.log('Data counts',data,error);
+      // console.log('Data ',data[0].invoice_count);
+
       const numberOfInvoices = Number(data[0].invoice_count ?? '0');
       const numberOfCustomers = Number(data[0].customer_count ?? '0');
       const totalPaidInvoices = formatCurrency(data[0].paid ?? '0');
       const totalPendingInvoices = formatCurrency(data[0].pending ?? '0');
-       
+
       /* const data = await Promise.all([
         invoiceCountPromise,
         customerCountPromise,
         invoiceStatusPromise,
       ]); */
-  /* 
+  /*
       const numberOfInvoices = Number(data[0].rows[0].count ?? '0');
       const numberOfCustomers = Number(data[1].rows[0].count ?? '0');
       const totalPaidInvoices = formatCurrency(data[2].rows[0].paid ?? '0');
       const totalPendingInvoices = formatCurrency(data[2].rows[0].pending ?? '0'); */
-  
+
       return {
         numberOfCustomers,
         numberOfInvoices,
@@ -399,16 +414,16 @@ export async function fetchDeportationStatistics() {
       throw new Error('Failed to card data.');
     }
   }
-  
-  
+
+
   const ITEMS_PER_PAGE = 22;
   export async function fetchInvoicesUser( query: string, currentPage: number, sessionUserEmail: string): Promise<InvoicesTable[]> {
     noStore();
-  
+
     const offset = (currentPage - 1) * ITEMS_PER_PAGE;
-  
+
     try {
-         
+
       /* const invoices = await sql<InvoicesTable>`
       SELECT
           invoices.id,
@@ -430,83 +445,83 @@ export async function fetchDeportationStatistics() {
             invoices.status ILIKE ${`%${query}%`}
           ) AND
           (
-            customers.email ILIKE ${`%${sessionUserEmail}%`} 
+            customers.email ILIKE ${`%${sessionUserEmail}%`}
           )
         ORDER BY invoices.date DESC
-        LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset} 
+        LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
       `;*/
-  
-  
+
+
       const query_param = query;
       const session_email_param = sessionUserEmail;
       const items_per_page_param = ITEMS_PER_PAGE;
       const offset_param = offset;
-      const { data, error } = await supabase.rpc('get_invoices_with_email_and_pagination', { 
-        query_param, 
+      const { data, error } = await supabase.rpc('get_invoices_with_email_and_pagination', {
+        query_param,
         session_email_param,
         items_per_page_param,
-        offset_param });   
-  
-  
+        offset_param });
+
+
       return data;
     } catch (error) {
       console.error('Database Error:', error);
       throw new Error('Failed to fetch fetchInvoicesUser.');
     }
   }
-  
-  
+
+
   export async function fetchInvoicesByUserMonth( sessionUserEmail: string): Promise<InvoicesTable[]> {
     noStore();
-  
+
     try {
-  
+
       const session_email_param = sessionUserEmail;
-      const { data, error } = await supabase.rpc('get_invoices_by_user_month', { session_email_param}); 
+      const { data, error } = await supabase.rpc('get_invoices_by_user_month', { session_email_param});
       //console.log('data ',data,error);
-  
+
       if (data === null || data.length === 0) {
         throw new Error('No invoices found for the specified user and month.');
       } else {
         return data;
-      }    
-  
+      }
+
     } catch (error) {
       console.error('Database Error:', error);
       throw new Error('Failed to fetch fetchInvoicesByUserMonth.');
     }
   }
-  
-  
+
+
   export async function fetchPastInvoiceAmount( sessionUserEmail: string): Promise<number> {
     noStore();
-  
+
     try {
-  
+
       const session_email_param = sessionUserEmail;
-      const { data, error } = await supabase.rpc('get_past_invoices_amount', { session_email_param}); 
+      const { data, error } = await supabase.rpc('get_past_invoices_amount', { session_email_param});
       //console.log('data ',data,error);
-  
+
       if (data === null || data.length === 0) {
         throw new Error('No invoices found for the specified past invoices.');
       } else {
         return data[0].total_amount;
-      }    
-  
+      }
+
     } catch (error) {
       console.error('Database Error:', error);
       throw new Error('Failed to fetch fetchPastInvoiceAmount.');
     }
   }
-  
-  
+
+
   export async function fetchInvoicesApproveList( query: string, currentPage: number): Promise<InvoicesTable[]> {
     noStore();
-  
+
     const offset = (currentPage - 1) * ITEMS_PER_PAGE;
-  
+
     try {
-         
+
       /* const invoices = await sql<InvoicesTable>`
       SELECT
           invoices.id,
@@ -528,40 +543,40 @@ export async function fetchDeportationStatistics() {
             invoices.date::text ILIKE ${`%${query}%`} OR
             invoices.status ILIKE ${`%${query}%`} OR
             invoices.groupid ILIKE ${`%${query}%`}
-          ) 
+          )
           ORDER BY invoices.date DESC
           --order by invoices.status DESC
         LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
       `; */
-  
-  
+
+
       //return invoices.rows;
-  
+
       const query_param = query;
       const items_per_page_param = ITEMS_PER_PAGE;
       const offset_param = offset;
-      const { data, error } = await supabase.rpc('search_invoices', { 
-        query_param, 
+      const { data, error } = await supabase.rpc('search_invoices', {
+        query_param,
         items_per_page_param,
-        offset_param }); 
-  
+        offset_param });
+
       return data;
-  
+
     } catch (error) {
       console.error('Database Error:', error);
       throw new Error('Failed to fetch fetchInvoicesApproveList.');
     }
   }
-  
-  
-  
+
+
+
   export async function fetchInvoicesApproveListSparte( query: string, currentPage: number, sparte: string): Promise<InvoicesTable[]> {
     noStore();
-  
+
     const offset = (currentPage - 1) * ITEMS_PER_PAGE;
-  
+
     try {
-         
+
       /* const invoices = await sql<InvoicesTable>`
       SELECT
           invoices.id,
@@ -590,33 +605,33 @@ export async function fetchDeportationStatistics() {
           )
         ORDER BY invoices.date DESC
         --order by invoices.status
-        LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset} 
+        LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
       `;*/
-  
-  
-  
+
+
+
       const query_param = query;
       const sparte_param = sparte;
       const items_per_page_param = ITEMS_PER_PAGE;
       const offset_param = offset;
-      const { data, error } = await supabase.rpc('search_invoices_division', { 
-        query_param, 
+      const { data, error } = await supabase.rpc('search_invoices_division', {
+        query_param,
         sparte_param,
         items_per_page_param,
-        offset_param }); 
-  
-  
+        offset_param });
+
+
       return data;
     } catch (error) {
       console.error('Database Error:', error);
       throw new Error('Failed to fetch fetchInvoicesApproveListSparte.');
     }
   }
-  
-  
+
+
   export async function fetchInvoicesApprovePagesSparte(query: string, sparte: string) {
       noStore();
-      
+
       try {
         /* const count = await sql`
         SELECT COUNT(*)
@@ -635,12 +650,12 @@ export async function fetchDeportationStatistics() {
             --invoices.status = 'ausstehend'
           )
       `; */
-    
-  
+
+
         const query_param = query;
         const sparte_param = sparte;
         const { data, error } = await supabase.rpc('count_matching_invoices', { query_param, sparte_param });
-  
+
         const totalPages = Math.ceil(Number(data) / ITEMS_PER_PAGE);
         return totalPages;
       } catch (error) {
@@ -648,11 +663,11 @@ export async function fetchDeportationStatistics() {
         throw new Error('Failed to fetch fetchInvoicesApprovePagesSparte.');
       }
     }
-    
-  
+
+
     export async function fetchInvoicesApprovePagesUser(query: string, sessionUserEmail: string) {
       noStore();
-      
+
       try {
         /* const count = await sql`
         SELECT COUNT(*)
@@ -667,33 +682,33 @@ export async function fetchDeportationStatistics() {
             invoices.status ILIKE ${`%${query}%`}
           ) AND
           (
-            customers.email ILIKE ${`%${sessionUserEmail}%`} 
+            customers.email ILIKE ${`%${sessionUserEmail}%`}
           )
       `; */
-    
+
         //const totalPages = Math.ceil(Number(count.rows[0].count) / ITEMS_PER_PAGE);
         //return totalPages;
-  
-  
+
+
       const query_param = query;
       const session_email_param = sessionUserEmail;
       const { data, error } = await supabase.rpc('count_matching_invoices_for_user', { query_param, session_email_param });
-  
+
       const totalPages = Math.ceil(Number(data) / ITEMS_PER_PAGE);
       return totalPages;
-  
+
       } catch (error) {
         console.error('Database Error:', error);
         throw new Error('Failed to fetch fetchInvoicesApprovePagesUser.');
       }
     }
-  
-  
-    
-  
+
+
+
+
   export async function fetchInvoicesPagesUser(query: string, sessionUserEmail: string) {
     noStore();
-  
+
     try {
       /* const count = await sql`
       SELECT COUNT(*)
@@ -708,15 +723,15 @@ export async function fetchDeportationStatistics() {
           invoices.status ILIKE ${`%${query}%`}
         ) AND
         (
-          customers.email ILIKE ${`%${sessionUserEmail}%`} 
+          customers.email ILIKE ${`%${sessionUserEmail}%`}
         )
     `; */
-  
-  
+
+
       const query_param = query;
       const session_email_param = sessionUserEmail;
       const { data, error } = await supabase.rpc('count_matching_invoices_with_email', { query_param, session_email_param });
-  
+
       const totalPages = Math.ceil(Number(data) / ITEMS_PER_PAGE);
       //const totalPages = Math.ceil(Number(count.rows[0].count) / ITEMS_PER_PAGE);
       return totalPages;
@@ -725,11 +740,11 @@ export async function fetchDeportationStatistics() {
       throw new Error('Failed to fetch fetchInvoicesPagesUser.');
     }
   }
-  
-  
+
+
   export async function fetchInvoicesPages(query: string) {
     noStore();
-    
+
     try {
       /* const count = await sql`
       SELECT COUNT(*)
@@ -742,24 +757,24 @@ export async function fetchDeportationStatistics() {
         invoices.date::text ILIKE ${`%${query}%`} OR
         invoices.status ILIKE ${`%${query}%`}
     `; */
-  
-  
+
+
       const query_param = query;
-      const { data, error } = await supabase.rpc('count_matching_invoices', { query_param}); 
-  
+      const { data, error } = await supabase.rpc('count_matching_invoices', { query_param});
+
       //const totalPages = Math.ceil(Number(count.rows[0].count) / ITEMS_PER_PAGE);
       const totalPages = Math.ceil(Number(data) / ITEMS_PER_PAGE);
       console.log('totalPages', totalPages);
-  
+
       return totalPages;
     } catch (error) {
       console.error('Database Error:', error);
       throw new Error('Failed to fetch fetchInvoicesPages.');
     }
   }
-  
-  
-  
+
+
+
   export async function fetchInvoiceById(id: string): Promise<InvoiceForm[]> {
     noStore();
     try {
@@ -775,18 +790,18 @@ export async function fetchDeportationStatistics() {
     FROM invoices
         WHERE invoices.id = ${id};
       `; */
-  
-  
+
+
       const id_param = id;
-      const { data, error } = await supabase.rpc('get_invoice_by_id', { id_param});  
-  
+      const { data, error } = await supabase.rpc('get_invoice_by_id', { id_param});
+
       /* const invoice = data.rows.map((invoice) => ({
         ...invoice,
         // Convert amount from cents to dollars
         //amount: invoice.amount / 100,
         //date: new Date(invoice.date).toLocaleDateString()
       })); */
-      
+
       // console.log(invoice)
       //return invoice[0];
       return data;
@@ -795,7 +810,7 @@ export async function fetchDeportationStatistics() {
       throw new Error('Failed to fetch fetchInvoiceById.');
     }
   }
-  
+
   export async function fetchSparten( query: string): Promise<SpartenTable[]> {
     noStore();
     try {
@@ -810,14 +825,14 @@ export async function fetchDeportationStatistics() {
         WHERE
         sp.name ILIKE ${`%${query}%`} OR
         sl.name ILIKE ${`%${query}%`} OR
-        sp.spartenleiter  ILIKE ${`%${query}%`} 
+        sp.spartenleiter  ILIKE ${`%${query}%`}
         ORDER BY sp.name ASC
       `; */
-  
-  
+
+
       const query_param = query;
-      const { data, error } = await supabase.rpc('search_sparten', { query_param});   
-  
+      const { data, error } = await supabase.rpc('search_sparten', { query_param});
+
       const groups = data.length !== 0 ? data : [{
         spartenname: '',
         spartenleiter: '',
@@ -829,25 +844,25 @@ export async function fetchDeportationStatistics() {
       throw new Error('Failed to fetch fetchSparten.');
     }
   }
-  
-  
-  
+
+
+
   export async function fetchCustomerById(customerId: string): Promise<CustomersTable> {
     noStore();
-  
+
     try {
-  
+
       const customer_id_param = customerId;
       const { data, error } = await supabase.rpc('search_customer_by_id', { customer_id_param });
-  
+
       return data[0];
     } catch (err) {
       console.error('Database Error:', err);
       throw new Error('Failed to fetch fetchCustomerById.');
     }
   }
-  
-  
+
+
   //export async function fetchCustomers() {
   export async function fetchCustomers(): Promise<CustomerField[]> {
     noStore();
@@ -860,10 +875,10 @@ export async function fetchDeportationStatistics() {
         FROM customers
         ORDER BY name ASC
       `; */
-  
-  
-      const { data, error } = await supabase.rpc('get_customers');  
-  
+
+
+      const { data, error } = await supabase.rpc('get_customers');
+
       //const customers = data.rows;
       //const customers = rows as CustomerField;
       return data;
@@ -872,11 +887,11 @@ export async function fetchDeportationStatistics() {
       throw new Error('Failed to fetch all customers.');
     }
   }
-  
-  
+
+
   export async function fetchFilteredCustomers(query: string): Promise<CustomersTable[]> {
     noStore();
-  
+
     try {
       /* const customers = await sql<CustomersTable>`
       WITH CTE AS (
@@ -889,9 +904,9 @@ export async function fetchDeportationStatistics() {
               case when status = 'geprüft' then 1 else 0 end as geprueft,
               case when status = 'genehmigt' then 1 else 0 end as genehmigt,
               customers.rate
-        FROM invoices 
-        LEFT JOIN customers 
-        ON invoices.customer_id = customers.id 
+        FROM invoices
+        LEFT JOIN customers
+        ON invoices.customer_id = customers.id
       )
         SELECT
             id,
@@ -907,22 +922,22 @@ export async function fetchDeportationStatistics() {
           (
                 name ILIKE ${`%${query}%`} OR
             email ILIKE ${`%${query}%`}
-          ) 
+          )
         GROUP BY id, name, email, image_url, rate
         ORDER BY name ASC
         `;
    */
-  
-  
+
+
       const query_param = query;
-      const { data, error } = await supabase.rpc('search_customers_summary', { query_param}); 
-  
+      const { data, error } = await supabase.rpc('search_customers_summary', { query_param});
+
       /* const customers = data.rows.map((customer) => ({
         ...customer,
         total_pending: formatCurrency(customer.total_pending),
         total_paid: formatCurrency(customer.total_paid),
       })); */
-  
+
       //return customers.rows;
       return data;
     } catch (err) {
@@ -930,13 +945,13 @@ export async function fetchDeportationStatistics() {
       throw new Error('Failed to fetchFilteredCustomers.');
     }
   }
-  
-  
-  
-  
+
+
+
+
   export async function fetchFilteredCustomersUser(query: string, sessionUserEmail: string): Promise<CustomersTable[]> {
     noStore();
-  
+
     try {
       /* const customers = await sql<CustomersTable>`
       WITH CTE AS (
@@ -949,9 +964,9 @@ export async function fetchDeportationStatistics() {
               case when status = 'geprüft' then 1 else 0 end as geprueft,
               case when status = 'genehmigt' then 1 else 0 end as genehmigt,
               customers.rate
-        FROM invoices 
-        LEFT JOIN customers 
-        ON invoices.customer_id = customers.id 
+        FROM invoices
+        LEFT JOIN customers
+        ON invoices.customer_id = customers.id
       )
         SELECT
             id,
@@ -972,31 +987,31 @@ export async function fetchDeportationStatistics() {
         GROUP BY id, name, email, image_url, rate
         ORDER BY name ASC
         `; */
-  
+
       /* const customers = data.rows.map((customer) => ({
         ...customer,
         total_pending: formatCurrency(customer.total_pending),
         total_paid: formatCurrency(customer.total_paid),
       })); */
-  
+
       //return customers.rows;
-  
+
       const query_param = query;
       const sessionuseremail_param = sessionUserEmail;
       const { data, error } = await supabase.rpc('search_customers_summary_for_user', { query_param, sessionuseremail_param });
-  
+
       return data;
     } catch (err) {
       console.error('Database Error:', err);
       throw new Error('Failed to fetch fetchFilteredCustomersUser.');
     }
   }
-  
-  
-  
+
+
+
   export async function fetchFilteredCustomersSparten(query: string, sparte: string): Promise<CustomersTable[]> {
     noStore();
-  
+
     try {
       /* const customers = await sql<CustomersTable>`
       WITH CTE AS (
@@ -1010,9 +1025,9 @@ export async function fetchDeportationStatistics() {
               case when status = 'geprüft' then 1 else 0 end as geprueft,
               case when status = 'genehmigt' then 1 else 0 end as genehmigt,
               customers.rate
-        FROM invoices 
-        LEFT JOIN customers 
-        ON invoices.customer_id = customers.id 
+        FROM invoices
+        LEFT JOIN customers
+        ON invoices.customer_id = customers.id
       )
         SELECT
             id,
@@ -1029,43 +1044,43 @@ export async function fetchDeportationStatistics() {
               (
             name ILIKE ${`%${query}%`} OR
             email ILIKE ${`%${query}%`}
-          ) 
+          )
           AND
             groupid ILIKE ${`%${sparte}%`}
         GROUP BY id, name, email, image_url, groupid, rate
-        ORDER BY name ASC 
+        ORDER BY name ASC
         `;*/
-  
-  
+
+
       const query_param = query;
       const sparte_param = sparte;
       const { data, error } = await supabase.rpc('search_customers', { query_param, sparte_param });
-  
+
       /* const customers = data.rows.map((customer) => ({
         ...customer,
         total_pending: formatCurrency(customer.total_pending),
         total_paid: formatCurrency(customer.total_paid),
       })); */
-  
-  
+
+
       return data;
     } catch (err) {
       console.error('Database Error:', err);
       throw new Error('Failed to fetch fetchFilteredCustomersSparten.');
     }
   }
-  
-  
+
+
   /* export async function getUser(email: string) {
     try {
       const user = await sql`
-      SELECT 
-            id, 
-            name, 
-            email, 
-            password, 
-            role 
-      from USERS 
+      SELECT
+            id,
+            name,
+            email,
+            password,
+            role
+      from USERS
             where email=${email}`;
       return user.rows[0] as User;
     } catch (error) {
@@ -1073,11 +1088,11 @@ export async function fetchDeportationStatistics() {
       throw new Error('Failed to fetch user.');
     }
   } */
-  
-  
+
+
   /*export async function fetchRoleId(sessionUserEmail: string | null | undefined){
     noStore();
-  
+
     try{
       const roleId = await sql<User>`
       SELECT
@@ -1085,7 +1100,7 @@ export async function fetchDeportationStatistics() {
       from USERS
       where email = ${sessionUserEmail}
       `;
-  
+
       return roleId.rows[0].role;
     }catch (error) {
       console.error('Database Error:', error);
