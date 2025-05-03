@@ -52,7 +52,6 @@ import {
       .from('deport')
       .update({
         valid_to: now,
-        updated_at: now,
         updated_by: userEmail
       })
       .eq('id', person.id);
@@ -78,14 +77,11 @@ import {
         Geburtsjahr: person.Geburtsjahr,
         Geburtsort: person.Geburtsort,
         Arbeitsort: person.Arbeitsort,
-        // Set the version to inserted for the new record
-        version: 'inserted',
         // Set the logical_id to the original record's id to maintain relationship
         logical_id: person.id,
         // Set valid_from to current timestamp and leave valid_to as null
         valid_from: now,
         valid_to: null,
-        updated_at: now,
         updated_by: userEmail
       })
       .select();
@@ -128,11 +124,9 @@ export async function createDeportedPerson(person: {
         Geburtsjahr: person.Geburtsjahr,
         Geburtsort: person.Geburtsort,
         Arbeitsort: person.Arbeitsort,
-        version: 'inserted',
         // Set valid_from to current timestamp and leave valid_to as null
         valid_from: now,
         valid_to: null,
-        updated_at: now,
         updated_by: userEmail
       })
       .select();
@@ -151,9 +145,7 @@ export async function deleteDeportedPerson(id: string, userEmail: string) {
   const { error } = await supabase
     .from('deport')
     .update({
-      version: 'deleted',
       valid_to: now, // Set valid_to to current timestamp to mark as no longer valid
-      updated_at: now,
       updated_by: userEmail // Using the current user's email
     })
     .eq('id', id)
@@ -173,11 +165,10 @@ export async function deleteDeportedPerson(id: string, userEmail: string) {
     const offset = (currentPage - 1) * ITEMS_PER_PAGE;
 
     try {
-      // Base query that excludes logically deleted records and only includes current valid records
+      // Base query that only includes current valid records
       let baseQuery = supabase
         .from('deport')
         .select()
-        .not('version', 'eq', 'deleted') // Exclude logically deleted records
         .is('valid_to', null); // Only include current valid records
 
       if (query === '') {
@@ -209,7 +200,6 @@ export async function deleteDeportedPerson(id: string, userEmail: string) {
         const { data } = await supabase
           .from('deport')
           .select('Seite')
-          .neq('version', 'deleted') // Exclude logically deleted records
           .is('valid_to', null) // Only include current valid records
           .order('Seite', { ascending: false })
           .limit(1);
@@ -221,7 +211,6 @@ export async function deleteDeportedPerson(id: string, userEmail: string) {
         const { count } = await supabase
           .from('deport')
           .select('*', { count: 'exact', head: true })
-          .neq('version', 'deleted') // Exclude logically deleted records
           .is('valid_to', null) // Only include current valid records
           .or(`Familienname.ilike.%${query}%,Vorname.ilike.%${query}%,Vatersname.ilike.%${query}%,Familienrolle.ilike.%${query}%,Geburtsort.ilike.%${query}%,Geburtsjahr.ilike.%${query}%`);
 
@@ -239,20 +228,18 @@ export async function fetchDeportationStatistics() {
     noStore();
 
     try {
-      // Get total number of persons (excluding logically deleted records and only including current valid records)
+      // Get total number of persons (only including current valid records)
       const { count: totalPersons, error: countError } = await supabase
         .from('deport')
         .select('*', { count: 'exact', head: true })
-        .neq('version', 'deleted') // Exclude logically deleted records
         .is('valid_to', null); // Only include current valid records
 
       if (countError) throw countError;
 
-      // Get gender distribution (excluding logically deleted records and only including current valid records)
+      // Get gender distribution (only including current valid records)
       const { data: genderData, error: genderError } = await supabase
         .from('deport')
         .select('Geschlecht')
-        .neq('version', 'deleted') // Exclude logically deleted records
         .is('valid_to', null) // Only include current valid records
         .not('Geschlecht', 'is', null);
 
@@ -266,11 +253,10 @@ export async function fetchDeportationStatistics() {
         else if (person.Geschlecht?.toLowerCase() === 'weiblich') femaleCount++;
       });
 
-      // Calculate average age (based on birth year) (excluding logically deleted records and only including current valid records)
+      // Calculate average age (based on birth year) (only including current valid records)
       const { data: birthYearData, error: birthYearError } = await supabase
         .from('deport')
         .select('Geburtsjahr')
-        .neq('version', 'deleted') // Exclude logically deleted records
         .is('valid_to', null) // Only include current valid records
         .not('Geburtsjahr', 'is', null);
 
@@ -290,11 +276,10 @@ export async function fetchDeportationStatistics() {
 
       const averageAge = validYears > 0 ? Math.round(totalYears / validYears) : undefined;
 
-      // Get highest page number for total pages (excluding logically deleted records and only including current valid records)
+      // Get highest page number for total pages (only including current valid records)
       const { data: pageData, error: pageError } = await supabase
         .from('deport')
         .select('Seite')
-        .neq('version', 'deleted') // Exclude logically deleted records
         .is('valid_to', null) // Only include current valid records
         .order('Seite', { ascending: false })
         .limit(1);

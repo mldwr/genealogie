@@ -17,11 +17,9 @@ export type Deported = {
     Vorname: string | null
     Familienrolle: string | null
     id: string
-    version: 'inserted' | 'updated' | 'deleted'
     valid_from: string | null
     valid_to: string | null
     logical_id: string | null
-    updated_at: string | null
     updated_by: string | null
   };
 
