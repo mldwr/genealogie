@@ -29,10 +29,43 @@ import {
     Geburtsort?: string;
     Arbeitsort?: string;
   }, userEmail: string) {
+    const now = new Date().toISOString();
 
-    const { data, error } = await supabase
+    // Step 1: Get the current record to preserve its data
+    const { data: currentRecord, error: fetchError } = await supabase
+      .from('deport')
+      .select('*')
+      .eq('id', person.id)
+      .is('valid_to', null)
+      .single();
+
+    if (fetchError) {
+      throw new Error('Failed to fetch current record: ' + fetchError.message);
+    }
+
+    if (!currentRecord) {
+      throw new Error('Record not found or already historized');
+    }
+
+    // Step 2: Update the current record by setting valid_to to current timestamp
+    const { error: updateError } = await supabase
       .from('deport')
       .update({
+        valid_to: now,
+        updated_at: now,
+        updated_by: userEmail
+      })
+      .eq('id', person.id);
+
+    if (updateError) {
+      throw new Error('Failed to historize current record: ' + updateError.message);
+    }
+
+    // Step 3: Create a new record with updated data
+    const { data: newRecord, error: insertError } = await supabase
+      .from('deport')
+      .insert({
+        // Copy all fields from the current record
         Seite: person.Seite,
         Familiennr: person.Familiennr,
         Eintragsnr: person.Eintragsnr,
@@ -45,17 +78,23 @@ import {
         Geburtsjahr: person.Geburtsjahr,
         Geburtsort: person.Geburtsort,
         Arbeitsort: person.Arbeitsort,
-        version: 'updated',
-        updated_at: new Date().toISOString(),
+        // Set the version to inserted for the new record
+        version: 'inserted',
+        // Set the logical_id to the original record's id to maintain relationship
+        logical_id: person.id,
+        // Set valid_from to current timestamp and leave valid_to as null
+        valid_from: now,
+        valid_to: null,
+        updated_at: now,
         updated_by: userEmail
       })
-      .eq('id', person.id);
+      .select();
 
-    if (error) {
-      throw new Error('Failed to update person: '+error.message);
+    if (insertError) {
+      throw new Error('Failed to create new version of record: ' + insertError.message);
     }
 
-    return data;
+    return newRecord;
   }
 
 export async function createDeportedPerson(person: {
@@ -72,6 +111,7 @@ export async function createDeportedPerson(person: {
     Geburtsort?: string;
     Arbeitsort?: string;
   }, userEmail: string) {
+    const now = new Date().toISOString();
 
     const { data, error } = await supabase
       .from('deport')
@@ -88,8 +128,11 @@ export async function createDeportedPerson(person: {
         Geburtsjahr: person.Geburtsjahr,
         Geburtsort: person.Geburtsort,
         Arbeitsort: person.Arbeitsort,
-        version: 'created',
-        updated_at: new Date().toISOString(),
+        version: 'inserted',
+        // Set valid_from to current timestamp and leave valid_to as null
+        valid_from: now,
+        valid_to: null,
+        updated_at: now,
         updated_by: userEmail
       })
       .select();
@@ -103,14 +146,18 @@ export async function createDeportedPerson(person: {
 
 export async function deleteDeportedPerson(id: string, userEmail: string) {
   // Perform logical deletion by updating the record instead of deleting it
+  const now = new Date().toISOString();
+
   const { error } = await supabase
     .from('deport')
     .update({
       version: 'deleted',
-      updated_at: new Date().toISOString(),
+      valid_to: now, // Set valid_to to current timestamp to mark as no longer valid
+      updated_at: now,
       updated_by: userEmail // Using the current user's email
     })
-    .eq('id', id);
+    .eq('id', id)
+    .is('valid_to', null); // Only update the current valid record
 
   if (error) {
     throw new Error(`Failed to delete person: ${error.message}`);
@@ -126,11 +173,12 @@ export async function deleteDeportedPerson(id: string, userEmail: string) {
     const offset = (currentPage - 1) * ITEMS_PER_PAGE;
 
     try {
-      // Base query that excludes logically deleted records
+      // Base query that excludes logically deleted records and only includes current valid records
       let baseQuery = supabase
         .from('deport')
         .select()
-        .not('version', 'eq', 'deleted'); // Exclude logically deleted records
+        .not('version', 'eq', 'deleted') // Exclude logically deleted records
+        .is('valid_to', null); // Only include current valid records
 
       if (query === '') {
         const { data } = await baseQuery
@@ -162,6 +210,7 @@ export async function deleteDeportedPerson(id: string, userEmail: string) {
           .from('deport')
           .select('Seite')
           .neq('version', 'deleted') // Exclude logically deleted records
+          .is('valid_to', null) // Only include current valid records
           .order('Seite', { ascending: false })
           .limit(1);
 
@@ -173,6 +222,7 @@ export async function deleteDeportedPerson(id: string, userEmail: string) {
           .from('deport')
           .select('*', { count: 'exact', head: true })
           .neq('version', 'deleted') // Exclude logically deleted records
+          .is('valid_to', null) // Only include current valid records
           .or(`Familienname.ilike.%${query}%,Vorname.ilike.%${query}%,Vatersname.ilike.%${query}%,Familienrolle.ilike.%${query}%,Geburtsort.ilike.%${query}%,Geburtsjahr.ilike.%${query}%`);
 
         const totalPages = Math.ceil(Number(count) / ITEMS_PER_PAGE);
@@ -189,19 +239,21 @@ export async function fetchDeportationStatistics() {
     noStore();
 
     try {
-      // Get total number of persons (excluding logically deleted records)
+      // Get total number of persons (excluding logically deleted records and only including current valid records)
       const { count: totalPersons, error: countError } = await supabase
         .from('deport')
         .select('*', { count: 'exact', head: true })
-        .neq('version', 'deleted'); // Exclude logically deleted records
+        .neq('version', 'deleted') // Exclude logically deleted records
+        .is('valid_to', null); // Only include current valid records
 
       if (countError) throw countError;
 
-      // Get gender distribution (excluding logically deleted records)
+      // Get gender distribution (excluding logically deleted records and only including current valid records)
       const { data: genderData, error: genderError } = await supabase
         .from('deport')
         .select('Geschlecht')
         .neq('version', 'deleted') // Exclude logically deleted records
+        .is('valid_to', null) // Only include current valid records
         .not('Geschlecht', 'is', null);
 
       if (genderError) throw genderError;
@@ -214,11 +266,12 @@ export async function fetchDeportationStatistics() {
         else if (person.Geschlecht?.toLowerCase() === 'weiblich') femaleCount++;
       });
 
-      // Calculate average age (based on birth year) (excluding logically deleted records)
+      // Calculate average age (based on birth year) (excluding logically deleted records and only including current valid records)
       const { data: birthYearData, error: birthYearError } = await supabase
         .from('deport')
         .select('Geburtsjahr')
         .neq('version', 'deleted') // Exclude logically deleted records
+        .is('valid_to', null) // Only include current valid records
         .not('Geburtsjahr', 'is', null);
 
       if (birthYearError) throw birthYearError;
@@ -237,11 +290,12 @@ export async function fetchDeportationStatistics() {
 
       const averageAge = validYears > 0 ? Math.round(totalYears / validYears) : undefined;
 
-      // Get highest page number for total pages (excluding logically deleted records)
+      // Get highest page number for total pages (excluding logically deleted records and only including current valid records)
       const { data: pageData, error: pageError } = await supabase
         .from('deport')
         .select('Seite')
         .neq('version', 'deleted') // Exclude logically deleted records
+        .is('valid_to', null) // Only include current valid records
         .order('Seite', { ascending: false })
         .limit(1);
 

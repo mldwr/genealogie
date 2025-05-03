@@ -17,9 +17,15 @@ export type Deported = {
     Vorname: string | null
     Familienrolle: string | null
     id: string
+    version: 'inserted' | 'updated' | 'deleted'
+    valid_from: string | null
+    valid_to: string | null
+    logical_id: string | null
+    updated_at: string | null
+    updated_by: string | null
   };
-  
-  
+
+
   export type User = {
     id: string;
     name: string;
@@ -28,14 +34,14 @@ export type Deported = {
     image: string;
     role: string;
   };
-  
+
   export type Customer = {
     id: string;
     name: string;
     email: string;
     image_url: string;
   };
-  
+
   export type Invoice = {
     id: string;
     customer_id: string;
@@ -45,13 +51,13 @@ export type Deported = {
     // It means that the "status" property can only be one of the two strings: 'pending' or 'paid'.
     status: 'ausstehend' | 'geprüft' | 'genehmigt';
   };
-  
+
   export type Revenue = {
     year: string;
     month: string;
     revenue: number;
   };
-  
+
   export type LatestInvoice = {
     id: string;
     name: string;
@@ -60,12 +66,12 @@ export type Deported = {
     amount: string;
     date: string;
   };
-  
+
   // The database returns a number for amount, but we later format it to a string with the formatCurrency function
   export type LatestInvoiceRaw = Omit<LatestInvoice, 'amount'> & {
     amount: number;
   };
-  
+
   export type InvoicesTable = {
     id: string;
     customer_id: string;
@@ -78,7 +84,7 @@ export type Deported = {
     status: 'ausstehend' | 'geprüft' | 'genehmigt';
     groupid: string;
   };
-  
+
   export type CustomersTable = {
     id: string;
     name: string;
@@ -89,7 +95,7 @@ export type Deported = {
     total_genehmigt: number;
     rate: number;
   };
-  
+
   export type FormattedCustomersTable = {
     id: string;
     name: string;
@@ -104,13 +110,13 @@ export type Deported = {
     // total_pending: string;
     // total_paid: string;
   };
-  
+
   export type CustomerField = {
     id: string;
     name: string;
     email: string;
   };
-  
+
   export type InvoiceForm = {
     id: string;
     customer_id: string;
@@ -120,7 +126,7 @@ export type Deported = {
     status: 'ausstehend' | 'geprüft' | 'genehmigt';
     groupid: string;
   };
-  
+
   export type SpartenTable = {
     spartenname: string;
     spartenleiter: string;
