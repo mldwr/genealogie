@@ -19,7 +19,6 @@ export type Deported = {
     id: string
     valid_from: string | null
     valid_to: string | null
-    logical_id: string | null
     updated_by: string | null
   };
 

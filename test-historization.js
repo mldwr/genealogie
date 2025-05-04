@@ -72,9 +72,7 @@ async function testHistorization() {
       .from('deport')
       .insert({
         ...currentRecord,
-        id: undefined, // Let Supabase generate a new ID
         Familienname: 'UpdatedName', // Change some data
-        logical_id: personId,
         valid_from: updateTime,
         valid_to: null,
         updated_by: 'test@example.com'
@@ -92,28 +90,31 @@ async function testHistorization() {
     const { data: currentVersion, error: currentError } = await supabase
       .from('deport')
       .select('*')
-      .eq('logical_id', personId)
+      .eq('id', personId)
       .is('valid_to', null)
       .single();
 
-    if (currentError) {
+    if (currentError && currentError.code !== 'PGRST116') { // PGRST116 is "no rows returned" which is expected
       throw new Error(`Failed to fetch current version: ${currentError.message}`);
     }
 
-    console.log('Current version:', {
-      id: currentVersion.id,
-      logical_id: currentVersion.logical_id,
-      Familienname: currentVersion.Familienname,
-      valid_from: currentVersion.valid_from,
-      valid_to: currentVersion.valid_to
-    });
+    if (currentVersion) {
+      console.log('Current version:', {
+        id: currentVersion.id,
+        Familienname: currentVersion.Familienname,
+        valid_from: currentVersion.valid_from,
+        valid_to: currentVersion.valid_to
+      });
+    } else {
+      console.log('No current version found with the original ID (expected)');
+    }
 
     // 4. Fetch the history of the record
     console.log('Fetching record history...');
     const { data: history, error: historyError } = await supabase
       .from('deport')
       .select('*')
-      .or(`id.eq.${personId},logical_id.eq.${personId}`)
+      .eq('id', personId)
       .order('valid_from', { ascending: false });
 
     if (historyError) {
@@ -124,7 +125,6 @@ async function testHistorization() {
     history.forEach((record, index) => {
       console.log(`Version ${index + 1}:`, {
         id: record.id,
-        logical_id: record.logical_id,
         Familienname: record.Familienname,
         valid_from: record.valid_from,
         valid_to: record.valid_to
@@ -133,15 +133,24 @@ async function testHistorization() {
 
     // 5. Clean up test data
     console.log('Cleaning up test data...');
-    for (const record of history) {
-      const { error: deleteError } = await supabase
-        .from('deport')
-        .delete()
-        .eq('id', record.id);
+    // Delete the original record
+    const { error: deleteError1 } = await supabase
+      .from('deport')
+      .delete()
+      .eq('id', personId);
 
-      if (deleteError) {
-        console.warn(`Warning: Failed to delete test record ${record.id}: ${deleteError.message}`);
-      }
+    if (deleteError1) {
+      console.warn(`Warning: Failed to delete original test record: ${deleteError1.message}`);
+    }
+
+    // Delete the new record
+    const { error: deleteError2 } = await supabase
+      .from('deport')
+      .delete()
+      .eq('id', newRecord[0].id);
+
+    if (deleteError2) {
+      console.warn(`Warning: Failed to delete new test record: ${deleteError2.message}`);
     }
 
     console.log('Test completed successfully!');

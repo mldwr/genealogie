@@ -77,8 +77,8 @@ import {
         Geburtsjahr: person.Geburtsjahr,
         Geburtsort: person.Geburtsort,
         Arbeitsort: person.Arbeitsort,
-        // Set the logical_id to the original record's id to maintain relationship
-        logical_id: person.id,
+        // Copy the id to maintain relationship
+        id: currentRecord.id, // Keep the same ID
         // Set valid_from to current timestamp and leave valid_to as null
         valid_from: now,
         valid_to: null,
@@ -142,6 +142,23 @@ export async function deleteDeportedPerson(id: string, userEmail: string) {
   // Perform logical deletion by updating the record instead of deleting it
   const now = new Date().toISOString();
 
+  // First, get the current record to ensure it exists
+  const { data: currentRecord, error: fetchError } = await supabase
+    .from('deport')
+    .select('*')
+    .eq('id', id)
+    .is('valid_to', null)
+    .single();
+
+  if (fetchError) {
+    throw new Error(`Failed to fetch record for deletion: ${fetchError.message}`);
+  }
+
+  if (!currentRecord) {
+    throw new Error('Record not found or already deleted');
+  }
+
+  // Update the record to mark it as deleted
   const { error } = await supabase
     .from('deport')
     .update({
