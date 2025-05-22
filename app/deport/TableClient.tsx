@@ -24,7 +24,6 @@ interface Person {
   Geburtsort: string | null;
   Arbeitsort: string | null;
   // Historization fields
-  logical_id: number | null;
   valid_from: string | null;
   valid_to: string | null;
   updated_by: string | null;
@@ -121,11 +120,10 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
 
   const handleEdit = (idx: number, person: any) => {
     setEditIdx(idx);
-    // Include both id and logical_id in the form data
+    // Include id in the form data
     setFormData({
       ...person,
-      id: person.id,
-      logical_id: person.logical_id
+      id: person.id
     });
     setOriginalData(person);
   };
@@ -183,7 +181,6 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
           Geburtsjahr?: string;
           Geburtsort?: string;
           Arbeitsort?: string;
-          logical_id?: number | null; // Include logical_id in the update
         }, user?.email || 'unknown');
       } catch (error) {
         console.error('Table: Failed to update person:', error);
@@ -226,7 +223,6 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
       Geburtsort: null,
       Arbeitsort: null,
       // Historization fields
-      logical_id: null,
       valid_from: null,
       valid_to: null,
       updated_by: null
@@ -363,17 +359,8 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                     )}
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
-                  {editIdx === idx ? (
-                        <input
-                          type="text"
-                          name="Laufendenr"
-                          value={formData.Laufendenr}
-                          onChange={handleChange}
-                          className="w-20"
-                        />
-                      ) : (
-                        person.Laufendenr
-                      )}
+                    {/* Laufendenr field is read-only and cannot be edited */}
+                    {person.Laufendenr}
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
                   {editIdx === idx ? (
