@@ -28,7 +28,6 @@ import {
     Geburtsjahr?: string;
     Geburtsort?: string;
     Arbeitsort?: string;
-    logical_id?: number | null; // Add logical_id parameter
   }, userEmail: string) {
     const now = new Date().toISOString();
 
@@ -61,18 +60,6 @@ import {
       throw new Error('Failed to historize current record: ' + updateError.message);
     }
 
-    // Determine the logical_id to use
-    // Priority: 1. Use the passed logical_id if available
-    //           2. Use the currentRecord's logical_id if available
-    //           3. Fall back to Laufendenr if needed
-    let logicalId = person.logical_id;
-    if (logicalId === undefined || logicalId === null) {
-      logicalId = currentRecord.logical_id;
-      if (logicalId === undefined || logicalId === null) {
-        logicalId = person.Laufendenr ? parseInt(person.Laufendenr) : null;
-      }
-    }
-
     // Step 3: Create a new record with updated data
     const { data: newRecord, error: insertError } = await supabase
       .from('deport')
@@ -81,7 +68,8 @@ import {
         Seite: person.Seite,
         Familiennr: person.Familiennr,
         Eintragsnr: person.Eintragsnr,
-        Laufendenr: person.Laufendenr,
+        // Always preserve the original Laufendenr value as our business key
+        Laufendenr: currentRecord.Laufendenr,
         Familienname: person.Familienname,
         Vorname: person.Vorname,
         Vatersname: person.Vatersname,
@@ -92,8 +80,6 @@ import {
         Arbeitsort: person.Arbeitsort,
         // Let Supabase generate a new UUID for the new version
         // id field is omitted to allow auto-generation of a new UUID
-        // Preserve the logical_id to maintain the business key relationship
-        logical_id: logicalId,
         // Set valid_from to current timestamp and leave valid_to as null
         valid_from: now,
         valid_to: null,
@@ -112,7 +98,7 @@ export async function createDeportedPerson(person: {
     Seite?: string;
     Familiennr?: string;
     Eintragsnr?: string;
-    Laufendenr?: string;
+    Laufendenr?: string; // This will be auto-generated, so it's optional
     Familienname?: string;
     Vorname?: string;
     Vatersname?: string;
@@ -124,8 +110,20 @@ export async function createDeportedPerson(person: {
   }, userEmail: string) {
     const now = new Date().toISOString();
 
-    // Parse Laufendenr to ensure it's a number for logical_id
-    const laufendeNr = person.Laufendenr ? parseInt(person.Laufendenr) : null;
+    // Get the maximum Laufendenr value from the database
+    const { data: maxData, error: maxError } = await supabase
+      .from('deport')
+      .select('Laufendenr')
+      .order('Laufendenr', { ascending: false })
+      .limit(1);
+
+    if (maxError) {
+      throw new Error(`Failed to get max Laufendenr: ${maxError.message}`);
+    }
+
+    // Calculate the next Laufendenr value
+    const maxLaufendenr = maxData && maxData.length > 0 ? maxData[0].Laufendenr : 0;
+    const nextLaufendenr = maxLaufendenr + 1;
 
     const { data, error } = await supabase
       .from('deport')
@@ -133,7 +131,8 @@ export async function createDeportedPerson(person: {
         Seite: person.Seite,
         Familiennr: person.Familiennr,
         Eintragsnr: person.Eintragsnr,
-        Laufendenr: person.Laufendenr,
+        // Use the auto-generated Laufendenr value
+        Laufendenr: nextLaufendenr,
         Familienname: person.Familienname,
         Vorname: person.Vorname,
         Vatersname: person.Vatersname,
@@ -145,9 +144,7 @@ export async function createDeportedPerson(person: {
         // Set valid_from to current timestamp and leave valid_to as null
         valid_from: now,
         valid_to: null,
-        updated_by: userEmail,
-        // Set logical_id to the same value as Laufendenr to maintain the business key
-        logical_id: laufendeNr
+        updated_by: userEmail
       })
       .select();
 
@@ -159,17 +156,17 @@ export async function createDeportedPerson(person: {
   }
 
 /**
- * Retrieves a record by its logical ID (business key)
- * @param logicalId The logical ID (business key) to search for
+ * Retrieves a record by its Laufendenr (business key)
+ * @param laufendenr The Laufendenr (business key) to search for
  * @param includeHistory Whether to include historical records (default: false)
- * @returns The current record or all records for the given logical ID
+ * @returns The current record or all records for the given Laufendenr
  */
-export async function getDeportedPersonByLogicalId(logicalId: number, includeHistory: boolean = false): Promise<Deported | Deported[]> {
+export async function getDeportedPersonByLaufendenr(laufendenr: number, includeHistory: boolean = false): Promise<Deported | Deported[]> {
   try {
     let query = supabase
       .from('deport')
       .select('*')
-      .eq('logical_id', logicalId);
+      .eq('Laufendenr', laufendenr);
 
     // If we only want the current record, filter by valid_to is null
     if (!includeHistory) {
@@ -184,11 +181,11 @@ export async function getDeportedPersonByLogicalId(logicalId: number, includeHis
     const { data, error } = await query;
 
     if (error) {
-      throw new Error(`Failed to fetch record by logical ID: ${error.message}`);
+      throw new Error(`Failed to fetch record by Laufendenr: ${error.message}`);
     }
 
     if (!data || data.length === 0) {
-      throw new Error(`No records found for logical ID: ${logicalId}`);
+      throw new Error(`No records found for Laufendenr: ${laufendenr}`);
     }
 
     // Return either the single current record or the array of historical records
@@ -253,9 +250,7 @@ export async function deleteDeportedPerson(id: string, userEmail: string) {
         const { data } = await baseQuery
           .or(`Familienname.ilike.%${query}%,Vorname.ilike.%${query}%,Vatersname.ilike.%${query}%,Familienrolle.ilike.%${query}%,Geburtsort.ilike.%${query}%,Geburtsjahr.ilike.%${query}%`)
           .eq('Seite', currentPage)
-          // Order by logical_id first (which represents the original Laufendenr business key)
-          // and then by Laufendenr as a fallback for records that might not have logical_id set yet
-          .order('logical_id', { ascending: true })
+          // Order by Laufendenr which is our business key
           .order('Laufendenr', { ascending: true });
 
         return data ?? [];
@@ -263,9 +258,7 @@ export async function deleteDeportedPerson(id: string, userEmail: string) {
         const { data } = await baseQuery
           .or(`Familienname.ilike.%${query}%,Vorname.ilike.%${query}%,Vatersname.ilike.%${query}%,Familienrolle.ilike.%${query}%,Geburtsort.ilike.%${query}%,Geburtsjahr.ilike.%${query}%`)
           .range(offset, offset + ITEMS_PER_PAGE - 1)
-          // Order by logical_id first (which represents the original Laufendenr business key)
-          // and then by Laufendenr as a fallback for records that might not have logical_id set yet
-          .order('logical_id', { ascending: true })
+          // Order by Laufendenr which is our business key
           .order('Laufendenr', { ascending: true });
 
         return data ?? [];
