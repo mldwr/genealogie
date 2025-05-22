@@ -128,7 +128,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
     setOriginalData(person);
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
@@ -218,7 +218,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
       Vorname: null,
       Vatersname: null,
       Familienrolle: null,
-      Geschlecht: null,
+      Geschlecht: "unbekannt",
       Geburtsjahr: null,
       Geburtsort: null,
       Arbeitsort: null,
@@ -245,7 +245,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
       Vorname: newPerson.Vorname || '',
       Vatersname: newPerson.Vatersname || '',
       Familienrolle: newPerson.Familienrolle || '',
-      Geschlecht: newPerson.Geschlecht || '',
+      Geschlecht: newPerson.Geschlecht || 'unbekannt',
       Geburtsjahr: newPerson.Geburtsjahr || '',
       Geburtsort: newPerson.Geburtsort || '',
       Arbeitsort: newPerson.Arbeitsort || ''
@@ -416,13 +416,16 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
                   {editIdx === idx ? (
-                        <input
-                          type="text"
+                        <select
                           name="Geschlecht"
-                          value={formData.Geschlecht}
+                          value={formData.Geschlecht || ''}
                           onChange={handleChange}
-                          className="w-20"
-                        />
+                          className="w-28"
+                        >
+                          <option value="männlich">männlich</option>
+                          <option value="weiblich">weiblich</option>
+                          <option value="unbekannt">unbekannt</option>
+                        </select>
                       ) : (
                         person.Geschlecht
                       )}
