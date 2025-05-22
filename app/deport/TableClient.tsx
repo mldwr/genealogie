@@ -657,8 +657,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                                 <span>Gültig von: {historyRecord.valid_from ? new Date(historyRecord.valid_from).toLocaleString('de-DE') : '-'}</span>
                                 <span>Gültig bis: {historyRecord.valid_to ? new Date(historyRecord.valid_to).toLocaleString('de-DE') : '-'}</span>
                                 <span>Aktualisiert von: {historyRecord.updated_by || '-'}</span>
-                              </div>
-                            </td>
+                              </div>                            </td>
                           )}
                         </tr>
                       ))}
