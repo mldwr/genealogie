@@ -196,6 +196,30 @@ export async function getDeportedPersonByLaufendenr(laufendenr: number, includeH
   }
 }
 
+/**
+ * Checks if a record has historical versions
+ * @param laufendenr The Laufendenr (business key) to check
+ * @returns Boolean indicating if the record has historical versions
+ */
+export async function hasHistoricalVersions(laufendenr: number): Promise<boolean> {
+  try {
+    const { count, error } = await supabase
+      .from('deport')
+      .select('*', { count: 'exact', head: true })
+      .eq('Laufendenr', laufendenr);
+
+    if (error) {
+      throw new Error(`Failed to check for historical versions: ${error.message}`);
+    }
+
+    // If count is greater than 1, there are historical versions
+    return (count || 0) > 1;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw error;
+  }
+}
+
 export async function deleteDeportedPerson(id: string, userEmail: string) {
   // Perform logical deletion by updating the record instead of deleting it
   const now = new Date().toISOString();

@@ -1,14 +1,15 @@
 'use client';
 
 import { useAuth } from '@/components/providers/AuthProvider';
-import { EditRow, DeleteRow } from '@/app/deport/buttons';
 import { Button } from '@headlessui/react';
-import { PencilIcon, PlusIcon, TrashIcon, StopIcon, CheckIcon } from '@heroicons/react/24/outline';
+import { PencilIcon, PlusIcon, TrashIcon, StopIcon, CheckIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import React, { useState, useEffect, useRef } from 'react';
-import { fetchDeported, updateDeportedPerson, createDeportedPerson, deleteDeportedPerson } from '@/app/deport/data';
+import { fetchDeported, updateDeportedPerson, createDeportedPerson, deleteDeportedPerson, getDeportedPersonByLaufendenr, hasHistoricalVersions } from '@/app/deport/data';
 import { useToast } from '@/components/ui/Toasts/use-toast';
-
 import { createClient } from '@/utils/supabase/client';
+
+// Import the ITEMS_PER_PAGE constant if it's exported, otherwise define it here
+const ITEMS_PER_PAGE = 22; // Make sure this matches the value in data.ts
 interface Person {
   id: string;
   Seite: number | null;
@@ -57,6 +58,13 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
   const [originalData, setOriginalData] = useState<any>({});
   const firstInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  // State to track which rows have their history expanded
+  const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
+  // State to store historical records for each person
+  const [historyRecords, setHistoryRecords] = useState<Record<number, Person[]>>({});
+  // State to track which records have historical versions
+  const [recordsWithHistory, setRecordsWithHistory] = useState<Record<number, boolean>>({});
 
   const { user } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
@@ -109,6 +117,29 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
   // Update local people state when initialPeople changes
   useEffect(() => {
     setPeople(initialPeople);
+    
+    // Check which records have historical versions
+    const checkHistoricalRecords = async () => {
+      const historyStatus: Record<number, boolean> = {};
+      
+      // Process in batches to avoid too many parallel requests
+      for (let i = 0; i < initialPeople.length; i++) {
+        const person = initialPeople[i];
+        if (person.Laufendenr) {
+          try {
+            const hasHistory = await hasHistoricalVersions(person.Laufendenr);
+            historyStatus[person.Laufendenr] = hasHistory;
+          } catch (error) {
+            console.error(`Error checking history for Laufendenr ${person.Laufendenr}:`, error);
+            historyStatus[person.Laufendenr] = false;
+          }
+        }
+      }
+      
+      setRecordsWithHistory(historyStatus);
+    };
+    
+    checkHistoricalRecords();
   }, [initialPeople]);
 
   // Focus on first input when adding a new row
@@ -277,6 +308,56 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
     }
   };
 
+  // Function to toggle the history view for a specific row
+  const toggleHistoryView = async (laufendenr: number) => {
+    // Toggle the expanded state for this row
+    setExpandedRows(prev => ({
+      ...prev,
+      [laufendenr]: !prev[laufendenr]
+    }));
+
+    // If we're expanding and don't have the history data yet, fetch it
+    if (!expandedRows[laufendenr] && !historyRecords[laufendenr]) {
+      try {
+        // Show loading toast
+        toast({
+          title: 'Lade Versionshistorie...',
+          description: 'Die historischen Daten werden geladen.',
+        });
+        
+        // Fetch historical records for this person
+        const history = await getDeportedPersonByLaufendenr(laufendenr, true) as Person[];
+        
+        // Store the historical records in state
+        setHistoryRecords(prev => ({
+          ...prev,
+          [laufendenr]: history
+        }));
+        
+        // Update the recordsWithHistory state to ensure we know this record has history
+        if (history.length > 1) {
+          setRecordsWithHistory(prev => ({
+            ...prev,
+            [laufendenr]: true
+          }));
+        }
+      } catch (error) {
+        console.error('Failed to fetch history:', error);
+        toast({
+          title: 'Fehler beim Laden der Historie',
+          description: error instanceof Error ? error.message : 'Ein unbekannter Fehler ist aufgetreten',
+          variant: 'destructive'
+        });
+        
+        // Reset expanded state on error
+        setExpandedRows(prev => ({
+          ...prev,
+          [laufendenr]: false
+        }));
+      }
+    }
+  };
+
   return (
     <div className="mt-6 flow-root">
       <div className="block align-middle overflow-x-auto">
@@ -295,6 +376,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
           <table className="min-w-full text-gray-900 table ">
             <thead className="rounded-lg text-left text-sm font-normal">
               <tr>
+                <th scope="col" className="px-3 py-5 font-medium">Historie</th>
                 <th scope="col" className="px-3 py-5 font-medium">Seite</th>
                 <th scope="col" className="px-3 py-5 font-medium">Familiennr</th>
                 <th scope="col" className="px-3 py-5 font-medium">Eintragsnr</th>
@@ -316,8 +398,26 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
             </thead>
             <tbody className="bg-white">
               {people?.map((person,idx) => (
-                <tr key={person.id}
-                className={`w-full border-b py-3 text-sm last-of-type:border-none ${editIdx === idx ? 'bg-gray-200' : ''} [&:first-child>td:first-child]:rounded-tl-lg [&:first-child>td:last-child]:rounded-tr-lg [&:last-child>td:first-child]:rounded-bl-lg [&:last-child>td:last-child]:rounded-br-lg`}>
+                <React.Fragment key={person.id}>
+                <tr
+                className={`w-full border-b py-3 text-sm ${editIdx === idx ? 'bg-gray-200' : ''} ${expandedRows[person.Laufendenr || 0] ? 'border-b-0' : 'last-of-type:border-none'} [&:first-child>td:first-child]:rounded-tl-lg [&:first-child>td:last-child]:rounded-tr-lg [&:last-child>td:first-child]:rounded-bl-lg [&:last-child>td:last-child]:rounded-br-lg`}>
+                  <td className="whitespace-nowrap px-3 py-3">
+                    {person.Laufendenr && recordsWithHistory[person.Laufendenr || 0] ? (
+                      <Button
+                        onClick={() => toggleHistoryView(person.Laufendenr || 0)}
+                        className="rounded-md p-1 hover:bg-gray-100"
+                        title="Zeige historische Versionen"
+                      >
+                        {expandedRows[person.Laufendenr || 0] ? (
+                          <ChevronUpIcon className="w-5 h-5" />
+                        ) : (
+                          <ChevronDownIcon className="w-5 h-5" />
+                        )}
+                      </Button>
+                    ) : (
+                      <span className="w-5 h-5 inline-block"></span>
+                    )}
+                  </td>
                   <td className="whitespace-nowrap px-3 py-3">
                   {editIdx === idx ? (
                         <input
@@ -511,8 +611,61 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                     </td>
                   )}
                 </tr>
-              ))}
-            </tbody>
+                {expandedRows[person.Laufendenr || 0] && historyRecords[person.Laufendenr || 0] && (
+                  <>
+                    <tr className="w-full border-b py-2 text-sm bg-blue-50">
+                      <td colSpan={user ? 14 : 13} className="px-3 py-2 text-blue-700 font-medium">
+                        <div className="flex items-center">
+                          <span className="mr-2">Versionshistorie</span>
+                          <span className="text-xs text-blue-500">Chronologisch sortiert (neueste zuerst)</span>
+                        </div>
+                      </td>
+                    </tr>
+                    
+                    {historyRecords[person.Laufendenr || 0]
+                      .filter(historyRecord => historyRecord.id !== person.id)
+                      .sort((a, b) => {
+                        const dateA = a.valid_from ? new Date(a.valid_from).getTime() : 0;
+                        const dateB = b.valid_from ? new Date(b.valid_from).getTime() : 0;
+                        return dateB - dateA;
+                      })
+                      .map((historyRecord, historyIdx) => (
+                        <tr 
+                          key={`history-${historyRecord.id}`}
+                          className={`w-full border-b py-3 text-sm bg-blue-50/30 hover:bg-blue-50/50 ${historyIdx === historyRecords[person.Laufendenr || 0].filter(h => h.id !== person.id).length - 1 ? 'last-of-type:border-none' : ''}`}
+                        >
+                          <td className="whitespace-nowrap px-3 py-3">
+                            <span className="w-5 h-5 inline-block"></span>
+                          </td>
+                          
+                          <td className="whitespace-nowrap px-3 py-3 text-gray-600">{historyRecord.Seite}</td>
+                          <td className="whitespace-nowrap px-3 py-3 text-gray-600">{historyRecord.Familiennr}</td>
+                          <td className="whitespace-nowrap px-3 py-3 text-gray-600">{historyRecord.Eintragsnr}</td>
+                          <td className="whitespace-nowrap px-3 py-3 text-gray-600">{historyRecord.Laufendenr}</td>
+                          <td className="whitespace-nowrap px-3 py-3 text-gray-600">{historyRecord.Familienname}</td>
+                          <td className="whitespace-nowrap px-3 py-3 text-gray-600">{historyRecord.Vorname}</td>
+                          <td className="whitespace-nowrap px-3 py-3 text-gray-600">{historyRecord.Vatersname}</td>
+                          <td className="whitespace-nowrap px-3 py-3 text-gray-600">{historyRecord.Familienrolle}</td>
+                          <td className="whitespace-nowrap px-3 py-3 text-gray-600">{historyRecord.Geschlecht}</td>
+                          <td className="whitespace-nowrap px-3 py-3 text-gray-600">{historyRecord.Geburtsjahr}</td>
+                          <td className="whitespace-nowrap px-3 py-3 text-gray-600">{historyRecord.Geburtsort}</td>
+                          <td className="whitespace-nowrap px-3 py-3 text-gray-600">{historyRecord.Arbeitsort}</td>
+                          
+                          {user && (
+                            <td className="whitespace-nowrap py-3 pl-6 pr-3 text-xs text-gray-500">
+                              <div className="flex flex-col">
+                                <span>Gültig von: {historyRecord.valid_from ? new Date(historyRecord.valid_from).toLocaleString('de-DE') : '-'}</span>
+                                <span>Gültig bis: {historyRecord.valid_to ? new Date(historyRecord.valid_to).toLocaleString('de-DE') : '-'}</span>
+                                <span>Aktualisiert von: {historyRecord.updated_by || '-'}</span>
+                              </div>
+                            </td>
+                          )}
+                        </tr>
+                      ))}
+                  </>
+                )}
+                </React.Fragment>
+              ))}            </tbody>
           </table>
         </div>
       </div>
