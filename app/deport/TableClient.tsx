@@ -23,6 +23,11 @@ interface Person {
   Geburtsjahr: string | null;
   Geburtsort: string | null;
   Arbeitsort: string | null;
+  // Historization fields
+  logical_id: number | null;
+  valid_from: string | null;
+  valid_to: string | null;
+  updated_by: string | null;
 }
 
 interface TableClientProps {
@@ -116,7 +121,12 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
 
   const handleEdit = (idx: number, person: any) => {
     setEditIdx(idx);
-    setFormData({ ...person, id: person.id });
+    // Include both id and logical_id in the form data
+    setFormData({
+      ...person,
+      id: person.id,
+      logical_id: person.logical_id
+    });
     setOriginalData(person);
   };
 
@@ -173,6 +183,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
           Geburtsjahr?: string;
           Geburtsort?: string;
           Arbeitsort?: string;
+          logical_id?: number | null; // Include logical_id in the update
         }, user?.email || 'unknown');
       } catch (error) {
         console.error('Table: Failed to update person:', error);
@@ -213,7 +224,12 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
       Geschlecht: null,
       Geburtsjahr: null,
       Geburtsort: null,
-      Arbeitsort: null
+      Arbeitsort: null,
+      // Historization fields
+      logical_id: null,
+      valid_from: null,
+      valid_to: null,
+      updated_by: null
     };
 
     // Add the new person to the top of the local state
