@@ -326,6 +326,67 @@ export async function deleteDeportedPerson(id: string, userEmail: string) {
     }
   }
 
+/**
+ * Fetches unique values for a specific field to use in autocomplete suggestions
+ * @param fieldName The name of the field to get unique values for
+ * @param searchTerm The current search term to filter suggestions
+ * @param limit The maximum number of suggestions to return
+ * @returns Array of unique values for the specified field
+ */
+export async function fetchFieldSuggestions(
+  fieldName: string, 
+  searchTerm: string, 
+  limit: number = 10
+): Promise<string[]> {
+  try {
+    if (!searchTerm || searchTerm.length < 2) {
+      return [];
+    }
+
+    // Ensure the field name is valid to prevent SQL injection
+    const validFields = [
+      'Familienname', 
+      'Vorname', 
+      'Vatersname', 
+      'Familienrolle', 
+      'Geburtsort', 
+      'Arbeitsort'
+    ];
+    
+    if (!validFields.includes(fieldName)) {
+      throw new Error(`Invalid field name: ${fieldName}`);
+    }
+
+    // Query for unique values that match the search term
+    const { data, error } = await supabase
+      .from('deport')
+      .select(fieldName)
+      .is('valid_to', null) // Only include current valid records
+      .ilike(fieldName, `%${searchTerm}%`)
+      .not(fieldName, 'is', null)
+      .order(fieldName, { ascending: true })
+      .limit(limit);
+
+    if (error) {
+      throw new Error(`Failed to fetch suggestions: ${error.message}`);
+    }
+
+    // Extract unique values
+    const uniqueValues = new Set<string>();
+    data?.forEach(item => {
+      const value = item[fieldName as keyof typeof item];
+      if (typeof value === 'string' && value.trim() !== '') {
+        uniqueValues.add(value);
+      }
+    });
+
+    return Array.from(uniqueValues);
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw error;
+  }
+}
+
 export async function fetchDeportationStatistics() {
     noStore();
 
