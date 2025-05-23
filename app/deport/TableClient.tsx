@@ -3,13 +3,97 @@
 import { useAuth } from '@/components/providers/AuthProvider';
 import { Button } from '@headlessui/react';
 import { PencilIcon, PlusIcon, TrashIcon, StopIcon, CheckIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
-import React, { useState, useEffect, useRef } from 'react';
-import { fetchDeported, updateDeportedPerson, createDeportedPerson, deleteDeportedPerson, getDeportedPersonByLaufendenr, hasHistoricalVersions } from '@/app/deport/data';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { fetchDeported, updateDeportedPerson, createDeportedPerson, deleteDeportedPerson, getDeportedPersonByLaufendenr, hasHistoricalVersions, fetchFieldSuggestions } from '@/app/deport/data';
 import { useToast } from '@/components/ui/Toasts/use-toast';
 import { createClient } from '@/utils/supabase/client';
 
 // Import the ITEMS_PER_PAGE constant if it's exported, otherwise define it here
 const ITEMS_PER_PAGE = 22; // Make sure this matches the value in data.ts
+
+// Autocomplete Input Component
+interface AutocompleteInputProps {
+  name: string;
+  value: string | undefined;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  suggestions: string[];
+  showSuggestions: boolean;
+  activeSuggestion: number;
+  onSelectSuggestion: (suggestion: string) => void;
+  className?: string;
+  placeholder?: string;
+  ref?: React.Ref<HTMLInputElement>;
+}
+
+const AutocompleteInput = React.forwardRef<HTMLInputElement, Omit<AutocompleteInputProps, 'ref'>>((
+  {
+    name,
+    value,
+    onChange,
+    onKeyDown,
+    suggestions,
+    showSuggestions,
+    activeSuggestion,
+    onSelectSuggestion,
+    className = '',
+    placeholder = '',
+  }, 
+  ref
+) => {
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  
+  // Handle click outside to close suggestions
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+        // Close suggestions when clicking outside
+        if (showSuggestions) {
+          onSelectSuggestion(''); // This will trigger the dropdown to close
+        }
+      }
+    }
+    
+    // Add event listener
+    document.addEventListener('mousedown', handleClickOutside);
+    
+    // Clean up
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showSuggestions, onSelectSuggestion]);
+  
+  return (
+    <div className="relative" ref={wrapperRef}>
+      <input
+        type="text"
+        name={name}
+        value={value || ''}
+        onChange={onChange}
+        onKeyDown={onKeyDown}
+        className={`${className} relative z-10`}
+        placeholder={placeholder}
+        ref={ref}
+        autoComplete="off"
+      />
+      {showSuggestions && suggestions.length > 0 && (
+        <div className="absolute left-0 right-0 mt-1 bg-white border border-gray-300 rounded-md shadow-lg z-20 max-h-60 overflow-y-auto">
+          {suggestions.map((suggestion, index) => (
+            <div
+              key={index}
+              className={`px-4 py-2 cursor-pointer hover:bg-blue-50 ${
+                index === activeSuggestion ? 'bg-blue-100' : ''
+              }`}
+              onClick={() => onSelectSuggestion(suggestion)}
+            >
+              {suggestion}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+});
 interface Person {
   id: string;
   Seite: number | null;
@@ -65,7 +149,13 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
   const [historyRecords, setHistoryRecords] = useState<Record<number, Person[]>>({});
   // State to track which records have historical versions
   const [recordsWithHistory, setRecordsWithHistory] = useState<Record<number, boolean>>({});
-
+  
+  // State for autocomplete suggestions
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [activeSuggestion, setActiveSuggestion] = useState<number>(-1);
+  const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
+  const [currentField, setCurrentField] = useState<string>('');
+  
   const { user } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
 
@@ -159,12 +249,85 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
     setOriginalData(person);
   };
 
+  // Debounced function to fetch suggestions
+  const fetchSuggestions = useCallback(async (fieldName: string, value: string) => {
+    if (value.length >= 2) {
+      try {
+        const fieldSuggestions = await fetchFieldSuggestions(fieldName, value);
+        setSuggestions(fieldSuggestions);
+        setShowSuggestions(fieldSuggestions.length > 0);
+        setActiveSuggestion(-1);
+      } catch (error) {
+        console.error('Error fetching suggestions:', error);
+        setSuggestions([]);
+        setShowSuggestions(false);
+      }
+    } else {
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+  }, []);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
       [name]: value,
     });
+    
+    // Only fetch suggestions for text fields that support autocomplete
+    const autocompleteFields = ['Familienname', 'Vorname', 'Vatersname', 'Familienrolle', 'Geburtsort', 'Arbeitsort'];
+    if (autocompleteFields.includes(name)) {
+      setCurrentField(name);
+      fetchSuggestions(name, value);
+    } else {
+      // Clear suggestions for non-autocomplete fields
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+  };
+  
+  // Handle suggestion selection
+  const handleSelectSuggestion = (suggestion: string) => {
+    if (currentField) {
+      setFormData({
+        ...formData,
+        [currentField]: suggestion,
+      });
+      setSuggestions([]);
+      setShowSuggestions(false);
+      setActiveSuggestion(-1);
+    }
+  };
+  
+  // Handle keyboard navigation for suggestions
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Only process if suggestions are showing
+    if (!showSuggestions) return;
+    
+    // Down arrow
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setActiveSuggestion(prev => 
+        prev < suggestions.length - 1 ? prev + 1 : prev
+      );
+    }
+    // Up arrow
+    else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setActiveSuggestion(prev => prev > 0 ? prev - 1 : 0);
+    }
+    // Enter key
+    else if (e.key === 'Enter' && activeSuggestion >= 0) {
+      e.preventDefault();
+      handleSelectSuggestion(suggestions[activeSuggestion]);
+    }
+    // Escape key
+    else if (e.key === 'Escape') {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      setActiveSuggestion(-1);
+    }
   };
 
   const handleSave = async () => {
@@ -224,12 +387,23 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
       }
     }
     setEditIdx(-1);
+    // Clear autocomplete state
+    setSuggestions([]);
+    setShowSuggestions(false);
+    setActiveSuggestion(-1);
+    setCurrentField('');
     fetchData();
   };
 
   const handleCancel = () => {
     setFormData(originalData);
     setEditIdx(-1);
+    
+    // Clear autocomplete state
+    setSuggestions([]);
+    setShowSuggestions(false);
+    setActiveSuggestion(-1);
+    setCurrentField('');
 
     if (isAddingNewRow) {
       setIsAddingNewRow(false);
@@ -426,7 +600,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                           value={formData.Seite}
                           onChange={handleChange}
                           className="w-20"
-                          ref={idx === 0 ? firstInputRef : null}
+                          ref={idx === 0 ? firstInputRef : undefined}
                         />
                       ) : (
                         person.Seite
@@ -464,12 +638,17 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
                   {editIdx === idx ? (
-                      <input
-                        type="text"
+                      <AutocompleteInput
                         name="Familienname"
                         value={formData.Familienname}
                         onChange={handleChange}
-                        className="w-20"
+                        onKeyDown={handleKeyDown}
+                        suggestions={currentField === 'Familienname' ? suggestions : []}
+                        showSuggestions={showSuggestions && currentField === 'Familienname'}
+                        activeSuggestion={activeSuggestion}
+                        onSelectSuggestion={handleSelectSuggestion}
+                        className="w-32"
+                        placeholder="Familienname"
                       />
                     ) : (
                       person.Familienname
@@ -477,12 +656,17 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
                   {editIdx === idx ? (
-                      <input
-                        type="text"
+                      <AutocompleteInput
                         name="Vorname"
                         value={formData.Vorname}
                         onChange={handleChange}
-                        className="w-20"
+                        onKeyDown={handleKeyDown}
+                        suggestions={currentField === 'Vorname' ? suggestions : []}
+                        showSuggestions={showSuggestions && currentField === 'Vorname'}
+                        activeSuggestion={activeSuggestion}
+                        onSelectSuggestion={handleSelectSuggestion}
+                        className="w-32"
+                        placeholder="Vorname"
                       />
                     ) : (
                       person.Vorname
@@ -490,12 +674,17 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
                   {editIdx === idx ? (
-                      <input
-                        type="text"
+                      <AutocompleteInput
                         name="Vatersname"
                         value={formData.Vatersname}
                         onChange={handleChange}
-                        className="w-20"
+                        onKeyDown={handleKeyDown}
+                        suggestions={currentField === 'Vatersname' ? suggestions : []}
+                        showSuggestions={showSuggestions && currentField === 'Vatersname'}
+                        activeSuggestion={activeSuggestion}
+                        onSelectSuggestion={handleSelectSuggestion}
+                        className="w-32"
+                        placeholder="Vatersname"
                       />
                     ) : (
                       person.Vatersname
@@ -503,12 +692,17 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
                   {editIdx === idx ? (
-                        <input
-                          type="text"
+                        <AutocompleteInput
                           name="Familienrolle"
                           value={formData.Familienrolle}
                           onChange={handleChange}
-                          className="w-20"
+                          onKeyDown={handleKeyDown}
+                          suggestions={currentField === 'Familienrolle' ? suggestions : []}
+                          showSuggestions={showSuggestions && currentField === 'Familienrolle'}
+                          activeSuggestion={activeSuggestion}
+                          onSelectSuggestion={handleSelectSuggestion}
+                          className="w-32"
+                          placeholder="Familienrolle"
                         />
                       ) : (
                         person.Familienrolle
@@ -545,12 +739,17 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
                   {editIdx === idx ? (
-                        <input
-                          type="text"
+                        <AutocompleteInput
                           name="Geburtsort"
                           value={formData.Geburtsort}
                           onChange={handleChange}
-                          className="w-20"
+                          onKeyDown={handleKeyDown}
+                          suggestions={currentField === 'Geburtsort' ? suggestions : []}
+                          showSuggestions={showSuggestions && currentField === 'Geburtsort'}
+                          activeSuggestion={activeSuggestion}
+                          onSelectSuggestion={handleSelectSuggestion}
+                          className="w-32"
+                          placeholder="Geburtsort"
                         />
                       ) : (
                         person.Geburtsort
@@ -558,12 +757,17 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
                   {editIdx === idx ? (
-                        <input
-                          type="text"
+                        <AutocompleteInput
                           name="Arbeitsort"
                           value={formData.Arbeitsort}
                           onChange={handleChange}
-                          className="w-20"
+                          onKeyDown={handleKeyDown}
+                          suggestions={currentField === 'Arbeitsort' ? suggestions : []}
+                          showSuggestions={showSuggestions && currentField === 'Arbeitsort'}
+                          activeSuggestion={activeSuggestion}
+                          onSelectSuggestion={handleSelectSuggestion}
+                          className="w-32"
+                          placeholder="Arbeitsort"
                         />
                       ) : (
                         person.Arbeitsort
