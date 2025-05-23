@@ -654,7 +654,6 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                           {user && (
                             <td className="whitespace-nowrap py-3 pl-6 pr-3 text-xs text-gray-500">
                               <div className="flex flex-col">
-                                <span>Gültig von: {historyRecord.valid_from ? new Date(historyRecord.valid_from).toLocaleString('de-DE') : '-'}</span>
                                 <span>Gültig bis: {historyRecord.valid_to ? new Date(historyRecord.valid_to).toLocaleString('de-DE') : '-'}</span>
                               </div>                            
                             </td>
