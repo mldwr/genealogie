@@ -550,7 +550,6 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
           <table className="min-w-full text-gray-900 table ">
             <thead className="rounded-lg text-left text-sm font-normal">
               <tr>
-                <th scope="col" className="px-3 py-5 font-medium">Historie</th>
                 <th scope="col" className="px-3 py-5 font-medium">Seite</th>
                 <th scope="col" className="px-3 py-5 font-medium">Familiennr</th>
                 <th scope="col" className="px-3 py-5 font-medium">Eintragsnr</th>
@@ -575,23 +574,6 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                 <React.Fragment key={person.id}>
                 <tr
                 className={`w-full border-b py-3 text-sm ${editIdx === idx ? 'bg-gray-200' : ''} ${expandedRows[person.Laufendenr || 0] ? 'border-b-0' : 'last-of-type:border-none'} [&:first-child>td:first-child]:rounded-tl-lg [&:first-child>td:last-child]:rounded-tr-lg [&:last-child>td:first-child]:rounded-bl-lg [&:last-child>td:last-child]:rounded-br-lg`}>
-                  <td className="whitespace-nowrap px-3 py-3">
-                    {person.Laufendenr && recordsWithHistory[person.Laufendenr || 0] ? (
-                      <Button
-                        onClick={() => toggleHistoryView(person.Laufendenr || 0)}
-                        className="rounded-md p-1 hover:bg-gray-100"
-                        title="Zeige historische Versionen"
-                      >
-                        {expandedRows[person.Laufendenr || 0] ? (
-                          <ChevronUpIcon className="w-5 h-5" />
-                        ) : (
-                          <ChevronDownIcon className="w-5 h-5" />
-                        )}
-                      </Button>
-                    ) : (
-                      <span className="w-5 h-5 inline-block"></span>
-                    )}
-                  </td>
                   <td className="whitespace-nowrap px-3 py-3">
                   {editIdx === idx ? (
                         <input
@@ -793,6 +775,19 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                         </>
                       ) : (
                         <>
+                        {person.Laufendenr && recordsWithHistory[person.Laufendenr || 0] && (
+                          <Button
+                            onClick={() => toggleHistoryView(person.Laufendenr || 0)}
+                            className="rounded-md border p-2 hover:bg-gray-100"
+                            title="Zeige historische Versionen"
+                          >
+                            {expandedRows[person.Laufendenr || 0] ? (
+                              <ChevronUpIcon className="w-5 h-5" />
+                            ) : (
+                              <ChevronDownIcon className="w-5 h-5" />
+                            )}
+                          </Button>
+                        )}
                         {user && (
                           <Button
                             onClick={() => handleEdit(idx, person)}
@@ -818,7 +813,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                 {expandedRows[person.Laufendenr || 0] && historyRecords[person.Laufendenr || 0] && (
                   <>
                     <tr className="w-full border-b py-2 text-sm bg-blue-50">
-                      <td colSpan={user ? 14 : 13} className="px-3 py-2 text-blue-700 font-medium">
+                      <td colSpan={user ? 13 : 12} className="px-3 py-2 text-blue-700 font-medium">
                         <div className="flex items-center">
                           <span className="mr-2">Versionshistorie</span>
                           <span className="text-xs text-blue-500">Chronologisch sortiert (neueste zuerst)</span>
@@ -838,10 +833,6 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                           key={`history-${historyRecord.id}`}
                           className={`w-full border-b py-3 text-sm bg-blue-50/30 hover:bg-blue-50/50 ${historyIdx === historyRecords[person.Laufendenr || 0].filter(h => h.id !== person.id).length - 1 ? 'last-of-type:border-none' : ''}`}
                         >
-                          <td className="whitespace-nowrap px-3 py-3">
-                            <span className="w-5 h-5 inline-block"></span>
-                          </td>
-                          
                           <td className="whitespace-nowrap px-3 py-3 text-gray-600">{historyRecord.Seite}</td>
                           <td className="whitespace-nowrap px-3 py-3 text-gray-600">{historyRecord.Familiennr}</td>
                           <td className="whitespace-nowrap px-3 py-3 text-gray-600">{historyRecord.Eintragsnr}</td>
