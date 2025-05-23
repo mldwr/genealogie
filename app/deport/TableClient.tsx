@@ -663,7 +663,8 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                   </>
                 )}
                 </React.Fragment>
-              ))}            </tbody>
+              ))}
+              </tbody>
           </table>
         </div>
       </div>
