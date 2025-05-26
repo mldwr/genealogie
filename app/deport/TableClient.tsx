@@ -3,7 +3,7 @@
 import { useAuth } from '@/components/providers/AuthProvider';
 import { PencilIcon, PlusIcon, TrashIcon, StopIcon, CheckIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { fetchDeported, updateDeportedPerson, createDeportedPerson, deleteDeportedPerson, getDeportedPersonByLaufendenr, hasHistoricalVersions, fetchFieldSuggestions } from '@/app/deport/data';
+import { fetchDeported, updateDeportedPerson, createDeportedPerson, deleteDeportedPerson, getDeportedPersonByLaufendenr, hasHistoricalVersions, fetchFieldSuggestions, getMaxFamiliennr } from '@/app/deport/data';
 import { useToast } from '@/components/ui/Toasts/use-toast';
 import { createClient } from '@/utils/supabase/client';
 
@@ -508,16 +508,31 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
     setIsAddingNewRow(true);
   };
 
-  const handleAddFamilyGroup = () => {
+  const handleAddFamilyGroup = async () => { // Make the function async
     const newFamilyGroup: Person[] = [];
-    const familyNr = Math.floor(Date.now() / 1000); // Simple auto-generation for Familiennr
+    
+    // Fetch the maximum existing Familiennr and increment it
+    let nextFamiliennr = 1; // Default if no records exist
+    try {
+      const maxNr = await getMaxFamiliennr();
+      nextFamiliennr = maxNr + 1;
+    } catch (error) {
+      console.error('Failed to fetch max Familiennr:', error);
+      toast({
+        title: 'Fehler beim Ermitteln der Familiennummer',
+        description: error instanceof Error ? error.message : 'Ein unbekannter Fehler ist aufgetreten',
+        variant: 'destructive'
+      });
+      return; // Stop execution if we can't get a valid Familiennr
+    }
+
     const tempFamilyId = 'family-' + Date.now(); // Temporary ID for the family group
 
     for (let i = 0; i < 5; i++) {
       const newPerson = {
         id: `temp-${tempFamilyId}-${i}`, // Temporary ID for each person in the group
         Seite: null, // Leave Seite empty for user to fill
-        Familiennr: familyNr,
+        Familiennr: nextFamiliennr, // Assign the new, incremented Familiennr
         Eintragsnr: i + 1,
         Laufendenr: null, // Let the database handle auto-generation
         Familienname: null,

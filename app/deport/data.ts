@@ -156,6 +156,36 @@ export async function createDeportedPerson(person: {
   }
 
 /**
+ * Fetches the maximum existing Familiennr from the deport table.
+ * @returns The maximum Familiennr, or 0 if no records exist.
+ */
+export async function getMaxFamiliennr(): Promise<number> {
+  noStore();
+  try {
+    const { data, error } = await supabase
+      .from('deport')
+      .select('Familiennr')
+      .is('valid_to', null) // Only consider current valid records
+      .order('Familiennr', { ascending: false })
+      .limit(1);
+
+    if (error) {
+      throw new Error(`Failed to get max Familiennr: ${error.message}`);
+    }
+
+    // If no records exist, maxData will be null or empty, so default to 0
+    const maxFamiliennr = data && data.length > 0 && data[0].Familiennr !== null
+      ? data[0].Familiennr
+      : 0;
+
+    return maxFamiliennr;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw error;
+  }
+}
+
+/**
  * Retrieves a record by its Laufendenr (business key)
  * @param laufendenr The Laufendenr (business key) to search for
  * @param includeHistory Whether to include historical records (default: false)
