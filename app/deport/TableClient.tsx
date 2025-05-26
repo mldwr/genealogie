@@ -142,6 +142,8 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
   const [originalData, setOriginalData] = useState<any>({});
   const firstInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const supabase = createClient();
 
   // State to track which rows have their history expanded
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
@@ -149,14 +151,19 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
   const [historyRecords, setHistoryRecords] = useState<Record<number, Person[]>>({});
   // State to track which records have historical versions
   const [recordsWithHistory, setRecordsWithHistory] = useState<Record<number, boolean>>({});
-  
   // State for autocomplete suggestions
   const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [activeSuggestion, setActiveSuggestion] = useState<number>(-1);
-  const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
-  const [currentField, setCurrentField] = useState<string>('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [activeSuggestion, setActiveSuggestion] = useState(-1);
+  const [currentField, setCurrentField] = useState('');
+  // State for dropdown menu visibility
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   
-  const { user } = useAuth();
+  // Toggle dropdown visibility
+  const toggleDropdown = () => {
+    setIsDropdownOpen(prevState => !prevState);
+  };
+  
   const [isAdmin, setIsAdmin] = useState(false);
 
   // Function to fetch data
@@ -470,7 +477,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
         Seite: null, // Leave Seite empty for user to fill
         Familiennr: familyNr,
         Eintragsnr: i + 1,
-        Laufendenr: Math.floor(Date.now() / 1000) + i, // Simple auto-generation for Laufendenr
+        Laufendenr: null, // Let the database handle auto-generation
         Familienname: null,
         Vorname: null,
         Vatersname: null,
@@ -594,39 +601,51 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
             <div className="flex justify-end p-4">
               <div className="relative inline-block text-left">
                 <Button
-                  onClick={handleAddRow}
+                  onClick={toggleDropdown}
                   className="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-500 flex items-center"
                 >
                   <PlusIcon className="w-5 h-5 mr-2" />
                   Person hinzufügen
-                  <ChevronDownIcon className="w-5 h-5 ml-2 -mr-1" aria-hidden="true" />
+                  {isDropdownOpen ? (
+                    <ChevronUpIcon className="w-5 h-5 ml-2 -mr-1" aria-hidden="true" />
+                  ) : (
+                    <ChevronDownIcon className="w-5 h-5 ml-2 -mr-1" aria-hidden="true" />
+                  )}
                 </Button>
                 {/* Dropdown menu */}
-                <div
-                  className="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none"
-                  role="menu"
-                  aria-orientation="vertical"
-                  aria-labelledby="menu-button"
-                >
-                  <div className="py-1" role="none">
-                    <button
-                      onClick={handleAddRow}
-                      className="text-gray-700 block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-                      role="menuitem"
-                      id="menu-item-0"
-                    >
-                      Einzelne Person hinzufügen
-                    </button>
-                    <button
-                      onClick={handleAddFamilyGroup}
-                      className="text-gray-700 block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-                      role="menuitem"
-                      id="menu-item-1"
-                    >
-                      Familiengruppe hinzufügen (bis zu 5 Personen)
-                    </button>
+                {isDropdownOpen && (
+                  <div
+                    className="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none"
+                    role="menu"
+                    aria-orientation="vertical"
+                    aria-labelledby="menu-button"
+                  >
+                    <div className="py-1" role="none">
+                      <button
+                        onClick={() => {
+                          handleAddRow();
+                          setIsDropdownOpen(false);
+                        }}
+                        className="text-gray-700 block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                        role="menuitem"
+                        id="menu-item-0"
+                      >
+                        Einzelne Person hinzufügen
+                      </button>
+                      <button
+                        onClick={() => {
+                          handleAddFamilyGroup();
+                          setIsDropdownOpen(false);
+                        }}
+                        className="text-gray-700 block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                        role="menuitem"
+                        id="menu-item-1"
+                      >
+                        Familiengruppe hinzufügen (bis zu 5 Personen)
+                      </button>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           )}
