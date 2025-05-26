@@ -1,7 +1,6 @@
 'use client';
 
 import { useAuth } from '@/components/providers/AuthProvider';
-import { Button } from '@headlessui/react';
 import { PencilIcon, PlusIcon, TrashIcon, StopIcon, CheckIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { fetchDeported, updateDeportedPerson, createDeportedPerson, deleteDeportedPerson, getDeportedPersonByLaufendenr, hasHistoricalVersions, fetchFieldSuggestions } from '@/app/deport/data';
@@ -158,13 +157,56 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
   const [currentField, setCurrentField] = useState('');
   // State for dropdown menu visibility
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  
-  // Toggle dropdown visibility
-  const toggleDropdown = () => {
-    setIsDropdownOpen(prevState => !prevState);
-  };
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const menuItemsRef = useRef<Array<HTMLButtonElement | null>>([]);
   
   const [isAdmin, setIsAdmin] = useState(false);
+
+  // Keyboard navigation for dropdown button
+  const handleDropdownKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      setIsDropdownOpen(prev => !prev);
+      // Focus on the first item when opening with keyboard
+      if (!isDropdownOpen) {
+        setTimeout(() => menuItemsRef.current[0]?.focus(), 0);
+      }
+    } else if (e.key === 'Escape') {
+      setIsDropdownOpen(false);
+    }
+  };
+
+  // Keyboard navigation for dropdown menu items
+  const handleMenuItemKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const nextIndex = (index + 1) % menuItemsRef.current.length;
+      menuItemsRef.current[nextIndex]?.focus();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const prevIndex = (index - 1 + menuItemsRef.current.length) % menuItemsRef.current.length;
+      menuItemsRef.current[prevIndex]?.focus();
+    } else if (e.key === 'Escape') {
+      setIsDropdownOpen(false);
+      dropdownRef.current?.querySelector('button')?.focus(); // Focus back on the toggle button
+    } else if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      (e.target as HTMLButtonElement).click(); // Simulate click on the focused item
+    }
+  };
+
+  // Handle click outside to close dropdown
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [dropdownRef]);
 
   // Function to fetch data
   const fetchData = async () => {
@@ -599,49 +641,56 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
         <div className="rounded-lg bg-gray-50 p-2 md:pt-0">
           {user && (
             <div className="flex justify-end p-4">
-              <div className="relative inline-block text-left">
-                <Button
-                  onClick={toggleDropdown}
-                  className="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-500 flex items-center"
-                >
-                  <PlusIcon className="w-5 h-5 mr-2" />
-                  Person hinzufügen
-                  {isDropdownOpen ? (
-                    <ChevronUpIcon className="w-5 h-5 ml-2 -mr-1" aria-hidden="true" />
-                  ) : (
-                    <ChevronDownIcon className="w-5 h-5 ml-2 -mr-1" aria-hidden="true" />
-                  )}
-                </Button>
-                {/* Dropdown menu */}
+              <div className="relative inline-block text-left" ref={dropdownRef}>
+                <div>
+                  <button
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    onKeyDown={handleDropdownKeyDown}
+                    className="inline-flex w-full justify-center rounded-md bg-black bg-opacity-20 px-4 py-2 text-sm font-medium text-white hover:bg-opacity-30 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75"
+                    id="options-menu-button"
+                    aria-expanded={isDropdownOpen}
+                    aria-haspopup="true"
+                  >
+                    Optionen
+                    {isDropdownOpen ? (
+                      <ChevronUpIcon className="-mr-1 ml-2 h-5 w-5 text-violet-200 hover:text-violet-100" aria-hidden="true" />
+                    ) : (
+                      <ChevronDownIcon className="-mr-1 ml-2 h-5 w-5 text-violet-200 hover:text-violet-100" aria-hidden="true" />
+                    )}
+                  </button>
+                </div>
                 {isDropdownOpen && (
                   <div
-                    className="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none"
+                    className="absolute right-0 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
                     role="menu"
                     aria-orientation="vertical"
-                    aria-labelledby="menu-button"
+                    aria-labelledby="options-menu-button"
+                    tabIndex={-1}
                   >
                     <div className="py-1" role="none">
                       <button
-                        onClick={() => {
-                          handleAddRow();
-                          setIsDropdownOpen(false);
-                        }}
-                        className="text-gray-700 block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                        onClick={() => { handleAddRow(); setIsDropdownOpen(false); }}
+                        onKeyDown={(e) => handleMenuItemKeyDown(e, 0)}
+                        className="text-gray-900 group flex w-full items-center rounded-md px-2 py-2 text-sm hover:bg-violet-500 hover:text-white"
                         role="menuitem"
+                        tabIndex={0}
                         id="menu-item-0"
+                        ref={el => { menuItemsRef.current[0] = el; }}
                       >
-                        Einzelne Person hinzufügen
+                        <PlusIcon className="mr-2 h-5 w-5" aria-hidden="true" />
+                        Neue Zeile hinzufügen
                       </button>
                       <button
-                        onClick={() => {
-                          handleAddFamilyGroup();
-                          setIsDropdownOpen(false);
-                        }}
-                        className="text-gray-700 block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                        onClick={() => { handleAddFamilyGroup(); setIsDropdownOpen(false); }}
+                        onKeyDown={(e) => handleMenuItemKeyDown(e, 1)}
+                        className="text-gray-900 group flex w-full items-center rounded-md px-2 py-2 text-sm hover:bg-violet-500 hover:text-white"
                         role="menuitem"
+                        tabIndex={-1}
                         id="menu-item-1"
+                        ref={el => { menuItemsRef.current[1] = el; }}
                       >
-                        Familiengruppe hinzufügen (bis zu 5 Personen)
+                        <PlusIcon className="mr-2 h-5 w-5" aria-hidden="true" />
+                        Neue Familiengruppe hinzufügen
                       </button>
                     </div>
                   </div>
@@ -862,23 +911,23 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                       <div className="flex justify-end gap-3">
                         {editIdx === idx || (isAddingNewRow && person.id.startsWith('temp-family-')) ? (
                         <>
-                        <Button
+                        <button
                           onClick={handleSave}
                           className="rounded-md border p-2 hover:bg-gray-100"
                         >
                           <CheckIcon className="w-5" />
-                        </Button>
-                        <Button
+                        </button>
+                        <button
                           onClick={handleCancel}
                           className="rounded-md border p-2 hover:bg-gray-100"
                         >
                           <StopIcon className="w-5" />
-                        </Button>
+                        </button>
                         </>
                       ) : (
                         <>
                         {person.Laufendenr && recordsWithHistory[person.Laufendenr || 0] && (
-                          <Button
+                          <button
                             onClick={() => toggleHistoryView(person.Laufendenr || 0)}
                             className="rounded-md border p-2 hover:bg-gray-100"
                             title="Zeige historische Versionen"
@@ -888,23 +937,23 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                             ) : (
                               <ChevronDownIcon className="w-5 h-5" />
                             )}
-                          </Button>
+                          </button>
                         )}
                         {user && (
-                          <Button
+                          <button
                             onClick={() => handleEdit(idx, person)}
                             className="rounded-md border p-2 hover:bg-gray-100"
                           >
                             <PencilIcon className="w-5" />
-                          </Button>
+                          </button>
                         )}
                         {user && isAdmin && (
-                          <Button
+                          <button
                             onClick={() => handleDelete(person.id)}
                             className="rounded-md border p-2 hover:bg-gray-100"
                           >
                             <TrashIcon className="w-5" />
-                          </Button>
+                          </button>
                         )}
                         </>
                       )}
