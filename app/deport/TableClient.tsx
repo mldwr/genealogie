@@ -459,6 +459,60 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
     setIsAddingNewRow(true);
   };
 
+  const handleAddFamilyGroup = () => {
+    const newFamilyGroup: Person[] = [];
+    const familyNr = Math.floor(Date.now() / 1000); // Simple auto-generation for Familiennr
+    const tempFamilyId = 'family-' + Date.now(); // Temporary ID for the family group
+
+    for (let i = 0; i < 5; i++) {
+      const newPerson = {
+        id: `temp-${tempFamilyId}-${i}`, // Temporary ID for each person in the group
+        Seite: null, // Leave Seite empty for user to fill
+        Familiennr: familyNr,
+        Eintragsnr: i + 1,
+        Laufendenr: Math.floor(Date.now() / 1000) + i, // Simple auto-generation for Laufendenr
+        Familienname: null,
+        Vorname: null,
+        Vatersname: null,
+        Familienrolle: i === 0 ? 'Familienoberhaupt' : (i === 1 ? 'Ehefrau' : 'Kind'),
+        Geschlecht: "unbekannt",
+        Geburtsjahr: null,
+        Geburtsort: null,
+        Arbeitsort: null,
+        valid_from: null,
+        valid_to: null,
+        updated_by: null
+      };
+      newFamilyGroup.push(newPerson);
+    }
+
+    // Add the new family group to the top of the local state
+    const updatedPeople = [...newFamilyGroup, ...people];
+    setPeople(updatedPeople);
+
+    // Set the first new row in edit mode (index 0)
+    setEditIdx(0);
+    // Set formData for the first person in the group
+    const firstPerson = newFamilyGroup[0];
+    setFormData({
+      id: firstPerson.id,
+      Seite: firstPerson.Seite !== null ? String(firstPerson.Seite) : '',
+      Familiennr: firstPerson.Familiennr !== null ? String(firstPerson.Familiennr) : '',
+      Eintragsnr: firstPerson.Eintragsnr !== null ? String(firstPerson.Eintragsnr) : '',
+      Laufendenr: firstPerson.Laufendenr !== null ? String(firstPerson.Laufendenr) : '',
+      Familienname: firstPerson.Familienname || '',
+      Vorname: firstPerson.Vorname || '',
+      Vatersname: firstPerson.Vatersname || '',
+      Familienrolle: firstPerson.Familienrolle || '',
+      Geschlecht: firstPerson.Geschlecht || 'unbekannt',
+      Geburtsjahr: firstPerson.Geburtsjahr || '',
+      Geburtsort: firstPerson.Geburtsort || '',
+      Arbeitsort: firstPerson.Arbeitsort || ''
+    });
+    setOriginalData(firstPerson);
+    setIsAddingNewRow(true); // Indicate that we are adding new rows
+  };
+
   const handleDelete = async (id: string) => {
     try {
       // Use the direct Supabase client function instead of the API endpoint
@@ -538,13 +592,42 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
         <div className="rounded-lg bg-gray-50 p-2 md:pt-0">
           {user && (
             <div className="flex justify-end p-4">
-              <Button
-                onClick={handleAddRow}
-                className="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-500 flex items-center"
-              >
-                <PlusIcon className="w-5 h-5 mr-2" />
-                Person hinzufügen
-              </Button>
+              <div className="relative inline-block text-left">
+                <Button
+                  onClick={handleAddRow}
+                  className="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-500 flex items-center"
+                >
+                  <PlusIcon className="w-5 h-5 mr-2" />
+                  Person hinzufügen
+                  <ChevronDownIcon className="w-5 h-5 ml-2 -mr-1" aria-hidden="true" />
+                </Button>
+                {/* Dropdown menu */}
+                <div
+                  className="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none"
+                  role="menu"
+                  aria-orientation="vertical"
+                  aria-labelledby="menu-button"
+                >
+                  <div className="py-1" role="none">
+                    <button
+                      onClick={handleAddRow}
+                      className="text-gray-700 block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                      role="menuitem"
+                      id="menu-item-0"
+                    >
+                      Einzelne Person hinzufügen
+                    </button>
+                    <button
+                      onClick={handleAddFamilyGroup}
+                      className="text-gray-700 block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                      role="menuitem"
+                      id="menu-item-1"
+                    >
+                      Familiengruppe hinzufügen (bis zu 5 Personen)
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
           <table className="min-w-full text-gray-900 table ">
@@ -573,9 +656,9 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
               {people?.map((person,idx) => (
                 <React.Fragment key={person.id}>
                 <tr
-                className={`w-full border-b py-3 text-sm ${editIdx === idx ? 'bg-gray-200' : ''} ${expandedRows[person.Laufendenr || 0] ? 'border-b-0' : 'last-of-type:border-none'} [&:first-child>td:first-child]:rounded-tl-lg [&:first-child>td:last-child]:rounded-tr-lg [&:last-child>td:first-child]:rounded-bl-lg [&:last-child>td:last-child]:rounded-br-lg`}>
+                className={`w-full border-b py-3 text-sm ${editIdx === idx || (isAddingNewRow && person.id.startsWith('temp-family-')) ? 'bg-gray-200' : ''} ${expandedRows[person.Laufendenr || 0] ? 'border-b-0' : 'last-of-type:border-none'} [&:first-child>td:first-child]:rounded-tl-lg [&:first-child>td:last-child]:rounded-tr-lg [&:last-child>td:first-child]:rounded-bl-lg [&:last-child>td:last-child]:rounded-br-lg ${person.id.startsWith('temp-family-') ? 'border-l-4 border-blue-500' : ''}`}>
                   <td className="whitespace-nowrap px-3 py-3">
-                  {editIdx === idx ? (
+                  {editIdx === idx || (isAddingNewRow && person.id.startsWith('temp-family-')) ? (
                         <input
                           type="text"
                           name="Seite"
@@ -589,7 +672,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                       )}
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
-                    {editIdx === idx ? (
+                    {editIdx === idx || (isAddingNewRow && person.id.startsWith('temp-family-')) ? (
                         <input
                           type="text"
                           name="Familiennr"
@@ -602,7 +685,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                       )}
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
-                  {editIdx === idx ? (
+                  {editIdx === idx || (isAddingNewRow && person.id.startsWith('temp-family-')) ? (
                       <input
                         type="text"
                         name="Eintragsnr"
@@ -619,7 +702,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                     {person.Laufendenr}
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
-                  {editIdx === idx ? (
+                  {editIdx === idx || (isAddingNewRow && person.id.startsWith('temp-family-')) ? (
                       <AutocompleteInput
                         name="Familienname"
                         value={formData.Familienname}
@@ -637,7 +720,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                     )}
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
-                  {editIdx === idx ? (
+                  {editIdx === idx || (isAddingNewRow && person.id.startsWith('temp-family-')) ? (
                       <AutocompleteInput
                         name="Vorname"
                         value={formData.Vorname}
@@ -655,7 +738,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                     )}
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
-                  {editIdx === idx ? (
+                  {editIdx === idx || (isAddingNewRow && person.id.startsWith('temp-family-')) ? (
                       <AutocompleteInput
                         name="Vatersname"
                         value={formData.Vatersname}
@@ -673,7 +756,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                     )}
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
-                  {editIdx === idx ? (
+                  {editIdx === idx || (isAddingNewRow && person.id.startsWith('temp-family-')) ? (
                         <AutocompleteInput
                           name="Familienrolle"
                           value={formData.Familienrolle}
@@ -691,7 +774,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                       )}
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
-                  {editIdx === idx ? (
+                  {editIdx === idx || (isAddingNewRow && person.id.startsWith('temp-family-')) ? (
                         <select
                           name="Geschlecht"
                           value={formData.Geschlecht || ''}
@@ -707,7 +790,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                       )}
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
-                  {editIdx === idx ? (
+                  {editIdx === idx || (isAddingNewRow && person.id.startsWith('temp-family-')) ? (
                         <input
                           type="text"
                           name="Geburtsjahr"
@@ -720,7 +803,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                       )}
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
-                  {editIdx === idx ? (
+                  {editIdx === idx || (isAddingNewRow && person.id.startsWith('temp-family-')) ? (
                         <AutocompleteInput
                           name="Geburtsort"
                           value={formData.Geburtsort}
@@ -738,7 +821,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                       )}
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
-                  {editIdx === idx ? (
+                  {editIdx === idx || (isAddingNewRow && person.id.startsWith('temp-family-')) ? (
                         <AutocompleteInput
                           name="Arbeitsort"
                           value={formData.Arbeitsort}
@@ -758,7 +841,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                   {user && (
                     <td className="whitespace-nowrap py-3 pl-6 pr-3">
                       <div className="flex justify-end gap-3">
-                        {editIdx === idx ? (
+                        {editIdx === idx || (isAddingNewRow && person.id.startsWith('temp-family-')) ? (
                         <>
                         <Button
                           onClick={handleSave}
