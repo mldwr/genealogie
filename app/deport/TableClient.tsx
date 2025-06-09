@@ -661,50 +661,50 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                   <button
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                     onKeyDown={handleDropdownKeyDown}
-                    className="inline-flex w-full justify-center rounded-md bg-black bg-opacity-20 px-4 py-2 text-sm font-medium text-white hover:bg-opacity-30 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75"
+                    className="inline-flex w-full justify-center rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md hover:from-blue-600 hover:to-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-opacity-75 transition-all duration-150 ease-in-out"
                     id="options-menu-button"
                     aria-expanded={isDropdownOpen}
                     aria-haspopup="true"
                   >
                     Optionen
                     {isDropdownOpen ? (
-                      <ChevronUpIcon className="-mr-1 ml-2 h-5 w-5 text-violet-200 hover:text-violet-100" aria-hidden="true" />
+                      <ChevronUpIcon className="-mr-1 ml-2 h-5 w-5 text-blue-100 group-hover:text-white" aria-hidden="true" />
                     ) : (
-                      <ChevronDownIcon className="-mr-1 ml-2 h-5 w-5 text-violet-200 hover:text-violet-100" aria-hidden="true" />
+                      <ChevronDownIcon className="-mr-1 ml-2 h-5 w-5 text-blue-100 group-hover:text-white" aria-hidden="true" />
                     )}
                   </button>
                 </div>
                 {isDropdownOpen && (
                   <div
-                    className="absolute right-0 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                    className="absolute right-0 mt-2 w-64 origin-top-right rounded-lg bg-white shadow-xl ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
                     role="menu"
                     aria-orientation="vertical"
                     aria-labelledby="options-menu-button"
                     tabIndex={-1}
                   >
-                    <div className="py-1" role="none">
+                    <div className="py-1.5" role="none">
                       <button
                         onClick={() => { handleAddRow(); setIsDropdownOpen(false); }}
                         onKeyDown={(e) => handleMenuItemKeyDown(e, 0)}
-                        className="text-gray-900 group flex w-full items-center rounded-md px-2 py-2 text-sm hover:bg-violet-500 hover:text-white"
+                        className="text-gray-700 group flex w-full items-center rounded-md px-3 py-2.5 text-sm hover:bg-blue-500 hover:text-white transition-colors duration-150 ease-in-out cursor-pointer"
                         role="menuitem"
                         tabIndex={0}
                         id="menu-item-0"
                         ref={el => { menuItemsRef.current[0] = el; }}
                       >
-                        <PlusIcon className="mr-2 h-5 w-5" aria-hidden="true" />
+                        <PlusIcon className="mr-3 h-5 w-5 text-gray-400 group-hover:text-white transition-colors duration-150 ease-in-out" aria-hidden="true" />
                         Neue Zeile hinzufügen
                       </button>
                       <button
                         onClick={() => { handleAddFamilyGroup(); setIsDropdownOpen(false); }}
                         onKeyDown={(e) => handleMenuItemKeyDown(e, 1)}
-                        className="text-gray-900 group flex w-full items-center rounded-md px-2 py-2 text-sm hover:bg-violet-500 hover:text-white"
+                        className="text-gray-700 group flex w-full items-center rounded-md px-3 py-2.5 text-sm hover:bg-blue-500 hover:text-white transition-colors duration-150 ease-in-out cursor-pointer"
                         role="menuitem"
                         tabIndex={-1}
                         id="menu-item-1"
                         ref={el => { menuItemsRef.current[1] = el; }}
                       >
-                        <PlusIcon className="mr-2 h-5 w-5" aria-hidden="true" />
+                        <PlusIcon className="mr-3 h-5 w-5 text-gray-400 group-hover:text-white transition-colors duration-150 ease-in-out" aria-hidden="true" />
                         Neue Familiengruppe hinzufügen
                       </button>
                     </div>
