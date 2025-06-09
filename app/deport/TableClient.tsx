@@ -508,73 +508,95 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
     setIsAddingNewRow(true);
   };
 
-  const handleAddFamilyGroup = async () => { // Make the function async
-    const newFamilyGroup: Person[] = [];
-    
-    // Fetch the maximum existing Familiennr and increment it
-    let nextFamiliennr = 1; // Default if no records exist
+  const handleAddFamilyGroup = async () => {
     try {
-      const maxNr = await getMaxFamiliennr();
-      nextFamiliennr = maxNr + 1;
+      // Fetch the maximum existing Familiennr and increment it
+      let nextFamiliennr = 1; // Default if no records exist
+      try {
+        const maxNr = await getMaxFamiliennr();
+        nextFamiliennr = maxNr + 1;
+      } catch (error) {
+        console.error('Failed to fetch max Familiennr:', error);
+        toast({
+          title: 'Fehler beim Ermitteln der Familiennummer',
+          description: error instanceof Error ? error.message : 'Ein unbekannter Fehler ist aufgetreten',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      // Get the maximum page number from existing records
+      const maxPage = Math.max(...people.map(p => p.Seite || 0), 0);
+      const nextPage = maxPage;
+
+      // Get the maximum Laufendenr from existing records
+      const maxLaufendenr = Math.max(...people.map(p => p.Laufendenr || 0), 0);
+      const nextLaufendenr = maxLaufendenr + 1;
+
+      const tempFamilyId = 'family-' + Date.now();
+      const newFamilyGroup: Person[] = [];
+
+      // Create 5 family members with proper numbering
+      for (let i = 0; i < 5; i++) {
+        const newPerson = {
+          id: `temp-${tempFamilyId}-${i}`,
+          Seite: nextPage,
+          Familiennr: nextFamiliennr,
+          Eintragsnr: i + 1,
+          Laufendenr: nextLaufendenr + i,
+          Familienname: null,
+          Vorname: null,
+          Vatersname: null,
+          Familienrolle: i === 0 ? 'Familienoberhaupt' : (i === 1 ? 'Ehefrau' : 'Kind'),
+          Geschlecht: "unbekannt",
+          Geburtsjahr: null,
+          Geburtsort: null,
+          Arbeitsort: null,
+          valid_from: null,
+          valid_to: null,
+          updated_by: null
+        };
+        newFamilyGroup.push(newPerson);
+      }
+
+      // Update the people state by appending the new family group
+      setPeople(prevPeople => [...newFamilyGroup, ...prevPeople]);
+
+      // Set the first new row in edit mode
+      setEditIdx(0);
+      
+      // Set formData for the first person in the group
+      const firstPerson = newFamilyGroup[0];
+      setFormData({
+        id: firstPerson.id,
+        Seite: String(firstPerson.Seite),
+        Familiennr: String(firstPerson.Familiennr),
+        Eintragsnr: String(firstPerson.Eintragsnr),
+        Laufendenr: String(firstPerson.Laufendenr),
+        Familienname: firstPerson.Familienname || '',
+        Vorname: firstPerson.Vorname || '',
+        Vatersname: firstPerson.Vatersname || '',
+        Familienrolle: firstPerson.Familienrolle || '',
+        Geschlecht: firstPerson.Geschlecht || 'unbekannt',
+        Geburtsjahr: firstPerson.Geburtsjahr || '',
+        Geburtsort: firstPerson.Geburtsort || '',
+        Arbeitsort: firstPerson.Arbeitsort || ''
+      });
+      
+      setOriginalData(firstPerson);
+      setIsAddingNewRow(true);
+
+      // Close the dropdown menu
+      setIsDropdownOpen(false);
+
     } catch (error) {
-      console.error('Failed to fetch max Familiennr:', error);
+      console.error('Failed to add family group:', error);
       toast({
-        title: 'Fehler beim Ermitteln der Familiennummer',
+        title: 'Fehler beim Hinzufügen der Familiengruppe',
         description: error instanceof Error ? error.message : 'Ein unbekannter Fehler ist aufgetreten',
         variant: 'destructive'
       });
-      return; // Stop execution if we can't get a valid Familiennr
     }
-
-    const tempFamilyId = 'family-' + Date.now(); // Temporary ID for the family group
-
-    for (let i = 0; i < 5; i++) {
-      const newPerson = {
-        id: `temp-${tempFamilyId}-${i}`, // Temporary ID for each person in the group
-        Seite: null, // Leave Seite empty for user to fill
-        Familiennr: nextFamiliennr, // Assign the new, incremented Familiennr
-        Eintragsnr: i + 1,
-        Laufendenr: null, // Let the database handle auto-generation
-        Familienname: null,
-        Vorname: null,
-        Vatersname: null,
-        Familienrolle: i === 0 ? 'Familienoberhaupt' : (i === 1 ? 'Ehefrau' : 'Kind'),
-        Geschlecht: "unbekannt",
-        Geburtsjahr: null,
-        Geburtsort: null,
-        Arbeitsort: null,
-        valid_from: null,
-        valid_to: null,
-        updated_by: null
-      };
-      newFamilyGroup.push(newPerson);
-    }
-
-    // Add the new family group to the top of the local state
-    const updatedPeople = [...newFamilyGroup, ...people];
-    setPeople(updatedPeople);
-
-    // Set the first new row in edit mode (index 0)
-    setEditIdx(0);
-    // Set formData for the first person in the group
-    const firstPerson = newFamilyGroup[0];
-    setFormData({
-      id: firstPerson.id,
-      Seite: firstPerson.Seite !== null ? String(firstPerson.Seite) : '',
-      Familiennr: firstPerson.Familiennr !== null ? String(firstPerson.Familiennr) : '',
-      Eintragsnr: firstPerson.Eintragsnr !== null ? String(firstPerson.Eintragsnr) : '',
-      Laufendenr: firstPerson.Laufendenr !== null ? String(firstPerson.Laufendenr) : '',
-      Familienname: firstPerson.Familienname || '',
-      Vorname: firstPerson.Vorname || '',
-      Vatersname: firstPerson.Vatersname || '',
-      Familienrolle: firstPerson.Familienrolle || '',
-      Geschlecht: firstPerson.Geschlecht || 'unbekannt',
-      Geburtsjahr: firstPerson.Geburtsjahr || '',
-      Geburtsort: firstPerson.Geburtsort || '',
-      Arbeitsort: firstPerson.Arbeitsort || ''
-    });
-    setOriginalData(firstPerson);
-    setIsAddingNewRow(true); // Indicate that we are adding new rows
   };
 
   const handleDelete = async (id: string) => {
