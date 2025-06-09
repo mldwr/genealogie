@@ -432,31 +432,29 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
     try {
       // If adding new rows, create all family members
       if (isAddingNewRow) {
-        // Convert all form data to Person objects and create them
-        const savePromises = Object.values(formDataMap).map(async (formData) => {
-          try {
-            await createDeportedPerson({
-              Seite: formData.Seite,
-              Familiennr: formData.Familiennr,
-              Eintragsnr: formData.Eintragsnr,
-              Laufendenr: formData.Laufendenr,
-              Familienname: formData.Familienname,
-              Vorname: formData.Vorname,
-              Vatersname: formData.Vatersname,
-              Familienrolle: formData.Familienrolle,
-              Geschlecht: formData.Geschlecht,
-              Geburtsjahr: formData.Geburtsjahr,
-              Geburtsort: formData.Geburtsort,
-              Arbeitsort: formData.Arbeitsort
-            }, user?.email || 'unknown');
-          } catch (error) {
-            console.error('Table: Failed to create new person:', error);
-            throw error; // Re-throw to be caught by Promise.all
-          }
-        });
+        // Sort form data by Laufendenr to ensure they are created in order
+        const sortedFormData = Object.values(formDataMap).sort((a, b) => 
+          (parseInt(a.Laufendenr || '0') - parseInt(b.Laufendenr || '0'))
+        );
 
-        // Wait for all creations to complete
-        await Promise.all(savePromises);
+        // Save family members sequentially to maintain Laufendenr order
+        for (const formData of sortedFormData) {
+          await createDeportedPerson({
+            Seite: formData.Seite,
+            Familiennr: formData.Familiennr,
+            Eintragsnr: formData.Eintragsnr,
+            Laufendenr: formData.Laufendenr,
+            Familienname: formData.Familienname,
+            Vorname: formData.Vorname,
+            Vatersname: formData.Vatersname,
+            Familienrolle: formData.Familienrolle,
+            Geschlecht: formData.Geschlecht,
+            Geburtsjahr: formData.Geburtsjahr,
+            Geburtsort: formData.Geburtsort,
+            Arbeitsort: formData.Arbeitsort
+          }, user?.email || 'unknown');
+        }
+
         setIsAddingNewRow(false);
       } else if (editIdx >= 0) {
         // Update existing person

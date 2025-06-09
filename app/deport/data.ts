@@ -1,4 +1,3 @@
-
 import {
     SpartenTable,
     CustomerField,
@@ -98,7 +97,7 @@ export async function createDeportedPerson(person: {
     Seite?: string;
     Familiennr?: string;
     Eintragsnr?: string;
-    Laufendenr?: string; // This will be auto-generated, so it's optional
+    Laufendenr?: string;
     Familienname?: string;
     Vorname?: string;
     Vatersname?: string;
@@ -110,20 +109,25 @@ export async function createDeportedPerson(person: {
   }, userEmail: string) {
     const now = new Date().toISOString();
 
-    // Get the maximum Laufendenr value from the database
-    const { data: maxData, error: maxError } = await supabase
-      .from('deport')
-      .select('Laufendenr')
-      .order('Laufendenr', { ascending: false })
-      .limit(1);
+    // Get the maximum Laufendenr value from the database only if not provided
+    let nextLaufendenr: number;
+    if (!person.Laufendenr) {
+      const { data: maxData, error: maxError } = await supabase
+        .from('deport')
+        .select('Laufendenr')
+        .order('Laufendenr', { ascending: false })
+        .limit(1);
 
-    if (maxError) {
-      throw new Error(`Failed to get max Laufendenr: ${maxError.message}`);
+      if (maxError) {
+        throw new Error(`Failed to get max Laufendenr: ${maxError.message}`);
+      }
+
+      // Calculate the next Laufendenr value if needed
+      const maxLaufendenr = maxData && maxData.length > 0 ? maxData[0].Laufendenr : 0;
+      nextLaufendenr = maxLaufendenr + 1;
+    } else {
+      nextLaufendenr = parseInt(person.Laufendenr);
     }
-
-    // Calculate the next Laufendenr value
-    const maxLaufendenr = maxData && maxData.length > 0 ? maxData[0].Laufendenr : 0;
-    const nextLaufendenr = maxLaufendenr + 1;
 
     const { data, error } = await supabase
       .from('deport')
@@ -131,7 +135,6 @@ export async function createDeportedPerson(person: {
         Seite: person.Seite,
         Familiennr: person.Familiennr,
         Eintragsnr: person.Eintragsnr,
-        // Use the auto-generated Laufendenr value
         Laufendenr: nextLaufendenr,
         Familienname: person.Familienname,
         Vorname: person.Vorname,
