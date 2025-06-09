@@ -119,26 +119,58 @@ interface TableClientProps {
   query?: string;
 }
 
+interface FormData {
+  id?: string;
+  Seite?: string;
+  Familiennr?: string;
+  Eintragsnr?: string;
+  Laufendenr?: string;
+  Familienname?: string;
+  Vorname?: string;
+  Vatersname?: string;
+  Familienrolle?: string;
+  Geschlecht?: string;
+  Geburtsjahr?: string;
+  Geburtsort?: string;
+  Arbeitsort?: string;
+}
+
+// Utility function to convert a Person object to FormData
+const personToFormData = (person: Person): FormData => {
+  const formData: FormData = {};
+  for (const [key, value] of Object.entries(person)) {
+    if (key !== 'valid_from' && key !== 'valid_to' && key !== 'updated_by') {
+      formData[key as keyof FormData] = value !== null ? String(value) : '';
+    }
+  }
+  return formData;
+};
+
+// Utility function to convert FormData back to Person
+const formDataToPerson = (formData: FormData): Partial<Person> => {
+  const person: Partial<Person> = {};
+  if (formData.id) person.id = formData.id;
+  if (formData.Seite) person.Seite = Number(formData.Seite);
+  if (formData.Familiennr) person.Familiennr = Number(formData.Familiennr);
+  if (formData.Eintragsnr) person.Eintragsnr = Number(formData.Eintragsnr);
+  if (formData.Laufendenr) person.Laufendenr = Number(formData.Laufendenr);
+  if (formData.Familienname !== undefined) person.Familienname = formData.Familienname || null;
+  if (formData.Vorname !== undefined) person.Vorname = formData.Vorname || null;
+  if (formData.Vatersname !== undefined) person.Vatersname = formData.Vatersname || null;
+  if (formData.Familienrolle !== undefined) person.Familienrolle = formData.Familienrolle || null;
+  if (formData.Geschlecht !== undefined) person.Geschlecht = formData.Geschlecht || null;
+  if (formData.Geburtsjahr !== undefined) person.Geburtsjahr = formData.Geburtsjahr || null;
+  if (formData.Geburtsort !== undefined) person.Geburtsort = formData.Geburtsort || null;
+  if (formData.Arbeitsort !== undefined) person.Arbeitsort = formData.Arbeitsort || null;
+  return person;
+};
+
 export default function TableClient({ people: initialPeople, currentPage = 1, query = '' }: TableClientProps) {
   const [people, setPeople] = useState<Person[]>(initialPeople);
   const [isAddingNewRow, setIsAddingNewRow] = useState(false);
   const [editIdx, setEditIdx] = useState(-1);
-  const [formData, setFormData] = useState<{
-    id?: string;
-    Seite?: string;
-    Familiennr?: string;
-    Eintragsnr?: string;
-    Laufendenr?: string;
-    Familienname?: string;
-    Vorname?: string;
-    Vatersname?: string;
-    Familienrolle?: string;
-    Geschlecht?: string;
-    Geburtsjahr?: string;
-    Geburtsort?: string;
-    Arbeitsort?: string;
-  }>({});
-  const [originalData, setOriginalData] = useState<any>({});
+  const [formDataMap, setFormDataMap] = useState<Record<string, FormData>>({});
+  const [originalData, setOriginalData] = useState<Record<string, Person>>({});
   const firstInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -291,10 +323,13 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
   const handleEdit = (idx: number, person: any) => {
     setEditIdx(idx);
     // Include id in the form data
-    setFormData({
-      ...person,
-      id: person.id
-    });
+    setFormDataMap(prev => ({
+      ...prev,
+      [person.id]: {
+        ...person,
+        id: person.id
+      }
+    }));
     setOriginalData(person);
   };
 
@@ -319,10 +354,18 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
+    
+    // Get the currently editing person's ID
+    const editingPerson = people[editIdx];
+    if (!editingPerson) return;
+
+    setFormDataMap(prev => ({
+      ...prev,
+      [editingPerson.id]: {
+        ...(prev[editingPerson.id] || {}),
+        [name]: value,
+      }
+    }));
     
     // Only fetch suggestions for text fields that support autocomplete
     const autocompleteFields = ['Familienname', 'Vorname', 'Vatersname', 'Familienrolle', 'Geburtsort', 'Arbeitsort'];
@@ -338,11 +381,17 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
   
   // Handle suggestion selection
   const handleSelectSuggestion = (suggestion: string) => {
-    if (currentField) {
-      setFormData({
-        ...formData,
-        [currentField]: suggestion,
-      });
+    if (currentField && editIdx !== -1) {
+      const editingPerson = people[editIdx];
+      if (editingPerson) {
+        setFormDataMap(prev => ({
+          ...prev,
+          [editingPerson.id]: {
+            ...(prev[editingPerson.id] || {}),
+            [currentField]: suggestion,
+          }
+        }));
+      }
       setSuggestions([]);
       setShowSuggestions(false);
       setActiveSuggestion(-1);
@@ -380,89 +429,112 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
   };
 
   const handleSave = async () => {
-    if (isAddingNewRow) {
-      // Create new person in the database
-      try {
-        await createDeportedPerson({
-          Seite: formData.Seite,
-          Familiennr: formData.Familiennr,
-          Eintragsnr: formData.Eintragsnr,
-          Laufendenr: formData.Laufendenr,
-          Familienname: formData.Familienname,
-          Vorname: formData.Vorname,
-          Vatersname: formData.Vatersname,
-          Familienrolle: formData.Familienrolle,
-          Geschlecht: formData.Geschlecht,
-          Geburtsjahr: formData.Geburtsjahr,
-          Geburtsort: formData.Geburtsort,
-          Arbeitsort: formData.Arbeitsort
-        }, user?.email || 'unknown');
+    try {
+      // If adding new rows, create all family members
+      if (isAddingNewRow) {
+        // Convert all form data to Person objects and create them
+        const savePromises = Object.values(formDataMap).map(async (formData) => {
+          try {
+            await createDeportedPerson({
+              Seite: formData.Seite,
+              Familiennr: formData.Familiennr,
+              Eintragsnr: formData.Eintragsnr,
+              Laufendenr: formData.Laufendenr,
+              Familienname: formData.Familienname,
+              Vorname: formData.Vorname,
+              Vatersname: formData.Vatersname,
+              Familienrolle: formData.Familienrolle,
+              Geschlecht: formData.Geschlecht,
+              Geburtsjahr: formData.Geburtsjahr,
+              Geburtsort: formData.Geburtsort,
+              Arbeitsort: formData.Arbeitsort
+            }, user?.email || 'unknown');
+          } catch (error) {
+            console.error('Table: Failed to create new person:', error);
+            throw error; // Re-throw to be caught by Promise.all
+          }
+        });
+
+        // Wait for all creations to complete
+        await Promise.all(savePromises);
         setIsAddingNewRow(false);
-      } catch (error) {
-        console.error('Table: Failed to create new person:', error);
-        toast({
-          title: 'Fehler beim Erstellen',
-          description: error instanceof Error ? error.message : 'Ein unbekannter Fehler ist aufgetreten',
-          variant: 'destructive'
-        });
-        return; // Prevent clearing edit mode on error
+      } else if (editIdx >= 0) {
+        // Update existing person
+        const editingPerson = people[editIdx];
+        if (editingPerson && editingPerson.id && formDataMap[editingPerson.id]) {
+          await updateDeportedPerson(formDataMap[editingPerson.id] as {
+            id: string;
+            Seite?: string;
+            Familiennr?: string;
+            Eintragsnr?: string;
+            Laufendenr?: string;
+            Familienname?: string;
+            Vorname?: string;
+            Vatersname?: string;
+            Familienrolle?: string;
+            Geschlecht?: string;
+            Geburtsjahr?: string;
+            Geburtsort?: string;
+            Arbeitsort?: string;
+          }, user?.email || 'unknown');
+        }
       }
-    } else if (formData.id) {
-      // Update existing person
-      try {
-        await updateDeportedPerson(formData as {
-          id: string;
-          Seite?: string;
-          Familiennr?: string;
-          Eintragsnr?: string;
-          Laufendenr?: string;
-          Familienname?: string;
-          Vorname?: string;
-          Vatersname?: string;
-          Familienrolle?: string;
-          Geschlecht?: string;
-          Geburtsjahr?: string;
-          Geburtsort?: string;
-          Arbeitsort?: string;
-        }, user?.email || 'unknown');
-      } catch (error) {
-        console.error('Table: Failed to update person:', error);
-        toast({
-          title: 'Fehler beim Aktualisieren',
-          description: error instanceof Error ? error.message : 'Ein unbekannter Fehler ist aufgetreten',
-          variant: 'destructive'
-        });
-        return; // Prevent clearing edit mode on error
-      }
+
+      // Clear states and refresh data
+      setEditIdx(-1);
+      setSuggestions([]);
+      setShowSuggestions(false);
+      setActiveSuggestion(-1);
+      setCurrentField('');
+      fetchData();
+
+      // Show success message
+      toast({
+        title: isAddingNewRow ? 'Familiengruppe erstellt' : 'Änderungen gespeichert',
+        description: isAddingNewRow ? 'Die neue Familiengruppe wurde erfolgreich erstellt.' : 'Die Änderungen wurden erfolgreich gespeichert.',
+      });
+
+    } catch (error) {
+      console.error('Table: Failed to save:', error);
+      toast({
+        title: 'Fehler beim Speichern',
+        description: error instanceof Error ? error.message : 'Ein unbekannter Fehler ist aufgetreten',
+        variant: 'destructive'
+      });
+      return; // Prevent clearing edit mode on error
     }
-    setEditIdx(-1);
-    // Clear autocomplete state
-    setSuggestions([]);
-    setShowSuggestions(false);
-    setActiveSuggestion(-1);
-    setCurrentField('');
-    fetchData();
   };
 
   const handleCancel = () => {
-    setFormData(originalData);
-    setEditIdx(-1);
+    if (isAddingNewRow) {
+      // If adding new rows, just reset the states
+      setFormDataMap({});
+      setOriginalData({});
+      setEditIdx(-1);
+      setIsAddingNewRow(false);
+      fetchData(); // Refresh data when canceling a new row addition
+    } else {
+      // If editing existing row, restore original data
+      const editingPerson = people[editIdx];
+      if (editingPerson && editingPerson.id && originalData[editingPerson.id]) {
+        setFormDataMap(prev => ({
+          ...prev,
+          [editingPerson.id]: personToFormData(originalData[editingPerson.id])
+        }));
+      }
+      setEditIdx(-1);
+    }
     
     // Clear autocomplete state
     setSuggestions([]);
     setShowSuggestions(false);
     setActiveSuggestion(-1);
     setCurrentField('');
-
-    if (isAddingNewRow) {
-      setIsAddingNewRow(false);
-      fetchData(); // Refresh data when canceling a new row addition
-    }
   };
 
   const handleAddRow = () => {
     // Create a new empty person with default values and a temporary ID
-    const newPerson = {
+    const newPerson: Person = {
       id: 'temp-' + Date.now(), // Temporary ID to identify this row
       Seite: null,
       Familiennr: null,
@@ -483,28 +555,17 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
     };
 
     // Add the new person to the top of the local state
-    const updatedPeople = [newPerson, ...people];
-    setPeople(updatedPeople);
+    setPeople(prevPeople => [newPerson, ...prevPeople]);
 
     // Set the new row in edit mode (index 0 since it's at the top)
     setEditIdx(0);
-    // Convert null values to empty strings for formData which expects string | undefined
-    setFormData({
-      id: newPerson.id,
-      Seite: newPerson.Seite !== null ? String(newPerson.Seite) : '',
-      Familiennr: newPerson.Familiennr !== null ? String(newPerson.Familiennr) : '',
-      Eintragsnr: newPerson.Eintragsnr !== null ? String(newPerson.Eintragsnr) : '',
-      Laufendenr: newPerson.Laufendenr !== null ? String(newPerson.Laufendenr) : '',
-      Familienname: newPerson.Familienname || '',
-      Vorname: newPerson.Vorname || '',
-      Vatersname: newPerson.Vatersname || '',
-      Familienrolle: newPerson.Familienrolle || '',
-      Geschlecht: newPerson.Geschlecht || 'unbekannt',
-      Geburtsjahr: newPerson.Geburtsjahr || '',
-      Geburtsort: newPerson.Geburtsort || '',
-      Arbeitsort: newPerson.Arbeitsort || ''
-    });
-    setOriginalData(newPerson);
+
+    // Convert null values to empty strings for formData
+    const formData = personToFormData(newPerson);
+    setFormDataMap({ [newPerson.id]: formData });
+    
+    // Store original data
+    setOriginalData({ [newPerson.id]: newPerson });
     setIsAddingNewRow(true);
   };
 
@@ -565,25 +626,19 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
       // Set the first new row in edit mode
       setEditIdx(0);
       
-      // Set formData for the first person in the group
-      const firstPerson = newFamilyGroup[0];
-      setFormData({
-        id: firstPerson.id,
-        Seite: String(firstPerson.Seite),
-        Familiennr: String(firstPerson.Familiennr),
-        Eintragsnr: String(firstPerson.Eintragsnr),
-        Laufendenr: String(firstPerson.Laufendenr),
-        Familienname: firstPerson.Familienname || '',
-        Vorname: firstPerson.Vorname || '',
-        Vatersname: firstPerson.Vatersname || '',
-        Familienrolle: firstPerson.Familienrolle || '',
-        Geschlecht: firstPerson.Geschlecht || 'unbekannt',
-        Geburtsjahr: firstPerson.Geburtsjahr || '',
-        Geburtsort: firstPerson.Geburtsort || '',
-        Arbeitsort: firstPerson.Arbeitsort || ''
+      // Initialize form data for each family member
+      const initialFormDataMap: Record<string, FormData> = {};
+      newFamilyGroup.forEach(person => {
+        initialFormDataMap[person.id] = personToFormData(person);
       });
+      setFormDataMap(initialFormDataMap);
       
-      setOriginalData(firstPerson);
+      // Store the original data for all family members
+      const originalDataMap: Record<string, Person> = {};
+      newFamilyGroup.forEach(person => {
+        originalDataMap[person.id] = person;
+      });
+      setOriginalData(originalDataMap);
       setIsAddingNewRow(true);
 
       // Close the dropdown menu
@@ -767,7 +822,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                         <input
                           type="text"
                           name="Seite"
-                          value={formData.Seite}
+                          value={formDataMap[person.id]?.Seite}
                           onChange={handleChange}
                           className="w-20"
                           ref={idx === 0 ? firstInputRef : undefined}
@@ -781,7 +836,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                         <input
                           type="text"
                           name="Familiennr"
-                          value={formData.Familiennr}
+                          value={formDataMap[person.id]?.Familiennr}
                           onChange={handleChange}
                           className="w-20"
                         />
@@ -794,7 +849,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                       <input
                         type="text"
                         name="Eintragsnr"
-                        value={formData.Eintragsnr}
+                        value={formDataMap[person.id]?.Eintragsnr}
                         onChange={handleChange}
                         className="w-20"
                       />
@@ -810,7 +865,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                   {editIdx === idx || (isAddingNewRow && person.id.startsWith('temp-family-')) ? (
                       <AutocompleteInput
                         name="Familienname"
-                        value={formData.Familienname}
+                        value={formDataMap[person.id]?.Familienname}
                         onChange={handleChange}
                         onKeyDown={handleKeyDown}
                         suggestions={currentField === 'Familienname' ? suggestions : []}
@@ -828,7 +883,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                   {editIdx === idx || (isAddingNewRow && person.id.startsWith('temp-family-')) ? (
                       <AutocompleteInput
                         name="Vorname"
-                        value={formData.Vorname}
+                        value={formDataMap[person.id]?.Vorname}
                         onChange={handleChange}
                         onKeyDown={handleKeyDown}
                         suggestions={currentField === 'Vorname' ? suggestions : []}
@@ -846,7 +901,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                   {editIdx === idx || (isAddingNewRow && person.id.startsWith('temp-family-')) ? (
                       <AutocompleteInput
                         name="Vatersname"
-                        value={formData.Vatersname}
+                        value={formDataMap[person.id]?.Vatersname}
                         onChange={handleChange}
                         onKeyDown={handleKeyDown}
                         suggestions={currentField === 'Vatersname' ? suggestions : []}
@@ -864,7 +919,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                   {editIdx === idx || (isAddingNewRow && person.id.startsWith('temp-family-')) ? (
                         <AutocompleteInput
                           name="Familienrolle"
-                          value={formData.Familienrolle}
+                          value={formDataMap[person.id]?.Familienrolle}
                           onChange={handleChange}
                           onKeyDown={handleKeyDown}
                           suggestions={currentField === 'Familienrolle' ? suggestions : []}
@@ -882,7 +937,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                   {editIdx === idx || (isAddingNewRow && person.id.startsWith('temp-family-')) ? (
                         <select
                           name="Geschlecht"
-                          value={formData.Geschlecht || ''}
+                          value={formDataMap[person.id]?.Geschlecht || ''}
                           onChange={handleChange}
                           className="w-28"
                         >
@@ -899,7 +954,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                         <input
                           type="text"
                           name="Geburtsjahr"
-                          value={formData.Geburtsjahr}
+                          value={formDataMap[person.id]?.Geburtsjahr}
                           onChange={handleChange}
                           className="w-20"
                         />
@@ -911,7 +966,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                   {editIdx === idx || (isAddingNewRow && person.id.startsWith('temp-family-')) ? (
                         <AutocompleteInput
                           name="Geburtsort"
-                          value={formData.Geburtsort}
+                          value={formDataMap[person.id]?.Geburtsort}
                           onChange={handleChange}
                           onKeyDown={handleKeyDown}
                           suggestions={currentField === 'Geburtsort' ? suggestions : []}
@@ -929,7 +984,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                   {editIdx === idx || (isAddingNewRow && person.id.startsWith('temp-family-')) ? (
                         <AutocompleteInput
                           name="Arbeitsort"
-                          value={formData.Arbeitsort}
+                          value={formDataMap[person.id]?.Arbeitsort}
                           onChange={handleChange}
                           onKeyDown={handleKeyDown}
                           suggestions={currentField === 'Arbeitsort' ? suggestions : []}
