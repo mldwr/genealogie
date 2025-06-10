@@ -14,7 +14,7 @@ const ITEMS_PER_PAGE = 22; // Make sure this matches the value in data.ts
 interface AutocompleteInputProps {
   name: string;
   value: string | undefined;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>, personId?: string) => void;
   onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   suggestions: string[];
   showSuggestions: boolean;
@@ -22,6 +22,7 @@ interface AutocompleteInputProps {
   onSelectSuggestion: (suggestion: string) => void;
   className?: string;
   placeholder?: string;
+  personId?: string;
   ref?: React.Ref<HTMLInputElement>;
 }
 
@@ -37,7 +38,8 @@ const AutocompleteInput = React.forwardRef<HTMLInputElement, Omit<AutocompleteIn
     onSelectSuggestion,
     className = '',
     placeholder = '',
-  }, 
+    personId,
+  },
   ref
 ) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -68,7 +70,7 @@ const AutocompleteInput = React.forwardRef<HTMLInputElement, Omit<AutocompleteIn
         type="text"
         name={name}
         value={value || ''}
-        onChange={onChange}
+        onChange={(e) => onChange(e, personId)}
         onKeyDown={onKeyDown}
         className={`${className} relative z-10`}
         placeholder={placeholder}
@@ -352,21 +354,30 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
     }
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>, personId?: string) => {
     const { name, value } = e.target;
-    
-    // Get the currently editing person's ID
-    const editingPerson = people[editIdx];
-    if (!editingPerson) return;
+
+    // Determine which person is being edited
+    let targetPersonId: string;
+
+    if (personId) {
+      // If personId is explicitly provided, use it
+      targetPersonId = personId;
+    } else {
+      // Fallback to the old logic for single-row editing
+      const editingPerson = people[editIdx];
+      if (!editingPerson) return;
+      targetPersonId = editingPerson.id;
+    }
 
     setFormDataMap(prev => ({
       ...prev,
-      [editingPerson.id]: {
-        ...(prev[editingPerson.id] || {}),
+      [targetPersonId]: {
+        ...(prev[targetPersonId] || {}),
         [name]: value,
       }
     }));
-    
+
     // Only fetch suggestions for text fields that support autocomplete
     const autocompleteFields = ['Familienname', 'Vorname', 'Vatersname', 'Familienrolle', 'Geburtsort', 'Arbeitsort'];
     if (autocompleteFields.includes(name)) {
@@ -821,7 +832,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                           type="text"
                           name="Seite"
                           value={formDataMap[person.id]?.Seite}
-                          onChange={handleChange}
+                          onChange={(e) => handleChange(e, person.id)}
                           className="w-20"
                           ref={idx === 0 ? firstInputRef : undefined}
                         />
@@ -835,7 +846,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                           type="text"
                           name="Familiennr"
                           value={formDataMap[person.id]?.Familiennr}
-                          onChange={handleChange}
+                          onChange={(e) => handleChange(e, person.id)}
                           className="w-20"
                         />
                       ) : (
@@ -848,7 +859,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                         type="text"
                         name="Eintragsnr"
                         value={formDataMap[person.id]?.Eintragsnr}
-                        onChange={handleChange}
+                        onChange={(e) => handleChange(e, person.id)}
                         className="w-20"
                       />
                     ) : (
@@ -872,6 +883,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                         onSelectSuggestion={handleSelectSuggestion}
                         className="w-32"
                         placeholder="Familienname"
+                        personId={person.id}
                       />
                     ) : (
                       person.Familienname
@@ -890,6 +902,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                         onSelectSuggestion={handleSelectSuggestion}
                         className="w-32"
                         placeholder="Vorname"
+                        personId={person.id}
                       />
                     ) : (
                       person.Vorname
@@ -908,6 +921,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                         onSelectSuggestion={handleSelectSuggestion}
                         className="w-32"
                         placeholder="Vatersname"
+                        personId={person.id}
                       />
                     ) : (
                       person.Vatersname
@@ -926,6 +940,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                           onSelectSuggestion={handleSelectSuggestion}
                           className="w-32"
                           placeholder="Familienrolle"
+                          personId={person.id}
                         />
                       ) : (
                         person.Familienrolle
@@ -936,7 +951,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                         <select
                           name="Geschlecht"
                           value={formDataMap[person.id]?.Geschlecht || ''}
-                          onChange={handleChange}
+                          onChange={(e) => handleChange(e, person.id)}
                           className="w-28"
                         >
                           <option value="männlich">männlich</option>
@@ -953,7 +968,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                           type="text"
                           name="Geburtsjahr"
                           value={formDataMap[person.id]?.Geburtsjahr}
-                          onChange={handleChange}
+                          onChange={(e) => handleChange(e, person.id)}
                           className="w-20"
                         />
                       ) : (
@@ -973,6 +988,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                           onSelectSuggestion={handleSelectSuggestion}
                           className="w-32"
                           placeholder="Geburtsort"
+                          personId={person.id}
                         />
                       ) : (
                         person.Geburtsort
@@ -991,6 +1007,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                           onSelectSuggestion={handleSelectSuggestion}
                           className="w-32"
                           placeholder="Arbeitsort"
+                          personId={person.id}
                         />
                       ) : (
                         person.Arbeitsort
