@@ -497,12 +497,6 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
       setCurrentField('');
       fetchData();
 
-      // Show success message
-      toast({
-        title: isAddingNewRow ? 'Familiengruppe erstellt' : 'Änderungen gespeichert',
-        description: isAddingNewRow ? 'Die neue Familiengruppe wurde erfolgreich erstellt.' : 'Die Änderungen wurden erfolgreich gespeichert.',
-      });
-
     } catch (error) {
       console.error('Table: Failed to save:', error);
       toast({
@@ -578,90 +572,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
     setIsAddingNewRow(true);
   };
 
-  const handleAddFamilyGroup = async () => {
-    try {
-      // Fetch the maximum existing Familiennr and increment it
-      let nextFamiliennr = 1; // Default if no records exist
-      try {
-        const maxNr = await getMaxFamiliennr();
-        nextFamiliennr = maxNr + 1;
-      } catch (error) {
-        console.error('Failed to fetch max Familiennr:', error);
-        toast({
-          title: 'Fehler beim Ermitteln der Familiennummer',
-          description: error instanceof Error ? error.message : 'Ein unbekannter Fehler ist aufgetreten',
-          variant: 'destructive'
-        });
-        return;
-      }
 
-      // Get the maximum page number from existing records
-      const maxPage = Math.max(...people.map(p => p.Seite || 0), 0);
-      const nextPage = maxPage;
-
-      // Get the maximum Laufendenr from existing records
-      const maxLaufendenr = Math.max(...people.map(p => p.Laufendenr || 0), 0);
-      const nextLaufendenr = maxLaufendenr + 1;
-
-      const tempFamilyId = 'family-' + Date.now();
-      const newFamilyGroup: Person[] = [];
-
-      // Create 5 family members with proper numbering
-      for (let i = 0; i < 5; i++) {
-        const newPerson = {
-          id: `temp-${tempFamilyId}-${i}`,
-          Seite: nextPage,
-          Familiennr: nextFamiliennr,
-          Eintragsnr: i + 1,
-          Laufendenr: nextLaufendenr + i,
-          Familienname: null,
-          Vorname: null,
-          Vatersname: null,
-          Familienrolle: i === 0 ? 'Familienoberhaupt' : (i === 1 ? 'Ehefrau' : 'Kind'),
-          Geschlecht: "unbekannt",
-          Geburtsjahr: null,
-          Geburtsort: null,
-          Arbeitsort: null,
-          valid_from: null,
-          valid_to: null,
-          updated_by: null
-        };
-        newFamilyGroup.push(newPerson);
-      }
-
-      // Update the people state by appending the new family group
-      setPeople(prevPeople => [...newFamilyGroup, ...prevPeople]);
-
-      // Set the first new row in edit mode
-      setEditIdx(0);
-      
-      // Initialize form data for each family member
-      const initialFormDataMap: Record<string, FormData> = {};
-      newFamilyGroup.forEach(person => {
-        initialFormDataMap[person.id] = personToFormData(person);
-      });
-      setFormDataMap(initialFormDataMap);
-      
-      // Store the original data for all family members
-      const originalDataMap: Record<string, Person> = {};
-      newFamilyGroup.forEach(person => {
-        originalDataMap[person.id] = person;
-      });
-      setOriginalData(originalDataMap);
-      setIsAddingNewRow(true);
-
-      // Close the dropdown menu
-      setIsDropdownOpen(false);
-
-    } catch (error) {
-      console.error('Failed to add family group:', error);
-      toast({
-        title: 'Fehler beim Hinzufügen der Familiengruppe',
-        description: error instanceof Error ? error.message : 'Ein unbekannter Fehler ist aufgetreten',
-        variant: 'destructive'
-      });
-    }
-  };
 
   const handleDelete = async (id: string) => {
     try {
@@ -781,18 +692,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                         <PlusIcon className="mr-3 h-5 w-5 text-gray-400 group-hover:text-white transition-colors duration-150 ease-in-out" aria-hidden="true" />
                         Neue Zeile hinzufügen
                       </button>
-                      <button
-                        onClick={() => { handleAddFamilyGroup(); setIsDropdownOpen(false); }}
-                        onKeyDown={(e) => handleMenuItemKeyDown(e, 1)}
-                        className="text-gray-700 group flex w-full items-center rounded-md px-3 py-2.5 text-sm hover:bg-blue-500 hover:text-white transition-colors duration-150 ease-in-out cursor-pointer"
-                        role="menuitem"
-                        tabIndex={-1}
-                        id="menu-item-1"
-                        ref={el => { menuItemsRef.current[1] = el; }}
-                      >
-                        <PlusIcon className="mr-3 h-5 w-5 text-gray-400 group-hover:text-white transition-colors duration-150 ease-in-out" aria-hidden="true" />
-                        Neue Familiengruppe hinzufügen
-                      </button>
+
                     </div>
                   </div>
                 )}
