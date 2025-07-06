@@ -653,50 +653,13 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
         <div className="rounded-lg bg-gray-50 p-2 md:pt-0">
           {user && (
             <div className="flex justify-end p-4">
-              <div className="relative inline-block text-left" ref={dropdownRef}>
-                <div>
-                  <button
-                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    onKeyDown={handleDropdownKeyDown}
-                    className="inline-flex w-full justify-center rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md hover:from-blue-600 hover:to-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-opacity-75 transition-all duration-150 ease-in-out"
-                    id="options-menu-button"
-                    aria-expanded={isDropdownOpen}
-                    aria-haspopup="true"
-                  >
-                    Optionen
-                    {isDropdownOpen ? (
-                      <ChevronUpIcon className="-mr-1 ml-2 h-5 w-5 text-blue-100 group-hover:text-white" aria-hidden="true" />
-                    ) : (
-                      <ChevronDownIcon className="-mr-1 ml-2 h-5 w-5 text-blue-100 group-hover:text-white" aria-hidden="true" />
-                    )}
-                  </button>
-                </div>
-                {isDropdownOpen && (
-                  <div
-                    className="absolute right-0 mt-2 w-64 origin-top-right rounded-lg bg-white shadow-xl ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
-                    role="menu"
-                    aria-orientation="vertical"
-                    aria-labelledby="options-menu-button"
-                    tabIndex={-1}
-                  >
-                    <div className="py-1.5" role="none">
-                      <button
-                        onClick={() => { handleAddRow(); setIsDropdownOpen(false); }}
-                        onKeyDown={(e) => handleMenuItemKeyDown(e, 0)}
-                        className="text-gray-700 group flex w-full items-center rounded-md px-3 py-2.5 text-sm hover:bg-blue-500 hover:text-white transition-colors duration-150 ease-in-out cursor-pointer"
-                        role="menuitem"
-                        tabIndex={0}
-                        id="menu-item-0"
-                        ref={el => { menuItemsRef.current[0] = el; }}
-                      >
-                        <PlusIcon className="mr-3 h-5 w-5 text-gray-400 group-hover:text-white transition-colors duration-150 ease-in-out" aria-hidden="true" />
-                        Neue Zeile hinzufügen
-                      </button>
-
-                    </div>
-                  </div>
-                )}
-              </div>
+              <button
+                onClick={handleAddRow}
+                className="inline-flex justify-center rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md hover:from-blue-600 hover:to-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-opacity-75 transition-all duration-150 ease-in-out"
+              >
+                <PlusIcon className="-ml-0.5 mr-2 h-5 w-5" aria-hidden="true" />
+                Neue Person hinzufügen
+              </button>
             </div>
           )}
           <table className="min-w-full text-gray-900 table ">
