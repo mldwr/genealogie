@@ -1,8 +1,9 @@
 'use client';
 
 import { useAuth } from '@/components/providers/AuthProvider';
-import { PencilIcon, PlusIcon, TrashIcon, StopIcon, CheckIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
+import { PencilIcon, PlusIcon, TrashIcon, StopIcon, CheckIcon, ChevronDownIcon, ChevronUpIcon, DocumentArrowUpIcon } from '@heroicons/react/24/outline';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { fetchDeported, updateDeportedPerson, createDeportedPerson, deleteDeportedPerson, getDeportedPersonByLaufendenr, hasHistoricalVersions, fetchFieldSuggestions, getMaxFamiliennr } from '@/app/deport/data';
 import { useToast } from '@/components/ui/Toasts/use-toast';
 import { createClient } from '@/utils/supabase/client';
@@ -176,6 +177,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
   const firstInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { user } = useAuth();
+  const router = useRouter();
   const supabase = createClient();
 
   // State to track which rows have their history expanded
@@ -652,7 +654,14 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
       <div className="block align-middle overflow-x-auto">
         <div className="rounded-lg bg-gray-50 p-2 md:pt-0">
           {user && (
-            <div className="flex justify-end p-4">
+            <div className="flex justify-end gap-3 p-4">
+              <button
+                onClick={() => router.push('/deport/csv-upload')}
+                className="inline-flex justify-center rounded-lg bg-gradient-to-r from-green-500 to-green-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md hover:from-green-600 hover:to-green-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-400 focus-visible:ring-opacity-75 transition-all duration-150 ease-in-out"
+              >
+                <DocumentArrowUpIcon className="-ml-0.5 mr-2 h-5 w-5" aria-hidden="true" />
+                CSV Import
+              </button>
               <button
                 onClick={handleAddRow}
                 className="inline-flex justify-center rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md hover:from-blue-600 hover:to-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-opacity-75 transition-all duration-150 ease-in-out"

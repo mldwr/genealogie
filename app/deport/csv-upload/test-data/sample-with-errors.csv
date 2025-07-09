@@ -1,0 +1,10 @@
+Seite;Familiennr;Eintragsnr;Laufendenr;Familienname;Vorname;Vatersname;Familienrolle;Geschlecht;Geburtsjahr;Geburtsort;Arbeitsort
+1;1;1;;Mustermann;Max;Johann;Vater;männlich;1900;Berlin;Hamburg
+1;1;2;abc;Mustermann;Anna;;Mutter;weiblich;1905;München;
+1;1;3;1003;Mustermann;Peter;Max;Sohn;unbekannt;2000;Berlin;Lehrling
+invalid;2;1;1004;Schmidt;Hans;Wilhelm;Vater;männlich;1895;Dresden;Fabrikarbeiter
+1;2;2;1005;Schmidt;Maria;;Mutter;weiblich;1800;Leipzig;
+2;3;1;1006;Weber;Karl;Friedrich;Großvater;männlich;1902;Köln;Handwerker
+2;3;2;1007;Weber;Elisabeth;;Mutter;weiblich;1906;Düsseldorf;
+2;3;3;1003;Weber;Klaus;Karl;Sohn;männlich;1930;Köln;
+2;4;1;1009;Müller;Otto;Heinrich;Vater;männlich;1888;Frankfurt;Kaufmann
