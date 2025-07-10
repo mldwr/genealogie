@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ValidationResult, ValidationError, DuplicateConflict } from '../types/csvTypes';
-import { 
-  ExclamationTriangleIcon, 
-  CheckCircleIcon, 
+import {
+  ExclamationTriangleIcon,
+  CheckCircleIcon,
   XCircleIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -20,7 +20,8 @@ interface ValidationStepProps {
   isProcessing: boolean;
 }
 
-export default function ValidationStep({
+// Create a client-only wrapper component
+function ValidationStepClient({
   validationResult,
   duplicateConflicts,
   onConflictResolution,
@@ -309,4 +310,19 @@ function ConflictResolution({
       ))}
     </div>
   );
+}
+
+// Main export with client-only wrapper
+export default function ValidationStep(props: ValidationStepProps) {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    return <div>Loading...</div>;
+  }
+
+  return <ValidationStepClient {...props} />;
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ParsedCsvData } from '../types/csvTypes';
 import { ChevronLeftIcon, ChevronRightIcon, EyeIcon } from '@heroicons/react/24/outline';
 
@@ -13,7 +13,8 @@ interface PreviewStepProps {
 
 const ROWS_PER_PAGE = 10;
 
-export default function PreviewStep({ parsedData, onNext, onPrevious, isProcessing }: PreviewStepProps) {
+// Create a client-only wrapper component
+function PreviewStepClient({ parsedData, onNext, onPrevious, isProcessing }: PreviewStepProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [showAllColumns, setShowAllColumns] = useState(false);
 
@@ -211,4 +212,19 @@ export default function PreviewStep({ parsedData, onNext, onPrevious, isProcessi
       </div>
     </div>
   );
+}
+
+// Main export with client-only wrapper
+export default function PreviewStep(props: PreviewStepProps) {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    return <div>Loading...</div>;
+  }
+
+  return <PreviewStepClient {...props} />;
 }

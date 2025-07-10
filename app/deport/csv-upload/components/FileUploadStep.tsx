@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { DocumentArrowUpIcon, DocumentTextIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
 import { validateCsvFile } from '../utils/csvParser';
@@ -11,8 +11,8 @@ interface FileUploadStepProps {
   isProcessing: boolean;
 }
 
-export default function FileUploadStep({ onFileSelected, isProcessing }: FileUploadStepProps) {
-  const [dragActive, setDragActive] = useState(false);
+// Create a client-only wrapper component
+function FileUploadStepClient({ onFileSelected, isProcessing }: FileUploadStepProps) {
   const [fileError, setFileError] = useState<string | null>(null);
 
   const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: any[]) => {
@@ -93,7 +93,7 @@ export default function FileUploadStep({ onFileSelected, isProcessing }: FileUpl
         {...getRootProps()}
         className={`
           relative border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
-          ${isDragActive || dragActive
+          ${isDragActive
             ? 'border-blue-400 bg-blue-50'
             : fileError
               ? 'border-red-400 bg-red-50'
@@ -179,4 +179,19 @@ export default function FileUploadStep({ onFileSelected, isProcessing }: FileUpl
       </div>
     </div>
   );
+}
+
+// Main export with client-only wrapper
+export default function FileUploadStep(props: FileUploadStepProps) {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    return <div>Loading...</div>;
+  }
+
+  return <FileUploadStepClient {...props} />;
 }
