@@ -58,15 +58,15 @@ function ValidationStepClient({
             <h3 className={`text-sm font-medium ${
               validationResult.isValid ? 'text-green-800' : 'text-red-800'
             }`}>
-              {validationResult.isValid ? 'Validation Passed' : 'Validation Issues Found'}
+              {validationResult.isValid ? 'Validierung erfolgreich' : 'Validierungsprobleme gefunden'}
             </h3>
             <div className={`mt-1 text-sm ${
               validationResult.isValid ? 'text-green-700' : 'text-red-700'
             }`}>
-              {validationResult.validRows} of {validationResult.totalRows} rows are valid
-              {validationResult.errors.length > 0 && ` • ${validationResult.errors.length} errors`}
-              {validationResult.warnings.length > 0 && ` • ${validationResult.warnings.length} warnings`}
-              {duplicateConflicts.length > 0 && ` • ${duplicateConflicts.length} conflicts`}
+              {validationResult.validRows} von {validationResult.totalRows} Zeilen sind gültig
+              {validationResult.errors.length > 0 && ` • ${validationResult.errors.length} Fehler`}
+              {validationResult.warnings.length > 0 && ` • ${validationResult.warnings.length} Warnungen`}
+              {duplicateConflicts.length > 0 && ` • ${duplicateConflicts.length} Konflikte`}
             </div>
           </div>
         </div>
@@ -75,19 +75,19 @@ function ValidationStepClient({
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="text-sm font-medium text-gray-900">Valid Rows</div>
+          <div className="text-sm font-medium text-gray-900">Gültige Zeilen</div>
           <div className="text-2xl font-bold text-green-600">{validationResult.validRows}</div>
         </div>
         <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="text-sm font-medium text-gray-900">Errors</div>
+          <div className="text-sm font-medium text-gray-900">Fehler</div>
           <div className="text-2xl font-bold text-red-600">{validationResult.errors.length}</div>
         </div>
         <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="text-sm font-medium text-gray-900">Warnings</div>
+          <div className="text-sm font-medium text-gray-900">Warnungen</div>
           <div className="text-2xl font-bold text-yellow-600">{validationResult.warnings.length}</div>
         </div>
         <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="text-sm font-medium text-gray-900">Conflicts</div>
+          <div className="text-sm font-medium text-gray-900">Konflikte</div>
           <div className="text-2xl font-bold text-orange-600">{duplicateConflicts.length}</div>
         </div>
       </div>
@@ -96,10 +96,10 @@ function ValidationStepClient({
       <div className="border-b border-gray-200">
         <nav className="-mb-px flex space-x-8">
           {[
-            { key: 'summary', label: 'Summary', count: null },
-            { key: 'errors', label: 'Errors', count: validationResult.errors.length },
-            { key: 'warnings', label: 'Warnings', count: validationResult.warnings.length },
-            { key: 'conflicts', label: 'Conflicts', count: duplicateConflicts.length }
+            { key: 'summary', label: 'Zusammenfassung', count: null },
+            { key: 'errors', label: 'Fehler', count: validationResult.errors.length },
+            { key: 'warnings', label: 'Warnungen', count: validationResult.warnings.length },
+            { key: 'conflicts', label: 'Konflikte', count: duplicateConflicts.length }
           ].map(tab => (
             <button
               key={tab.key}
@@ -133,18 +133,18 @@ function ValidationStepClient({
               <div className="flex">
                 <InformationCircleIcon className="h-5 w-5 text-blue-400" />
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-blue-800">Validation Summary</h3>
+                  <h3 className="text-sm font-medium text-blue-800">Validierungszusammenfassung</h3>
                   <div className="mt-2 text-sm text-blue-700">
                     <ul className="list-disc list-inside space-y-1">
-                      <li>{validationResult.validRows} rows passed validation</li>
+                      <li>{validationResult.validRows} Zeilen haben die Validierung bestanden</li>
                       {validationResult.errors.length > 0 && (
-                        <li className="text-red-700">{validationResult.errors.length} rows have errors that must be fixed</li>
+                        <li className="text-red-700">{validationResult.errors.length} Zeilen haben Fehler, die behoben werden müssen</li>
                       )}
                       {validationResult.warnings.length > 0 && (
-                        <li className="text-yellow-700">{validationResult.warnings.length} rows have warnings (can be imported)</li>
+                        <li className="text-yellow-700">{validationResult.warnings.length} Zeilen haben Warnungen (können importiert werden)</li>
                       )}
                       {duplicateConflicts.length > 0 && (
-                        <li className="text-orange-700">{duplicateConflicts.length} rows conflict with existing records</li>
+                        <li className="text-orange-700">{duplicateConflicts.length} Zeilen stehen im Konflikt mit bestehenden Datensätzen</li>
                       )}
                     </ul>
                   </div>
@@ -157,9 +157,9 @@ function ValidationStepClient({
                 <div className="flex">
                   <ExclamationTriangleIcon className="h-5 w-5 text-red-400" />
                   <div className="ml-3">
-                    <h3 className="text-sm font-medium text-red-800">Action Required</h3>
+                    <h3 className="text-sm font-medium text-red-800">Aktion erforderlich</h3>
                     <div className="mt-2 text-sm text-red-700">
-                      Please fix all errors before proceeding with the import. Check the "Errors" tab for details.
+                      Bitte beheben Sie alle Fehler, bevor Sie mit dem Import fortfahren. Prüfen Sie den "Fehler"-Tab für Details.
                     </div>
                   </div>
                 </div>
@@ -192,7 +192,7 @@ function ValidationStepClient({
           className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <ChevronLeftIcon className="h-4 w-4 mr-2" />
-          Back to Preview
+          Zurück zur Vorschau
         </button>
         <button
           onClick={onNext}
@@ -202,11 +202,11 @@ function ValidationStepClient({
           {isProcessing ? (
             <>
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-              Processing...
+              Verarbeite...
             </>
           ) : (
             <>
-              Start Import
+              Import starten
               <ChevronRightIcon className="h-4 w-4 ml-2" />
             </>
           )}
@@ -221,7 +221,7 @@ function ErrorList({ errors }: { errors: ValidationError[] }) {
   if (errors.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500">
-        No issues found
+        Keine Probleme gefunden
       </div>
     );
   }
@@ -245,14 +245,14 @@ function ErrorList({ errors }: { errors: ValidationError[] }) {
             )}
             <div className="ml-2 flex-1">
               <div className="text-sm font-medium">
-                Row {error.row}, Field: {error.field}
+                Zeile {error.row}, Feld: {error.field}
               </div>
               <div className="text-sm text-gray-600 mt-1">
                 {error.message}
               </div>
               {error.value && (
                 <div className="text-xs text-gray-500 mt-1">
-                  Value: "{error.value}"
+                  Wert: "{error.value}"
                 </div>
               )}
             </div>
@@ -274,7 +274,7 @@ function ConflictResolution({
   if (conflicts.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500">
-        No conflicts found
+        Keine Konflikte gefunden
       </div>
     );
   }
@@ -286,12 +286,12 @@ function ConflictResolution({
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <div className="text-sm font-medium text-orange-800">
-                Laufendenr {conflict.laufendenr} already exists
+                Laufendenr {conflict.laufendenr} existiert bereits
               </div>
               <div className="text-sm text-orange-700 mt-1">
-                Existing record: {conflict.existingRecord.Familienname}, {conflict.existingRecord.Vorname}
+                Bestehender Datensatz: {conflict.existingRecord.Familienname}, {conflict.existingRecord.Vorname}
                 <br />
-                Created: {new Date(conflict.existingRecord.valid_from || '').toLocaleDateString()}
+                Erstellt: {new Date(conflict.existingRecord.valid_from || '').toLocaleDateString()}
               </div>
             </div>
             <div className="ml-4">
@@ -300,9 +300,9 @@ function ConflictResolution({
                 onChange={(e) => onActionChange(conflict.laufendenr, e.target.value as any)}
                 className="text-sm border border-orange-300 rounded-md px-2 py-1 bg-white"
               >
-                <option value="skip">Skip (don't import)</option>
-                <option value="update">Update existing record</option>
-                <option value="create_new_version">Create new version</option>
+                <option value="skip">Überspringen (nicht importieren)</option>
+                <option value="update">Bestehenden Datensatz aktualisieren</option>
+                <option value="create_new_version">Neue Version erstellen</option>
               </select>
             </div>
           </div>
@@ -321,7 +321,7 @@ export default function ValidationStep(props: ValidationStepProps) {
   }, []);
 
   if (!isClient) {
-    return <div>Loading...</div>;
+    return <div>Lädt...</div>;
   }
 
   return <ValidationStepClient {...props} />;

@@ -44,10 +44,10 @@ function PreviewStepClient({ parsedData, onNext, onPrevious, isProcessing }: Pre
           <EyeIcon className="h-5 w-5 text-blue-400" />
           <div className="ml-3">
             <h3 className="text-sm font-medium text-blue-800">
-              Data Preview
+              Datenvorschau
             </h3>
             <div className="mt-1 text-sm text-blue-700">
-              Found {parsedData.totalRows} rows with {parsedData.headers.length} columns
+              {parsedData.totalRows} Zeilen mit {parsedData.headers.length} Spalten gefunden
             </div>
           </div>
         </div>
@@ -56,13 +56,13 @@ function PreviewStepClient({ parsedData, onNext, onPrevious, isProcessing }: Pre
       {/* Column Toggle */}
       <div className="flex justify-between items-center">
         <div className="text-sm text-gray-600">
-          Showing {startIndex + 1}-{endIndex} of {parsedData.totalRows} rows
+          Zeige {startIndex + 1}-{endIndex} von {parsedData.totalRows} Zeilen
         </div>
         <button
           onClick={() => setShowAllColumns(!showAllColumns)}
           className="text-sm text-blue-600 hover:text-blue-800"
         >
-          {showAllColumns ? 'Show fewer columns' : `Show all ${parsedData.headers.length} columns`}
+          {showAllColumns ? 'Weniger Spalten anzeigen' : `Alle ${parsedData.headers.length} Spalten anzeigen`}
         </button>
       </div>
 
@@ -73,7 +73,7 @@ function PreviewStepClient({ parsedData, onNext, onPrevious, isProcessing }: Pre
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Row
+                  Zeile
                 </th>
                 {displayHeaders.map((header, index) => (
                   <th
@@ -122,7 +122,7 @@ function PreviewStepClient({ parsedData, onNext, onPrevious, isProcessing }: Pre
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <div className="text-sm text-gray-700">
-            Page {currentPage} of {totalPages}
+            Seite {currentPage} von {totalPages}
           </div>
           <div className="flex space-x-2">
             <button
@@ -131,14 +131,14 @@ function PreviewStepClient({ parsedData, onNext, onPrevious, isProcessing }: Pre
               className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ChevronLeftIcon className="h-4 w-4 mr-1" />
-              Previous
+              Zurück
             </button>
             <button
               onClick={handleNextPage}
               disabled={currentPage === totalPages}
               className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Next
+              Weiter
               <ChevronRightIcon className="h-4 w-4 ml-1" />
             </button>
           </div>
@@ -148,7 +148,7 @@ function PreviewStepClient({ parsedData, onNext, onPrevious, isProcessing }: Pre
       {/* Headers Summary */}
       <div className="bg-gray-50 rounded-md p-4">
         <h4 className="text-sm font-medium text-gray-900 mb-2">
-          Detected Headers ({parsedData.headers.length}):
+          Erkannte Spaltenüberschriften ({parsedData.headers.length}):
         </h4>
         <div className="flex flex-wrap gap-2">
           {parsedData.headers.map((header, index) => (
@@ -165,15 +165,15 @@ function PreviewStepClient({ parsedData, onNext, onPrevious, isProcessing }: Pre
       {/* Data Quality Indicators */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="text-sm font-medium text-gray-900">Total Rows</div>
+          <div className="text-sm font-medium text-gray-900">Gesamtzeilen</div>
           <div className="text-2xl font-bold text-blue-600">{parsedData.totalRows}</div>
         </div>
         <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="text-sm font-medium text-gray-900">Columns</div>
+          <div className="text-sm font-medium text-gray-900">Spalten</div>
           <div className="text-2xl font-bold text-green-600">{parsedData.headers.length}</div>
         </div>
         <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="text-sm font-medium text-gray-900">Empty Cells</div>
+          <div className="text-sm font-medium text-gray-900">Leere Zellen</div>
           <div className="text-2xl font-bold text-yellow-600">
             {parsedData.rows.reduce((count, row) => {
               return count + parsedData.headers.filter(header => !row[header] || row[header].trim() === '').length;
@@ -190,7 +190,7 @@ function PreviewStepClient({ parsedData, onNext, onPrevious, isProcessing }: Pre
           className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <ChevronLeftIcon className="h-4 w-4 mr-2" />
-          Back to Upload
+          Zurück zum Upload
         </button>
         <button
           onClick={onNext}
@@ -200,11 +200,11 @@ function PreviewStepClient({ parsedData, onNext, onPrevious, isProcessing }: Pre
           {isProcessing ? (
             <>
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-              Validating...
+              Validiere...
             </>
           ) : (
             <>
-              Validate Data
+              Daten validieren
               <ChevronRightIcon className="h-4 w-4 ml-2" />
             </>
           )}
@@ -223,7 +223,7 @@ export default function PreviewStep(props: PreviewStepProps) {
   }, []);
 
   if (!isClient) {
-    return <div>Loading...</div>;
+    return <div>Lädt...</div>;
   }
 
   return <PreviewStepClient {...props} />;

@@ -7,11 +7,11 @@ interface ProgressIndicatorProps {
 }
 
 const steps = [
-  { key: 'upload', label: 'File Upload', description: 'Select CSV file' },
-  { key: 'preview', label: 'Preview', description: 'Review data' },
-  { key: 'validate', label: 'Validate', description: 'Check for errors' },
-  { key: 'import', label: 'Import', description: 'Process data' },
-  { key: 'complete', label: 'Complete', description: 'Finished' }
+  { key: 'upload', label: 'Datei-Upload', description: 'CSV-Datei auswählen' },
+  { key: 'preview', label: 'Vorschau', description: 'Daten überprüfen' },
+  { key: 'validate', label: 'Validieren', description: 'Auf Fehler prüfen' },
+  { key: 'import', label: 'Import', description: 'Daten verarbeiten' },
+  { key: 'complete', label: 'Abgeschlossen', description: 'Fertig' }
 ];
 
 export default function ProgressIndicator({ currentStep }: ProgressIndicatorProps) {
@@ -94,7 +94,7 @@ export default function ProgressIndicator({ currentStep }: ProgressIndicatorProp
             {steps[currentStepIndex]?.description}
           </div>
           <div className="text-xs text-gray-500 mt-1">
-            Step {currentStepIndex + 1} of {steps.length}
+            Schritt {currentStepIndex + 1} von {steps.length}
           </div>
         </div>
       </div>

@@ -49,10 +49,10 @@ export default function ImportStep({ progress, message, isProcessing }: ImportSt
       {/* Status Message */}
       <div className="text-center">
         <h3 className="text-lg font-medium text-gray-900 mb-2">
-          {isProcessing ? 'Importing Data...' : 'Import Complete'}
+          {isProcessing ? 'Daten werden importiert...' : 'Import abgeschlossen'}
         </h3>
         <p className="text-sm text-gray-600">
-          {message || 'Processing your CSV data...'}
+          {message || 'Ihre CSV-Daten werden verarbeitet...'}
         </p>
       </div>
 
@@ -74,19 +74,19 @@ export default function ImportStep({ progress, message, isProcessing }: ImportSt
       {isProcessing && (
         <div className="flex items-center space-x-2">
           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-          <span className="text-sm text-gray-500">Please wait...</span>
+          <span className="text-sm text-gray-500">Bitte warten...</span>
         </div>
       )}
 
       {/* Import Steps Indicator */}
       <div className="bg-gray-50 rounded-lg p-4 w-full max-w-md">
-        <h4 className="text-sm font-medium text-gray-900 mb-3">Import Process:</h4>
+        <h4 className="text-sm font-medium text-gray-900 mb-3">Importvorgang:</h4>
         <div className="space-y-2">
           {[
-            { step: 'Validating data', completed: progress > 10 },
-            { step: 'Checking for conflicts', completed: progress > 30 },
-            { step: 'Creating records', completed: progress > 60 },
-            { step: 'Finalizing import', completed: progress > 90 }
+            { step: 'Daten validieren', completed: progress > 10 },
+            { step: 'Konflikte prüfen', completed: progress > 30 },
+            { step: 'Datensätze erstellen', completed: progress > 60 },
+            { step: 'Import abschließen', completed: progress > 90 }
           ].map((item, index) => (
             <div key={index} className="flex items-center space-x-2">
               <div className={`w-2 h-2 rounded-full ${
@@ -107,7 +107,7 @@ export default function ImportStep({ progress, message, isProcessing }: ImportSt
         <div className="flex">
           <div className="ml-3">
             <p className="text-sm text-yellow-700">
-              Please do not close this window or navigate away during the import process.
+              Bitte schließen Sie dieses Fenster nicht und navigieren Sie nicht weg während des Importvorgangs.
             </p>
           </div>
         </div>

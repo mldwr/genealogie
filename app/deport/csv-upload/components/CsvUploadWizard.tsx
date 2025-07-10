@@ -51,11 +51,11 @@ export default function CsvUploadWizard({ onComplete, onCancel }: CsvUploadWizar
       }));
 
       toast({
-        title: 'File parsed successfully',
-        description: `Found ${parsedData.totalRows} rows of data`
+        title: 'Datei erfolgreich eingelesen',
+        description: `${parsedData.totalRows} Datenzeilen gefunden`
       });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to parse CSV file';
+      const errorMessage = error instanceof Error ? error.message : 'Fehler beim Einlesen der CSV-Datei';
       setState(prev => ({
         ...prev,
         error: errorMessage,
@@ -63,7 +63,7 @@ export default function CsvUploadWizard({ onComplete, onCancel }: CsvUploadWizar
       }));
 
       toast({
-        title: 'Parse Error',
+        title: 'Einlesefehler',
         description: errorMessage,
         variant: 'destructive'
       });
@@ -91,18 +91,18 @@ export default function CsvUploadWizard({ onComplete, onCancel }: CsvUploadWizar
 
       if (validationResult.isValid) {
         toast({
-          title: 'Validation completed',
-          description: `${validationResult.validRows} of ${validationResult.totalRows} rows are valid`
+          title: 'Validierung abgeschlossen',
+          description: `${validationResult.validRows} von ${validationResult.totalRows} Zeilen sind gültig`
         });
       } else {
         toast({
-          title: 'Validation issues found',
-          description: `${validationResult.errors.length} errors need to be resolved`,
+          title: 'Validierungsprobleme gefunden',
+          description: `${validationResult.errors.length} Fehler müssen behoben werden`,
           variant: 'destructive'
         });
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Validation failed';
+      const errorMessage = error instanceof Error ? error.message : 'Validierung fehlgeschlagen';
       setState(prev => ({
         ...prev,
         error: errorMessage,
@@ -110,7 +110,7 @@ export default function CsvUploadWizard({ onComplete, onCancel }: CsvUploadWizar
       }));
 
       toast({
-        title: 'Validation Error',
+        title: 'Validierungsfehler',
         description: errorMessage,
         variant: 'destructive'
       });
@@ -142,20 +142,20 @@ export default function CsvUploadWizard({ onComplete, onCancel }: CsvUploadWizar
 
       if (importResult.success) {
         toast({
-          title: 'Import completed successfully',
-          description: `${importResult.importedCount} records imported, ${importResult.skippedCount} skipped`
+          title: 'Import erfolgreich abgeschlossen',
+          description: `${importResult.importedCount} Datensätze importiert, ${importResult.skippedCount} übersprungen`
         });
       } else {
         toast({
-          title: 'Import completed with errors',
-          description: `${importResult.importedCount} imported, ${importResult.errorCount} errors`,
+          title: 'Import mit Fehlern abgeschlossen',
+          description: `${importResult.importedCount} importiert, ${importResult.errorCount} Fehler`,
           variant: 'destructive'
         });
       }
 
       onComplete?.(importResult);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Import failed';
+      const errorMessage = error instanceof Error ? error.message : 'Import fehlgeschlagen';
       setState(prev => ({
         ...prev,
         error: errorMessage,
@@ -163,7 +163,7 @@ export default function CsvUploadWizard({ onComplete, onCancel }: CsvUploadWizar
       }));
 
       toast({
-        title: 'Import Error',
+        title: 'Importfehler',
         description: errorMessage,
         variant: 'destructive'
       });
@@ -218,7 +218,7 @@ export default function CsvUploadWizard({ onComplete, onCancel }: CsvUploadWizar
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
           <div className="flex">
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">Error</h3>
+              <h3 className="text-sm font-medium text-red-800">Fehler</h3>
               <div className="mt-2 text-sm text-red-700">
                 {state.error}
               </div>
@@ -271,11 +271,11 @@ export default function CsvUploadWizard({ onComplete, onCancel }: CsvUploadWizar
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h3 className="mt-4 text-lg font-medium text-gray-900">Import Complete</h3>
+              <h3 className="mt-4 text-lg font-medium text-gray-900">Import abgeschlossen</h3>
               <p className="mt-2 text-sm text-gray-500">
-                {state.importResult.importedCount} records imported successfully
-                {state.importResult.skippedCount > 0 && `, ${state.importResult.skippedCount} skipped`}
-                {state.importResult.errorCount > 0 && `, ${state.importResult.errorCount} errors`}
+                {state.importResult.importedCount} Datensätze erfolgreich importiert
+                {state.importResult.skippedCount > 0 && `, ${state.importResult.skippedCount} übersprungen`}
+                {state.importResult.errorCount > 0 && `, ${state.importResult.errorCount} Fehler`}
               </p>
             </div>
             
@@ -284,13 +284,13 @@ export default function CsvUploadWizard({ onComplete, onCancel }: CsvUploadWizar
                 onClick={handleReset}
                 className="btn bg-blue-600 text-white hover:bg-blue-700"
               >
-                Import Another File
+                Weitere Datei importieren
               </button>
               <button
                 onClick={onCancel}
                 className="btn bg-gray-600 text-white hover:bg-gray-700"
               >
-                Close
+                Schließen
               </button>
             </div>
           </div>
@@ -304,7 +304,7 @@ export default function CsvUploadWizard({ onComplete, onCancel }: CsvUploadWizar
             className="btn bg-gray-600 text-white hover:bg-gray-700"
             disabled={state.isProcessing}
           >
-            Cancel
+            Abbrechen
           </button>
         </div>
       )}
