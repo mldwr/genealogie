@@ -56,7 +56,7 @@ export async function validateCsvData(parsedData: ParsedCsvData): Promise<Valida
   }
 
   // Check for duplicate Laufendenr within CSV
-  for (const [laufendenr, rowNumbers] of laufendenrMap.entries()) {
+  for (const [laufendenr, rowNumbers] of Array.from(laufendenrMap.entries())) {
     if (rowNumbers.length > 1) {
       rowNumbers.forEach(rowNumber => {
         errors.push({
@@ -217,7 +217,7 @@ async function checkDatabaseConflicts(
     .filter(val => !isNaN(val));
 
   // Check each unique Laufendenr against database
-  const uniqueLaufendenr = [...new Set(laufendenrValues)];
+  const uniqueLaufendenr = Array.from(new Set(laufendenrValues));
   
   for (const laufendenr of uniqueLaufendenr) {
     try {
