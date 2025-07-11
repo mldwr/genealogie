@@ -23,13 +23,13 @@ export default function CsvUploadPage() {
   const handleImportComplete = (result: ImportResult) => {
     if (result.success) {
       toast({
-        title: 'Import Successful',
-        description: `${result.importedCount} records imported successfully`
+        title: 'Import erfolgreich',
+        description: `${result.importedCount} Datensätze erfolgreich importiert`
       });
     } else {
       toast({
-        title: 'Import Completed with Issues',
-        description: `${result.importedCount} imported, ${result.errorCount} errors`,
+        title: 'Import mit Problemen abgeschlossen',
+        description: `${result.importedCount} importiert, ${result.errorCount} Fehler`,
         variant: 'destructive'
       });
     }
@@ -69,12 +69,12 @@ export default function CsvUploadPage() {
               className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700"
             >
               <ArrowLeftIcon className="h-4 w-4 mr-1" />
-              Back to Deportations
+              Zurück zu Deportationen
             </button>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">CSV Data Import</h1>
+          <h1 className="text-3xl font-bold text-gray-900">CSV-Datenimport</h1>
           <p className="mt-2 text-gray-600">
-            Import deportation records from a CSV file with validation and conflict resolution.
+            Importieren Sie Deportationsdatensätze aus einer CSV-Datei mit Validierung und Konfliktlösung.
           </p>
         </div>
 
@@ -88,10 +88,10 @@ export default function CsvUploadPage() {
               </div>
               <div className="ml-4">
                 <h2 className="text-2xl font-bold text-white">
-                  Import Deportation Records
+                  Deportationsdatensätze importieren
                 </h2>
                 <p className="mt-1 text-blue-100">
-                  Upload and validate CSV data with our step-by-step wizard
+                  CSV-Daten mit unserem schrittweisen Assistenten hochladen und validieren
                 </p>
               </div>
             </div>
@@ -106,9 +106,9 @@ export default function CsvUploadPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Data Validation</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Datenvalidierung</h3>
                 <p className="text-sm text-gray-600">
-                  Comprehensive validation of field types, required values, and business rules
+                  Umfassende Validierung von Feldtypen, Pflichtfeldern und Geschäftsregeln
                 </p>
               </div>
 
@@ -118,9 +118,9 @@ export default function CsvUploadPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Conflict Resolution</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Konfliktlösung</h3>
                 <p className="text-sm text-gray-600">
-                  Handle duplicate records with flexible resolution options
+                  Behandlung doppelter Datensätze mit flexiblen Lösungsoptionen
                 </p>
               </div>
 
@@ -130,33 +130,33 @@ export default function CsvUploadPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Fast Processing</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Schnelle Verarbeitung</h3>
                 <p className="text-sm text-gray-600">
-                  Efficient batch processing with real-time progress tracking
+                  Effiziente Stapelverarbeitung mit Echtzeit-Fortschrittsverfolgung
                 </p>
               </div>
             </div>
 
             {/* Requirements */}
             <div className="bg-gray-50 rounded-lg p-6 mb-8">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">File Requirements</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Dateianforderungen</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <h4 className="text-sm font-medium text-gray-700 mb-2">Format</h4>
                   <ul className="text-sm text-gray-600 space-y-1">
-                    <li>• CSV file (.csv extension)</li>
-                    <li>• UTF-8 encoding</li>
-                    <li>• Semicolon (;) separator</li>
-                    <li>• Maximum 10MB file size</li>
+                    <li>• CSV-Datei (.csv-Erweiterung)</li>
+                    <li>• UTF-8-Kodierung</li>
+                    <li>• Semikolon (;) als Trennzeichen</li>
+                    <li>• Maximale Dateigröße 10MB</li>
                   </ul>
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">Required Fields</h4>
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Pflichtfelder</h4>
                   <ul className="text-sm text-gray-600 space-y-1">
-                    <li>• Laufendenr (unique identifier)</li>
-                    <li>• All other fields are optional</li>
-                    <li>• Headers must match template exactly</li>
-                    <li>• Empty values allowed for optional fields</li>
+                    <li>• Laufendenr (eindeutige Kennung)</li>
+                    <li>• Alle anderen Felder sind optional</li>
+                    <li>• Spaltenüberschriften müssen exakt der Vorlage entsprechen</li>
+                    <li>• Leere Werte sind für optionale Felder erlaubt</li>
                   </ul>
                 </div>
               </div>
@@ -169,7 +169,7 @@ export default function CsvUploadPage() {
                 className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
                 <DocumentArrowUpIcon className="h-5 w-5 mr-2" />
-                Start CSV Import
+                CSV-Import starten
               </button>
             </div>
           </div>
@@ -177,16 +177,16 @@ export default function CsvUploadPage() {
 
         {/* Help Section */}
         <div className="mt-8 bg-white shadow rounded-lg p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Need Help?</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Benötigen Sie Hilfe?</h3>
           <div className="prose prose-sm text-gray-600">
             <p>
-              If you're having trouble with the CSV import, make sure your file follows the required format. 
-              You can download a template file during the import process that shows the correct structure.
+              Falls Sie Probleme mit dem CSV-Import haben, stellen Sie sicher, dass Ihre Datei dem erforderlichen Format entspricht.
+              Sie können während des Importvorgangs eine Vorlagendatei herunterladen, die die korrekte Struktur zeigt.
             </p>
             <p className="mt-2">
-              The import process includes validation to catch common issues like missing required fields, 
-              invalid data types, and duplicate records. All issues will be clearly explained with 
-              suggestions for resolution.
+              Der Importvorgang beinhaltet eine Validierung, um häufige Probleme wie fehlende Pflichtfelder,
+              ungültige Datentypen und doppelte Datensätze zu erkennen. Alle Probleme werden klar erklärt mit
+              Lösungsvorschlägen.
             </p>
           </div>
         </div>
