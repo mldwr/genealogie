@@ -1,9 +1,93 @@
 // CSV parsing utilities for deported persons data
 
-import { ParsedCsvData, CsvRow, EXPECTED_CSV_HEADERS } from '../types/csvTypes';
+import { ParsedCsvData, CsvRow, EXPECTED_CSV_HEADERS, SeparatorDetectionResult } from '../types/csvTypes';
+
+// Supported CSV separators in order of priority
+const SUPPORTED_SEPARATORS = [
+  { char: ';', name: 'Semikolon (;)' },
+  { char: ',', name: 'Komma (,)' },
+  { char: '|', name: 'Pipe (|)' },
+  { char: '\t', name: 'Tabulator' }
+] as const;
 
 /**
- * Parses CSV file content with semicolon separator and UTF-8 encoding
+ * Automatically detects the CSV separator by analyzing the header row
+ */
+function detectCsvSeparator(headerLine: string): SeparatorDetectionResult {
+  let bestSeparator: typeof SUPPORTED_SEPARATORS[number] = SUPPORTED_SEPARATORS[0]; // Default to semicolon
+  let bestScore = 0;
+
+  for (const separator of SUPPORTED_SEPARATORS) {
+    // Parse the header line with this separator
+    const fields = parseCsvLineWithSeparator(headerLine, separator.char);
+
+    // Count how many fields match our expected headers
+    const matchingFields = fields.filter((field: string) =>
+      EXPECTED_CSV_HEADERS.includes(field.trim() as any)
+    ).length;
+
+    // Calculate score: number of matching fields
+    const score = matchingFields;
+
+    // Prefer this separator if it produces more matching fields
+    if (score > bestScore) {
+      bestScore = score;
+      bestSeparator = separator;
+    }
+  }
+
+  // Calculate confidence as percentage of expected headers found
+  const confidence = Math.round((bestScore / EXPECTED_CSV_HEADERS.length) * 100);
+
+  return {
+    separator: bestSeparator.char,
+    name: bestSeparator.name,
+    confidence
+  };
+}
+
+/**
+ * Parses a single CSV line with a specified separator, handling quoted values
+ */
+function parseCsvLineWithSeparator(line: string, separator: string): string[] {
+  const result: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  let i = 0;
+
+  while (i < line.length) {
+    const char = line[i];
+    const nextChar = line[i + 1];
+
+    if (char === '"') {
+      if (inQuotes && nextChar === '"') {
+        // Escaped quote
+        current += '"';
+        i += 2;
+      } else {
+        // Toggle quote state
+        inQuotes = !inQuotes;
+        i++;
+      }
+    } else if (char === separator && !inQuotes) {
+      // Field separator
+      result.push(current.trim());
+      current = '';
+      i++;
+    } else {
+      current += char;
+      i++;
+    }
+  }
+
+  // Add the last field
+  result.push(current.trim());
+
+  return result;
+}
+
+/**
+ * Parses CSV file content with automatic separator detection and UTF-8 encoding
  */
 export async function parseCsvFile(file: File): Promise<ParsedCsvData> {
   return new Promise((resolve, reject) => {
@@ -28,52 +112,10 @@ export async function parseCsvFile(file: File): Promise<ParsedCsvData> {
   });
 }
 
-/**
- * Detects if CSV content uses incorrect separators instead of semicolon
- */
-function detectIncorrectSeparators(lines: string[]): void {
-  // Take first few lines for analysis (max 3 lines to avoid performance issues)
-  const sampleLines = lines.slice(0, Math.min(3, lines.length));
-  const sampleContent = sampleLines.join('\n');
 
-  // Common incorrect separators to check for
-  const incorrectSeparators = [
-    { char: '+', name: 'Pluszeichen (+)' },
-    { char: ',', name: 'Komma (,)' },
-    { char: '|', name: 'Pipe (|)' },
-    { char: '\t', name: 'Tabulator' }
-  ];
-
-  // Count semicolons in sample
-  const semicolonCount = (sampleContent.match(/;/g) || []).length;
-
-  // If we have very few semicolons, check for other separators
-  if (semicolonCount < 2) {
-    for (const separator of incorrectSeparators) {
-      const separatorCount = (sampleContent.match(new RegExp(`\\${separator.char}`, 'g')) || []).length;
-
-      // If we find many instances of an incorrect separator, it's likely being used as delimiter
-      if (separatorCount > semicolonCount * 2 && separatorCount >= 5) {
-        throw new Error(
-          `Die CSV-Datei verwendet '${separator.char}' als Trennzeichen, aber Semikolon (;) ist erforderlich. ` +
-          `Bitte stellen Sie sicher, dass Ihre CSV-Datei Semikolon-getrennte Werte verwendet. ` +
-          `Erkanntes Trennzeichen: ${separator.name}`
-        );
-      }
-    }
-
-    // If no clear incorrect separator found but still very few semicolons, give general advice
-    if (semicolonCount === 0) {
-      throw new Error(
-        'Die CSV-Datei scheint keine Semikolon-Trennzeichen zu enthalten. ' +
-        'Bitte stellen Sie sicher, dass Ihre CSV-Datei Semikolon (;) als Trennzeichen verwendet.'
-      );
-    }
-  }
-}
 
 /**
- * Parses CSV content string with semicolon separator
+ * Parses CSV content string with automatic separator detection
  */
 export function parseCsvContent(content: string): ParsedCsvData {
   if (!content || content.trim().length === 0) {
@@ -86,12 +128,20 @@ export function parseCsvContent(content: string): ParsedCsvData {
     throw new Error('Die CSV-Datei enthält keine Daten');
   }
 
-  // Check for incorrect separators before parsing
-  detectIncorrectSeparators(lines);
-
-  // Parse header row
+  // Detect the CSV separator automatically
   const headerLine = lines[0];
-  const headers = parseCsvLine(headerLine);
+  const separatorResult = detectCsvSeparator(headerLine);
+
+  // Log the detected separator for debugging
+  console.log(`Automatisch erkanntes Trennzeichen: ${separatorResult.name} (Konfidenz: ${separatorResult.confidence}%)`);
+
+  // If confidence is very low, warn the user but continue
+  if (separatorResult.confidence < 50) {
+    console.warn(`Niedrige Konfidenz bei der Trennzeichen-Erkennung (${separatorResult.confidence}%). Verwende ${separatorResult.name}.`);
+  }
+
+  // Parse header row with detected separator
+  const headers = parseCsvLineWithSeparator(headerLine, separatorResult.separator);
 
   if (headers.length === 0) {
     throw new Error('Die CSV-Datei hat keine Spaltenüberschriften');
@@ -100,13 +150,13 @@ export function parseCsvContent(content: string): ParsedCsvData {
   // Validate headers match expected format
   validateHeaders(headers);
 
-  // Parse data rows
+  // Parse data rows with detected separator
   const rows: CsvRow[] = [];
   const errors: string[] = [];
 
   for (let i = 1; i < lines.length; i++) {
     try {
-      const values = parseCsvLine(lines[i]);
+      const values = parseCsvLineWithSeparator(lines[i], separatorResult.separator);
 
       // Skip empty rows
       if (values.every(val => val.trim() === '')) {
@@ -136,45 +186,7 @@ export function parseCsvContent(content: string): ParsedCsvData {
   };
 }
 
-/**
- * Parses a single CSV line with semicolon separator, handling quoted values
- */
-function parseCsvLine(line: string): string[] {
-  const result: string[] = [];
-  let current = '';
-  let inQuotes = false;
-  let i = 0;
 
-  while (i < line.length) {
-    const char = line[i];
-    const nextChar = line[i + 1];
-
-    if (char === '"') {
-      if (inQuotes && nextChar === '"') {
-        // Escaped quote
-        current += '"';
-        i += 2;
-      } else {
-        // Toggle quote state
-        inQuotes = !inQuotes;
-        i++;
-      }
-    } else if (char === ';' && !inQuotes) {
-      // Field separator
-      result.push(current.trim());
-      current = '';
-      i++;
-    } else {
-      current += char;
-      i++;
-    }
-  }
-
-  // Add the last field
-  result.push(current.trim());
-
-  return result;
-}
 
 /**
  * Validates that CSV headers match expected format
@@ -202,7 +214,26 @@ function validateHeaders(headers: string[]): void {
 }
 
 /**
+ * Detects the separator used in a CSV file content
+ * This function can be used to preview separator detection before parsing
+ */
+export function detectSeparatorFromContent(content: string): SeparatorDetectionResult {
+  if (!content || content.trim().length === 0) {
+    throw new Error('Der Inhalt ist leer');
+  }
+
+  const lines = content.split(/\r?\n/).filter(line => line.trim().length > 0);
+
+  if (lines.length === 0) {
+    throw new Error('Keine Daten gefunden');
+  }
+
+  return detectCsvSeparator(lines[0]);
+}
+
+/**
  * Generates CSV template content for download
+ * Note: The parser supports automatic detection of various separators (;, ,, |, tab)
  */
 export function generateCsvTemplate(): string {
   const headers = EXPECTED_CSV_HEADERS.join(';');

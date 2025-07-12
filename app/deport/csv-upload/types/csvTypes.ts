@@ -35,6 +35,12 @@ export interface ImportResult {
   duplicateConflicts: DuplicateConflict[];
 }
 
+export interface SeparatorDetectionResult {
+  separator: string;
+  name: string;
+  confidence: number;
+}
+
 export interface DuplicateConflict {
   row: number;
   laufendenr: number;
