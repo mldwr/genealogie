@@ -169,7 +169,7 @@ export default function CsvUploadPage() {
                 className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
                 <DocumentArrowUpIcon className="h-5 w-5 mr-2" />
-                CSV-Import starten
+                CSV/Excel-Import starten
               </button>
             </div>
           </div>
@@ -180,7 +180,7 @@ export default function CsvUploadPage() {
           <h3 className="text-lg font-medium text-gray-900 mb-4">Benötigen Sie Hilfe?</h3>
           <div className="prose prose-sm text-gray-600">
             <p>
-              Falls Sie Probleme mit dem CSV-Import haben, stellen Sie sicher, dass Ihre Datei dem erforderlichen Format entspricht.
+              Falls Sie Probleme mit dem CSV/Excel-Import haben, stellen Sie sicher, dass Ihre Datei dem erforderlichen Format entspricht.
               Sie können während des Importvorgangs eine Vorlagendatei herunterladen, die die korrekte Struktur zeigt.
             </p>
             <p className="mt-2">

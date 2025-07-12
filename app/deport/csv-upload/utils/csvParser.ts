@@ -1,7 +1,9 @@
-// CSV parsing utilities for deported persons data
+// CSV and Excel parsing utilities for deported persons data
 // Supports multiple separator types: semicolon (;), tab, pipe (|), and comma (,)
+// Also supports Excel files (.xlsx, .xls) with automatic conversion to CSV format
 
 import { ParsedCsvData, CsvRow, EXPECTED_CSV_HEADERS, SeparatorDetectionResult } from '../types/csvTypes';
+import * as XLSX from 'xlsx';
 
 // CSV separators for detection (all are supported)
 const SUPPORTED_SEPARATORS = [
@@ -290,24 +292,186 @@ export function downloadCsvTemplate(): void {
   const content = generateCsvTemplate();
   const blob = new Blob([content], { type: 'text/csv;charset=utf-8' });
   const url = URL.createObjectURL(blob);
-  
+
   const link = document.createElement('a');
   link.href = url;
   link.download = 'deportierte_personen_template.csv';
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-  
+
   URL.revokeObjectURL(url);
 }
 
 /**
- * Validates CSV file format and size
+ * Parses Excel file and converts it to CSV format
+ * Supports both .xlsx and .xls files
  */
-export function validateCsvFile(file: File): { isValid: boolean; error?: string } {
-  // Check file type
-  if (!file.name.toLowerCase().endsWith('.csv')) {
-    return { isValid: false, error: 'Die Datei muss eine CSV-Datei sein (.csv-Erweiterung)' };
+export async function parseExcelFile(file: File): Promise<ParsedCsvData> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = (event) => {
+      try {
+        const data = event.target?.result as ArrayBuffer;
+
+        // Validate that we have data
+        if (!data || data.byteLength === 0) {
+          reject(new Error('Die Excel-Datei ist leer oder konnte nicht gelesen werden'));
+          return;
+        }
+
+        let workbook;
+        try {
+          workbook = XLSX.read(data, { type: 'array' });
+        } catch (xlsxError) {
+          reject(new Error('Die Excel-Datei ist beschädigt oder hat ein ungültiges Format. Bitte überprüfen Sie die Datei und versuchen Sie es erneut.'));
+          return;
+        }
+
+        // Check if workbook has any sheets
+        if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+          reject(new Error('Die Excel-Datei enthält keine Arbeitsblätter. Bitte fügen Sie mindestens ein Arbeitsblatt mit Daten hinzu.'));
+          return;
+        }
+
+        // Get the first worksheet (future enhancement: allow user to select sheet)
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+
+        if (!worksheet) {
+          reject(new Error(`Das Arbeitsblatt "${sheetName}" konnte nicht gelesen werden. Möglicherweise ist es beschädigt.`));
+          return;
+        }
+
+        // Log sheet information for debugging (can be removed in production)
+        console.log(`Excel-Import: Verwende Arbeitsblatt "${sheetName}" (${workbook.SheetNames.length} Arbeitsblätter verfügbar: ${workbook.SheetNames.join(', ')})`);
+
+        // Future enhancement: If multiple sheets exist, could show sheet selection UI
+        if (workbook.SheetNames.length > 1) {
+          console.log(`Hinweis: Die Excel-Datei enthält ${workbook.SheetNames.length} Arbeitsblätter. Derzeit wird automatisch das erste Arbeitsblatt "${sheetName}" verwendet.`);
+        }
+
+        // Check if worksheet has any data
+        const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1:A1');
+        if (range.e.r === 0 && range.e.c === 0 && !worksheet['A1']) {
+          reject(new Error(`Das Arbeitsblatt "${sheetName}" ist leer. Bitte fügen Sie Daten mit den erforderlichen Spaltenüberschriften hinzu.`));
+          return;
+        }
+
+        // Convert worksheet to CSV format with semicolon separator
+        let csvContent;
+        try {
+          csvContent = XLSX.utils.sheet_to_csv(worksheet, { FS: ';' });
+        } catch (conversionError) {
+          reject(new Error('Fehler beim Konvertieren der Excel-Daten. Möglicherweise enthält das Arbeitsblatt ungültige Zeichen oder Formatierungen.'));
+          return;
+        }
+
+        if (!csvContent || csvContent.trim().length === 0) {
+          reject(new Error(`Das Arbeitsblatt "${sheetName}" enthält keine verwertbaren Daten. Bitte überprüfen Sie den Inhalt.`));
+          return;
+        }
+
+        // Parse the CSV content using existing CSV parser
+        const parsed = parseCsvContent(csvContent);
+        resolve(parsed);
+      } catch (error) {
+        // Pass through specific validation errors from CSV parser
+        if (error instanceof Error && (
+          error.message.includes('Trennzeichen') ||
+          error.message.includes('Spaltenüberschriften') ||
+          error.message.includes('erforderliche')
+        )) {
+          reject(error);
+        } else {
+          const errorMessage = error instanceof Error ? error.message : 'Unbekannter Fehler';
+          reject(new Error(`Fehler beim Verarbeiten der Excel-Datei: ${errorMessage}. Bitte überprüfen Sie das Dateiformat und die Spaltenüberschriften.`));
+        }
+      }
+    };
+
+    reader.onerror = () => {
+      reject(new Error('Fehler beim Lesen der Excel-Datei. Möglicherweise ist die Datei beschädigt oder wird von einem anderen Programm verwendet.'));
+    };
+
+    // Read as ArrayBuffer for Excel files
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+/**
+ * Determines if a file is an Excel file based on its extension
+ */
+export function isExcelFile(file: File): boolean {
+  const fileName = file.name.toLowerCase();
+  return fileName.endsWith('.xlsx') || fileName.endsWith('.xls');
+}
+
+/**
+ * Gets information about Excel sheets (for future sheet selection feature)
+ * Currently returns info about the first sheet that will be used
+ */
+export async function getExcelSheetInfo(file: File): Promise<{ sheetNames: string[]; selectedSheet: string }> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = (event) => {
+      try {
+        const data = event.target?.result as ArrayBuffer;
+
+        if (!data || data.byteLength === 0) {
+          reject(new Error('Die Excel-Datei ist leer'));
+          return;
+        }
+
+        const workbook = XLSX.read(data, { type: 'array' });
+
+        if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+          reject(new Error('Die Excel-Datei enthält keine Arbeitsblätter'));
+          return;
+        }
+
+        resolve({
+          sheetNames: workbook.SheetNames,
+          selectedSheet: workbook.SheetNames[0] // Default to first sheet
+        });
+      } catch (error) {
+        reject(new Error(`Fehler beim Lesen der Excel-Datei: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`));
+      }
+    };
+
+    reader.onerror = () => {
+      reject(new Error('Fehler beim Lesen der Excel-Datei'));
+    };
+
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+/**
+ * Universal file parser that handles both CSV and Excel files
+ */
+export async function parseFile(file: File): Promise<ParsedCsvData> {
+  if (isExcelFile(file)) {
+    return parseExcelFile(file);
+  } else {
+    return parseCsvFile(file);
+  }
+}
+
+/**
+ * Validates file format and size for both CSV and Excel files
+ */
+export function validateFile(file: File): { isValid: boolean; error?: string } {
+  const fileName = file.name.toLowerCase();
+
+  // Check file type - support CSV and Excel formats
+  if (!fileName.endsWith('.csv') && !fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
+    return {
+      isValid: false,
+      error: 'Die Datei muss eine CSV-Datei (.csv) oder Excel-Datei (.xlsx, .xls) sein'
+    };
   }
 
   // Check file size (max 10MB)
@@ -322,4 +486,12 @@ export function validateCsvFile(file: File): { isValid: boolean; error?: string 
   }
 
   return { isValid: true };
+}
+
+/**
+ * Legacy function for backward compatibility
+ * @deprecated Use validateFile instead
+ */
+export function validateCsvFile(file: File): { isValid: boolean; error?: string } {
+  return validateFile(file);
 }

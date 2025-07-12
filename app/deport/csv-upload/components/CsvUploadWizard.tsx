@@ -4,7 +4,7 @@ import React, { useState, useCallback } from 'react';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useToast } from '@/components/ui/Toasts/use-toast';
 import { CsvUploadState, ParsedCsvData, ValidationResult, ImportResult, DuplicateConflict } from '../types/csvTypes';
-import { parseCsvFile } from '../utils/csvParser';
+import { parseFile } from '../utils/csvParser';
 import { validateCsvData, identifyDuplicateConflicts } from '../utils/dataValidator';
 import { processCsvImport } from '../utils/importProcessor';
 
@@ -41,7 +41,7 @@ export default function CsvUploadWizard({ onComplete, onCancel }: CsvUploadWizar
     setState(prev => ({ ...prev, isProcessing: true, error: null }));
 
     try {
-      const parsedData = await parseCsvFile(file);
+      const parsedData = await parseFile(file);
       setState(prev => ({
         ...prev,
         file,
@@ -50,12 +50,13 @@ export default function CsvUploadWizard({ onComplete, onCancel }: CsvUploadWizar
         isProcessing: false
       }));
 
+      const fileType = file.name.toLowerCase().endsWith('.csv') ? 'CSV' : 'Excel';
       toast({
         title: 'Datei erfolgreich eingelesen',
-        description: `${parsedData.totalRows} Datenzeilen gefunden`
+        description: `${fileType}-Datei mit ${parsedData.totalRows} Datenzeilen gefunden`
       });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Fehler beim Einlesen der CSV-Datei';
+      const errorMessage = error instanceof Error ? error.message : 'Fehler beim Einlesen der Datei';
       setState(prev => ({
         ...prev,
         error: errorMessage,
@@ -209,7 +210,7 @@ export default function CsvUploadWizard({ onComplete, onCancel }: CsvUploadWizar
     <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          CSV Import für Deportierte Personen
+          CSV & Excel Import für Deportierte Personen
         </h1>
         <ProgressIndicator currentStep={state.step} />
       </div>

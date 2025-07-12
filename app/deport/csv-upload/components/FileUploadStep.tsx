@@ -3,7 +3,7 @@
 import React, { useCallback, useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { DocumentArrowUpIcon, DocumentTextIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
-import { validateCsvFile } from '../utils/csvParser';
+import { validateFile } from '../utils/csvParser';
 import { downloadCsvTemplateWithDocs } from '../utils/csvTemplate';
 
 interface FileUploadStepProps {
@@ -19,7 +19,7 @@ function FileUploadStepClient({ onFileSelected, isProcessing }: FileUploadStepPr
     setFileError(null);
 
     if (rejectedFiles.length > 0) {
-      setFileError('Bitte wählen Sie eine gültige CSV-Datei aus');
+      setFileError('Bitte wählen Sie eine gültige CSV- oder Excel-Datei aus');
       return;
     }
 
@@ -29,7 +29,7 @@ function FileUploadStepClient({ onFileSelected, isProcessing }: FileUploadStepPr
     }
 
     const file = acceptedFiles[0];
-    const validation = validateCsvFile(file);
+    const validation = validateFile(file);
 
     if (!validation.isValid) {
       setFileError(validation.error || 'Ungültige Datei');
@@ -44,7 +44,9 @@ function FileUploadStepClient({ onFileSelected, isProcessing }: FileUploadStepPr
     accept: {
       'text/csv': ['.csv'],
       'application/csv': ['.csv'],
-      'text/plain': ['.csv']
+      'text/plain': ['.csv'],
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+      'application/vnd.ms-excel': ['.xls']
     },
     multiple: false,
     disabled: isProcessing
@@ -66,8 +68,9 @@ function FileUploadStepClient({ onFileSelected, isProcessing }: FileUploadStepPr
             </h3>
             <div className="mt-2 text-sm text-blue-700">
               <ul className="list-disc list-inside space-y-1">
-                <li>Bereiten Sie Ihre CSV-Datei mit einem unterstützten Trennzeichen vor (Semikolon, Tabulator, Pipe oder Komma)</li>
-                <li>Stellen Sie UTF-8-Kodierung sicher</li>
+                <li><strong>CSV-Dateien:</strong> Verwenden Sie ein unterstütztes Trennzeichen (Semikolon, Tabulator, Pipe oder Komma)</li>
+                <li><strong>Excel-Dateien:</strong> Unterstützt werden .xlsx und .xls Formate</li>
+                <li>Stellen Sie UTF-8-Kodierung sicher (bei CSV-Dateien)</li>
                 <li>Fügen Sie alle erforderlichen Spaltenüberschriften hinzu</li>
                 <li>Laden Sie die Vorlage unten für das korrekte Format herunter</li>
               </ul>
@@ -84,7 +87,7 @@ function FileUploadStepClient({ onFileSelected, isProcessing }: FileUploadStepPr
           disabled={isProcessing}
         >
           <DocumentTextIcon className="h-4 w-4 mr-2" />
-          CSV-Vorlage & Anweisungen herunterladen
+          CSV-Vorlage herunterladen (auch für Excel verwendbar)
         </button>
       </div>
 
@@ -112,8 +115,8 @@ function FileUploadStepClient({ onFileSelected, isProcessing }: FileUploadStepPr
           <div>
             <p className="text-lg font-medium text-gray-900">
               {isDragActive
-                ? 'CSV-Datei hier ablegen'
-                : 'CSV-Datei hier ablegen oder klicken zum Durchsuchen'
+                ? 'Datei hier ablegen'
+                : 'CSV- oder Excel-Datei hier ablegen oder klicken zum Durchsuchen'
               }
             </p>
             <p className="text-sm text-gray-500 mt-1">
@@ -123,7 +126,7 @@ function FileUploadStepClient({ onFileSelected, isProcessing }: FileUploadStepPr
 
           {!isProcessing && (
             <div className="text-xs text-gray-400">
-              Unterstütztes Format: CSV-Dateien mit Semikolon (;), Tabulator, Pipe (|) oder Komma (,) als Trennzeichen
+              Unterstützte Formate: CSV (.csv), Excel (.xlsx, .xls)
             </div>
           )}
 
@@ -158,11 +161,12 @@ function FileUploadStepClient({ onFileSelected, isProcessing }: FileUploadStepPr
           Dateianforderungen:
         </h4>
         <ul className="text-sm text-gray-600 space-y-1">
-          <li>• Dateiformat: CSV (.csv)</li>
-          <li>• Kodierung: UTF-8</li>
-          <li>• Trennzeichen: Semikolon (;), Tabulator, Pipe (|) oder Komma (,)</li>
-          <li>• Pflichtfelder: Laufendenr</li>
-          <li>• Maximale Größe: 10MB</li>
+          <li>• <strong>Dateiformate:</strong> CSV (.csv), Excel (.xlsx, .xls)</li>
+          <li>• <strong>CSV-Kodierung:</strong> UTF-8</li>
+          <li>• <strong>CSV-Trennzeichen:</strong> Semikolon (;), Tabulator, Pipe (|) oder Komma (,)</li>
+          <li>• <strong>Excel-Hinweis:</strong> Daten werden automatisch aus dem ersten Arbeitsblatt gelesen</li>
+          <li>• <strong>Pflichtfelder:</strong> Laufendenr</li>
+          <li>• <strong>Maximale Größe:</strong> 10MB</li>
         </ul>
       </div>
 
@@ -177,7 +181,8 @@ function FileUploadStepClient({ onFileSelected, isProcessing }: FileUploadStepPr
           </code>
         </div>
         <p className="text-xs text-gray-500">
-          (Beispiel mit Semikolon-Trennzeichen - andere unterstützte Trennzeichen können ebenfalls verwendet werden)
+          <strong>CSV:</strong> Beispiel mit Semikolon-Trennzeichen - andere unterstützte Trennzeichen können ebenfalls verwendet werden<br/>
+          <strong>Excel:</strong> Verwenden Sie diese Spaltenüberschriften in der ersten Zeile Ihres Arbeitsblatts
         </p>
       </div>
     </div>

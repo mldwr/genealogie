@@ -660,7 +660,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                 className="inline-flex justify-center rounded-lg bg-gradient-to-r from-green-500 to-green-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md hover:from-green-600 hover:to-green-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-400 focus-visible:ring-opacity-75 transition-all duration-150 ease-in-out"
               >
                 <DocumentArrowUpIcon className="-ml-0.5 mr-2 h-5 w-5" aria-hidden="true" />
-                CSV Import
+                CSV & Excel Import
               </button>
               <button
                 onClick={handleAddRow}
