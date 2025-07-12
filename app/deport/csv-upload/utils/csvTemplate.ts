@@ -74,7 +74,7 @@ export function generateFieldDocumentation(): string {
   docs.push('');
   docs.push('## Dateiformat:');
   docs.push('- Encoding: UTF-8');
-  docs.push('- Separator: Semikolon (;)');
+  docs.push('- Separator: Semikolon (;), Tabulator, Pipe (|) oder Komma (,)');
   docs.push('- Textqualifizierer: Anführungszeichen (") bei Bedarf');
   docs.push('');
   docs.push('## Felderbeschreibung:');

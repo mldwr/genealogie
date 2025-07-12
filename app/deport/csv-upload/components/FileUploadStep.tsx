@@ -66,7 +66,7 @@ function FileUploadStepClient({ onFileSelected, isProcessing }: FileUploadStepPr
             </h3>
             <div className="mt-2 text-sm text-blue-700">
               <ul className="list-disc list-inside space-y-1">
-                <li>Bereiten Sie Ihre CSV-Datei mit Semikolon (;) als Trennzeichen vor</li>
+                <li>Bereiten Sie Ihre CSV-Datei mit einem unterstützten Trennzeichen vor (Semikolon, Tabulator, Pipe oder Komma)</li>
                 <li>Stellen Sie UTF-8-Kodierung sicher</li>
                 <li>Fügen Sie alle erforderlichen Spaltenüberschriften hinzu</li>
                 <li>Laden Sie die Vorlage unten für das korrekte Format herunter</li>
@@ -123,7 +123,7 @@ function FileUploadStepClient({ onFileSelected, isProcessing }: FileUploadStepPr
 
           {!isProcessing && (
             <div className="text-xs text-gray-400">
-              Unterstütztes Format: CSV-Dateien mit Semikolon als Trennzeichen
+              Unterstütztes Format: CSV-Dateien mit Semikolon (;), Tabulator, Pipe (|) oder Komma (,) als Trennzeichen
             </div>
           )}
 
@@ -160,7 +160,7 @@ function FileUploadStepClient({ onFileSelected, isProcessing }: FileUploadStepPr
         <ul className="text-sm text-gray-600 space-y-1">
           <li>• Dateiformat: CSV (.csv)</li>
           <li>• Kodierung: UTF-8</li>
-          <li>• Trennzeichen: Semikolon (;)</li>
+          <li>• Trennzeichen: Semikolon (;), Tabulator, Pipe (|) oder Komma (,)</li>
           <li>• Pflichtfelder: Laufendenr</li>
           <li>• Maximale Größe: 10MB</li>
         </ul>
@@ -171,11 +171,14 @@ function FileUploadStepClient({ onFileSelected, isProcessing }: FileUploadStepPr
         <h4 className="text-sm font-medium text-gray-900 mb-2">
           Erwartete Spaltenüberschriften:
         </h4>
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-gray-600 mb-2">
           <code className="bg-white px-2 py-1 rounded text-xs">
             Seite;Familiennr;Eintragsnr;Laufendenr;Familienname;Vorname;Vatersname;Familienrolle;Geschlecht;Geburtsjahr;Geburtsort;Arbeitsort
           </code>
         </div>
+        <p className="text-xs text-gray-500">
+          (Beispiel mit Semikolon-Trennzeichen - andere unterstützte Trennzeichen können ebenfalls verwendet werden)
+        </p>
       </div>
     </div>
   );

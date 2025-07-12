@@ -1,9 +1,9 @@
 // CSV parsing utilities for deported persons data
-// Enforces semicolon (;) separator requirement with German error messages
+// Supports multiple separator types: semicolon (;), tab, pipe (|), and comma (,)
 
 import { ParsedCsvData, CsvRow, EXPECTED_CSV_HEADERS, SeparatorDetectionResult } from '../types/csvTypes';
 
-// CSV separators for detection (semicolon is required, others are detected to provide helpful error messages)
+// CSV separators for detection (all are supported)
 const SUPPORTED_SEPARATORS = [
   { char: ';', name: 'Semikolon (;)' },
   { char: ',', name: 'Komma (,)' },
@@ -88,7 +88,8 @@ function parseCsvLineWithSeparator(line: string, separator: string): string[] {
 }
 
 /**
- * Parses CSV file content with semicolon separator validation and UTF-8 encoding
+ * Parses CSV file content with automatic separator detection and UTF-8 encoding
+ * Supports semicolon (;), tab, pipe (|), and comma (,) separators
  */
 export async function parseCsvFile(file: File): Promise<ParsedCsvData> {
   return new Promise((resolve, reject) => {
@@ -121,7 +122,8 @@ export async function parseCsvFile(file: File): Promise<ParsedCsvData> {
 
 
 /**
- * Parses CSV content string with semicolon separator validation
+ * Parses CSV content string with automatic separator detection
+ * Supports semicolon (;), tab, pipe (|), and comma (,) separators
  */
 export function parseCsvContent(content: string): ParsedCsvData {
   if (!content || content.trim().length === 0) {
@@ -138,8 +140,8 @@ export function parseCsvContent(content: string): ParsedCsvData {
   const headerLine = lines[0];
   const separatorResult = detectCsvSeparator(headerLine);
 
-  // Validate that semicolon is used as separator
-  validateSeparatorRequirement(separatorResult);
+  // Validate that a supported separator was detected with sufficient confidence
+  validateSeparatorDetection(separatorResult);
 
   // Parse header row with detected separator
   const headers = parseCsvLineWithSeparator(headerLine, separatorResult.separator);
@@ -190,46 +192,26 @@ export function parseCsvContent(content: string): ParsedCsvData {
 
 
 /**
- * Validates that semicolon separator is used and provides specific German error messages
+ * Validates that a supported separator was detected with sufficient confidence
  */
-function validateSeparatorRequirement(separatorResult: SeparatorDetectionResult): void {
+function validateSeparatorDetection(separatorResult: SeparatorDetectionResult): void {
   // Check if confidence is too low to reliably detect separator
   if (separatorResult.confidence < 50) {
     throw new Error(
       `Das Trennzeichen in der CSV-Datei konnte nicht eindeutig erkannt werden (Konfidenz: ${separatorResult.confidence}%). ` +
-      'Bitte stellen Sie sicher, dass Ihre CSV-Datei Semikolons (;) als Trennzeichen verwendet und ' +
-      'die Spaltenüberschriften korrekt formatiert sind. Laden Sie die Datei anschließend erneut hoch.'
+      'Bitte stellen Sie sicher, dass Ihre CSV-Datei ein unterstütztes Trennzeichen verwendet ' +
+      '(Semikolon, Tabulator, Pipe oder Komma) und die Spaltenüberschriften korrekt formatiert sind. ' +
+      'Laden Sie die Datei anschließend erneut hoch.'
     );
   }
 
-  // Check if detected separator is not semicolon
-  if (separatorResult.separator !== ';') {
-    let separatorName: string;
-    let suggestion: string;
-
-    switch (separatorResult.separator) {
-      case ',':
-        separatorName = 'Kommas (,)';
-        suggestion = 'Öffnen Sie die CSV-Datei in einem Texteditor oder Excel und ersetzen Sie alle Kommas durch Semikolons, oder speichern Sie die Datei mit Semikolon als Trennzeichen.';
-        break;
-      case '\t':
-        separatorName = 'Tabulatoren';
-        suggestion = 'Öffnen Sie die CSV-Datei in einem Texteditor oder Excel und ersetzen Sie alle Tabulatoren durch Semikolons, oder speichern Sie die Datei mit Semikolon als Trennzeichen.';
-        break;
-      case '|':
-        separatorName = 'Pipe-Zeichen (|)';
-        suggestion = 'Öffnen Sie die CSV-Datei in einem Texteditor und ersetzen Sie alle Pipe-Zeichen durch Semikolons.';
-        break;
-      default:
-        separatorName = `"${separatorResult.separator}"`;
-        suggestion = 'Öffnen Sie die CSV-Datei in einem Texteditor und stellen Sie sicher, dass Semikolons (;) als Trennzeichen verwendet werden.';
-    }
-
+  // Check if detected separator is supported
+  const supportedSeparators = [';', ',', '|', '\t'];
+  if (!supportedSeparators.includes(separatorResult.separator)) {
     throw new Error(
-      `Die CSV-Datei verwendet ${separatorName} als Trennzeichen. ` +
-      'Für diese Anwendung sind Semikolons (;) als Trennzeichen erforderlich.\n\n' +
-      `Lösung: ${suggestion}\n\n` +
-      'Laden Sie die korrigierte Datei anschließend erneut hoch.'
+      `Das erkannte Trennzeichen "${separatorResult.separator}" wird nicht unterstützt. ` +
+      'Unterstützte Trennzeichen sind: Semikolon (;), Tabulator, Pipe (|) und Komma (,). ' +
+      'Bitte verwenden Sie eines dieser Trennzeichen und laden Sie die Datei erneut hoch.'
     );
   }
 }
@@ -279,7 +261,7 @@ export function detectSeparatorFromContent(content: string): SeparatorDetectionR
 
 /**
  * Generates CSV template content for download
- * Note: The parser requires semicolon (;) separators - other separators will be rejected
+ * Note: Uses semicolon (;) separators by default, but parser supports multiple separator types
  */
 export function generateCsvTemplate(): string {
   const headers = EXPECTED_CSV_HEADERS.join(';');

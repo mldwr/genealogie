@@ -146,7 +146,7 @@ export default function CsvUploadPage() {
                   <ul className="text-sm text-gray-600 space-y-1">
                     <li>• CSV-Datei (.csv-Erweiterung)</li>
                     <li>• UTF-8-Kodierung</li>
-                    <li>• Semikolon (;) als Trennzeichen</li>
+                    <li>• Unterstützte Trennzeichen: Semikolon (;), Tabulator, Pipe (|), Komma (,)</li>
                     <li>• Maximale Dateigröße 10MB</li>
                   </ul>
                 </div>
