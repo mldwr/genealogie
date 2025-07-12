@@ -15,12 +15,12 @@ export async function parseCsvFile(file: File): Promise<ParsedCsvData> {
         const parsed = parseCsvContent(content);
         resolve(parsed);
       } catch (error) {
-        reject(new Error(`Failed to parse CSV file: ${error instanceof Error ? error.message : 'Unknown error'}`));
+        reject(new Error(`Fehler beim Parsen der CSV-Datei: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`));
       }
     };
-    
+
     reader.onerror = () => {
-      reject(new Error('Failed to read file'));
+      reject(new Error('Fehler beim Lesen der Datei'));
     };
     
     // Read as UTF-8 text
@@ -29,25 +29,72 @@ export async function parseCsvFile(file: File): Promise<ParsedCsvData> {
 }
 
 /**
+ * Detects if CSV content uses incorrect separators instead of semicolon
+ */
+function detectIncorrectSeparators(lines: string[]): void {
+  // Take first few lines for analysis (max 3 lines to avoid performance issues)
+  const sampleLines = lines.slice(0, Math.min(3, lines.length));
+  const sampleContent = sampleLines.join('\n');
+
+  // Common incorrect separators to check for
+  const incorrectSeparators = [
+    { char: '+', name: 'Pluszeichen (+)' },
+    { char: ',', name: 'Komma (,)' },
+    { char: '|', name: 'Pipe (|)' },
+    { char: '\t', name: 'Tabulator' }
+  ];
+
+  // Count semicolons in sample
+  const semicolonCount = (sampleContent.match(/;/g) || []).length;
+
+  // If we have very few semicolons, check for other separators
+  if (semicolonCount < 2) {
+    for (const separator of incorrectSeparators) {
+      const separatorCount = (sampleContent.match(new RegExp(`\\${separator.char}`, 'g')) || []).length;
+
+      // If we find many instances of an incorrect separator, it's likely being used as delimiter
+      if (separatorCount > semicolonCount * 2 && separatorCount >= 5) {
+        throw new Error(
+          `Die CSV-Datei verwendet '${separator.char}' als Trennzeichen, aber Semikolon (;) ist erforderlich. ` +
+          `Bitte stellen Sie sicher, dass Ihre CSV-Datei Semikolon-getrennte Werte verwendet. ` +
+          `Erkanntes Trennzeichen: ${separator.name}`
+        );
+      }
+    }
+
+    // If no clear incorrect separator found but still very few semicolons, give general advice
+    if (semicolonCount === 0) {
+      throw new Error(
+        'Die CSV-Datei scheint keine Semikolon-Trennzeichen zu enthalten. ' +
+        'Bitte stellen Sie sicher, dass Ihre CSV-Datei Semikolon (;) als Trennzeichen verwendet.'
+      );
+    }
+  }
+}
+
+/**
  * Parses CSV content string with semicolon separator
  */
 export function parseCsvContent(content: string): ParsedCsvData {
   if (!content || content.trim().length === 0) {
-    throw new Error('CSV file is empty');
+    throw new Error('Die CSV-Datei ist leer');
   }
 
   const lines = content.split(/\r?\n/).filter(line => line.trim().length > 0);
-  
+
   if (lines.length === 0) {
-    throw new Error('CSV file contains no data');
+    throw new Error('Die CSV-Datei enthält keine Daten');
   }
+
+  // Check for incorrect separators before parsing
+  detectIncorrectSeparators(lines);
 
   // Parse header row
   const headerLine = lines[0];
   const headers = parseCsvLine(headerLine);
-  
+
   if (headers.length === 0) {
-    throw new Error('CSV file has no headers');
+    throw new Error('Die CSV-Datei hat keine Spaltenüberschriften');
   }
 
   // Validate headers match expected format
@@ -60,26 +107,26 @@ export function parseCsvContent(content: string): ParsedCsvData {
   for (let i = 1; i < lines.length; i++) {
     try {
       const values = parseCsvLine(lines[i]);
-      
+
       // Skip empty rows
       if (values.every(val => val.trim() === '')) {
         continue;
       }
-      
+
       // Create row object
       const row: CsvRow = {};
       headers.forEach((header, index) => {
         row[header] = values[index] || '';
       });
-      
+
       rows.push(row);
     } catch (error) {
-      errors.push(`Row ${i + 1}: ${error instanceof Error ? error.message : 'Parse error'}`);
+      errors.push(`Zeile ${i + 1}: ${error instanceof Error ? error.message : 'Parsing-Fehler'}`);
     }
   }
 
   if (errors.length > 0) {
-    throw new Error(`CSV parsing errors:\n${errors.join('\n')}`);
+    throw new Error(`CSV-Parsing-Fehler:\n${errors.join('\n')}`);
   }
 
   return {
@@ -134,23 +181,23 @@ function parseCsvLine(line: string): string[] {
  */
 function validateHeaders(headers: string[]): void {
   const normalizedHeaders = headers.map(h => h.trim());
-  
+
   // Check for required headers
-  const missingHeaders = EXPECTED_CSV_HEADERS.filter(expected => 
+  const missingHeaders = EXPECTED_CSV_HEADERS.filter(expected =>
     !normalizedHeaders.includes(expected)
   );
 
   if (missingHeaders.length > 0) {
-    throw new Error(`Missing required headers: ${missingHeaders.join(', ')}`);
+    throw new Error(`Fehlende erforderliche Spaltenüberschriften: ${missingHeaders.join(', ')}`);
   }
 
   // Check for unexpected headers
-  const unexpectedHeaders = normalizedHeaders.filter(header => 
+  const unexpectedHeaders = normalizedHeaders.filter(header =>
     !EXPECTED_CSV_HEADERS.includes(header as any) && header !== ''
   );
 
   if (unexpectedHeaders.length > 0) {
-    console.warn(`Unexpected headers found (will be ignored): ${unexpectedHeaders.join(', ')}`);
+    console.warn(`Unerwartete Spaltenüberschriften gefunden (werden ignoriert): ${unexpectedHeaders.join(', ')}`);
   }
 }
 
@@ -201,18 +248,18 @@ export function downloadCsvTemplate(): void {
 export function validateCsvFile(file: File): { isValid: boolean; error?: string } {
   // Check file type
   if (!file.name.toLowerCase().endsWith('.csv')) {
-    return { isValid: false, error: 'File must be a CSV file (.csv extension)' };
+    return { isValid: false, error: 'Die Datei muss eine CSV-Datei sein (.csv-Erweiterung)' };
   }
 
   // Check file size (max 10MB)
   const maxSize = 10 * 1024 * 1024; // 10MB
   if (file.size > maxSize) {
-    return { isValid: false, error: 'File size must be less than 10MB' };
+    return { isValid: false, error: 'Die Dateigröße muss weniger als 10MB betragen' };
   }
 
   // Check if file is empty
   if (file.size === 0) {
-    return { isValid: false, error: 'File is empty' };
+    return { isValid: false, error: 'Die Datei ist leer' };
   }
 
   return { isValid: true };
