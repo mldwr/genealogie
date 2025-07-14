@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   console.log('callback GET',code,requestUrl);
 
   if (code) {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
 
