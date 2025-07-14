@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useToast } from '@/components/ui/Toasts/use-toast';
@@ -14,9 +14,15 @@ export default function CsvUploadPage() {
   const { toast } = useToast();
   const [showWizard, setShowWizard] = useState(false);
 
-  // Redirect if not authenticated
+  useEffect(() => {
+    // Redirect if not authenticated.
+    // router.push() should be called in an effect to avoid issues with server-rendering.
+    if (!user) {
+      router.push('/signin');
+    }
+  }, [user, router]);
+
   if (!user) {
-    router.push('/signin');
     return null;
   }
 
