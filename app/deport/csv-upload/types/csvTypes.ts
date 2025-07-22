@@ -116,7 +116,7 @@ export const FIELD_VALIDATION_RULES: Record<keyof DeportedPersonCsvRow, FieldVal
     required: false, 
     type: 'string', 
     maxLength: 100,
-    allowedValues: ['Vater', 'Mutter', 'Sohn', 'Tochter', 'Großvater', 'Großmutter', 'Enkel', 'Enkelin', 'Bruder', 'Schwester', 'Onkel', 'Tante', 'Neffe', 'Nichte', 'Schwiegervater', 'Schwiegermutter', 'Schwiegersohn', 'Schwiegertochter', 'unbekannt']
+    allowedValues: ['Familienoberhaupt', 'Vater', 'Mutter', 'Sohn', 'Tochter', 'Ehefrau', 'Großvater', 'Großmutter', 'Enkel', 'Enkelin', 'Bruder', 'Schwester', 'Onkel', 'Tante', 'Neffe', 'Nichte', 'Schwiegervater', 'Schwiegermutter', 'Schwiegersohn', 'Schwiegertochter', 'unbekannt']
   },
   Geschlecht: { 
     required: false, 
