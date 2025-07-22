@@ -192,9 +192,9 @@ export async function getMaxFamiliennr(): Promise<number> {
  * Retrieves a record by its Laufendenr (business key)
  * @param laufendenr The Laufendenr (business key) to search for
  * @param includeHistory Whether to include historical records (default: false)
- * @returns The current record or all records for the given Laufendenr
+ * @returns The current record, all records for the given Laufendenr, or null if no records found
  */
-export async function getDeportedPersonByLaufendenr(laufendenr: number, includeHistory: boolean = false): Promise<Deported | Deported[]> {
+export async function getDeportedPersonByLaufendenr(laufendenr: number, includeHistory: boolean = false): Promise<Deported | Deported[] | null> {
   try {
     let query = supabase
       .from('deport')
@@ -218,7 +218,7 @@ export async function getDeportedPersonByLaufendenr(laufendenr: number, includeH
     }
 
     if (!data || data.length === 0) {
-      throw new Error(`No records found for Laufendenr: ${laufendenr}`);
+      return null; // Return null instead of throwing an error for missing records
     }
 
     // Return either the single current record or the array of historical records

@@ -218,11 +218,11 @@ async function checkDatabaseConflicts(
 
   // Check each unique Laufendenr against database
   const uniqueLaufendenr = Array.from(new Set(laufendenrValues));
-  
+
   for (const laufendenr of uniqueLaufendenr) {
     try {
       const existingRecord = await getDeportedPersonByLaufendenr(laufendenr, false);
-      
+
       if (existingRecord) {
         // Find all rows with this Laufendenr
         const conflictRows = parsedData.rows
@@ -240,6 +240,7 @@ async function checkDatabaseConflicts(
           });
         });
       }
+      // If existingRecord is null, no conflict exists - this is expected for new records
     } catch (error) {
       console.error(`Error checking Laufendenr ${laufendenr}:`, error);
     }
@@ -251,16 +252,16 @@ async function checkDatabaseConflicts(
  */
 export async function identifyDuplicateConflicts(parsedData: ParsedCsvData): Promise<DuplicateConflict[]> {
   const conflicts: DuplicateConflict[] = [];
-  
+
   for (let rowIndex = 0; rowIndex < parsedData.rows.length; rowIndex++) {
     const row = parsedData.rows[rowIndex];
     const laufendenr = parseInt(row.Laufendenr?.trim() || '');
-    
+
     if (isNaN(laufendenr)) continue;
 
     try {
       const existingRecord = await getDeportedPersonByLaufendenr(laufendenr, false);
-      
+
       if (existingRecord) {
         conflicts.push({
           row: rowIndex + 2, // +2 for header and 0-indexing
@@ -274,6 +275,7 @@ export async function identifyDuplicateConflicts(parsedData: ParsedCsvData): Pro
           action: 'skip' // Default action
         });
       }
+      // If existingRecord is null, no conflict exists - this is expected for new records
     } catch (error) {
       console.error(`Error checking for conflicts with Laufendenr ${laufendenr}:`, error);
     }
