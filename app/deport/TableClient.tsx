@@ -617,16 +617,19 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
         });
         
         // Fetch historical records for this person
-        const history = await getDeportedPersonByLaufendenr(laufendenr, true) as Person[];
-        
+        const history = await getDeportedPersonByLaufendenr(laufendenr, true);
+
+        // Handle the case where no records are found (should not happen for existing records, but handle gracefully)
+        const historyArray = history ? (Array.isArray(history) ? history : [history]) : [];
+
         // Store the historical records in state
         setHistoryRecords(prev => ({
           ...prev,
-          [laufendenr]: history
+          [laufendenr]: historyArray
         }));
-        
+
         // Update the recordsWithHistory state to ensure we know this record has history
-        if (history.length > 1) {
+        if (historyArray.length > 1) {
           setRecordsWithHistory(prev => ({
             ...prev,
             [laufendenr]: true
