@@ -18,7 +18,7 @@ export function EditRow({ id }: { id: string }) {
   return (
     <Link
       href={`/dashboard/invoices/${id}/edit`}
-      className="rounded-md border p-2 hover:bg-gray-100"
+      className="rounded-md border border-gray-300 p-2 hover:bg-gray-100"
     >
       <PencilIcon className="w-5" />
     </Link>
@@ -28,7 +28,7 @@ export function EditRow({ id }: { id: string }) {
 export function DeleteRow({ id }: { id: string }) {
 
   return (
-    <div className="rounded-md border p-2 hover:bg-gray-100">
+    <div className="rounded-md border border-gray-300 p-2 hover:bg-gray-100">
       <span className="sr-only">Delete</span>
       <TrashIcon className="w-5" />
     </div>

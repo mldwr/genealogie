@@ -660,14 +660,14 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
             <div className="flex justify-end gap-3 p-4">
               <button
                 onClick={() => router.push('/deport/csv-upload')}
-                className="inline-flex justify-center rounded-lg bg-gradient-to-r from-green-500 to-green-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md hover:from-green-600 hover:to-green-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-400 focus-visible:ring-opacity-75 transition-all duration-150 ease-in-out"
+                className="inline-flex justify-center rounded-lg bg-linear-to-r from-green-500 to-green-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md hover:from-green-600 hover:to-green-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-400 focus-visible:ring-opacity-75 transition-all duration-150 ease-in-out"
               >
                 <DocumentArrowUpIcon className="-ml-0.5 mr-2 h-5 w-5" aria-hidden="true" />
                 CSV & Excel Import
               </button>
               <button
                 onClick={handleAddRow}
-                className="inline-flex justify-center rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md hover:from-blue-600 hover:to-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-opacity-75 transition-all duration-150 ease-in-out"
+                className="inline-flex justify-center rounded-lg bg-linear-to-r from-blue-500 to-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md hover:from-blue-600 hover:to-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-opacity-75 transition-all duration-150 ease-in-out"
               >
                 <PlusIcon className="-ml-0.5 mr-2 h-5 w-5" aria-hidden="true" />
                 Neue Person hinzufügen
@@ -700,7 +700,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
               {people?.map((person,idx) => (
                 <React.Fragment key={person.id}>
                 <tr
-                className={`w-full border-b py-3 text-sm ${editIdx === idx || (isAddingNewRow && person.id.startsWith('temp-family-')) ? 'bg-gray-200' : ''} ${expandedRows[person.Laufendenr || 0] ? 'border-b-0' : 'last-of-type:border-none'} [&:first-child>td:first-child]:rounded-tl-lg [&:first-child>td:last-child]:rounded-tr-lg [&:last-child>td:first-child]:rounded-bl-lg [&:last-child>td:last-child]:rounded-br-lg ${person.id.startsWith('temp-family-') ? 'border-l-4 border-blue-500' : ''}`}>
+                className={`w-full border-b border-gray-300 py-3 text-sm ${editIdx === idx || (isAddingNewRow && person.id.startsWith('temp-family-')) ? 'bg-gray-200' : ''} ${expandedRows[person.Laufendenr || 0] ? 'border-b-0' : 'last-of-type:border-none'} [&:first-child>td:first-child]:rounded-tl-lg [&:first-child>td:last-child]:rounded-tr-lg [&:last-child>td:first-child]:rounded-bl-lg [&:last-child>td:last-child]:rounded-br-lg ${person.id.startsWith('temp-family-') ? 'border-l-4 border-blue-500' : ''}`}>
                   <td className="whitespace-nowrap px-3 py-3">
                   {editIdx === idx || (isAddingNewRow && person.id.startsWith('temp-family-')) ? (
                         <input
@@ -895,13 +895,13 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                         <>
                         <button
                           onClick={handleSave}
-                          className="rounded-md border p-2 hover:bg-gray-100"
+                          className="rounded-md border border-gray-300 p-2 hover:bg-gray-100"
                         >
                           <CheckIcon className="w-5" />
                         </button>
                         <button
                           onClick={handleCancel}
-                          className="rounded-md border p-2 hover:bg-gray-100"
+                          className="rounded-md border border-gray-300 p-2 hover:bg-gray-100"
                         >
                           <StopIcon className="w-5" />
                         </button>
@@ -911,7 +911,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                         {person.Laufendenr && recordsWithHistory[person.Laufendenr || 0] && (
                           <button
                             onClick={() => toggleHistoryView(person.Laufendenr || 0)}
-                            className="rounded-md border p-2 hover:bg-gray-100"
+                            className="rounded-md border border-gray-300 p-2 hover:bg-gray-100"
                             title="Zeige historische Versionen"
                           >
                             {expandedRows[person.Laufendenr || 0] ? (
@@ -924,7 +924,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                         {user && (
                           <button
                             onClick={() => handleEdit(idx, person)}
-                            className="rounded-md border p-2 hover:bg-gray-100"
+                            className="rounded-md border border-gray-300 p-2 hover:bg-gray-100"
                           >
                             <PencilIcon className="w-5" />
                           </button>
@@ -932,7 +932,7 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
                         {user && isAdmin && (
                           <button
                             onClick={() => handleDelete(person.id)}
-                            className="rounded-md border p-2 hover:bg-gray-100"
+                            className="rounded-md border border-gray-300 p-2 hover:bg-gray-100"
                           >
                             <TrashIcon className="w-5" />
                           </button>

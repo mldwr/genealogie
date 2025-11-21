@@ -28,7 +28,7 @@ export default async function Page(
 
   return (
     <div className="w-full mt-4">
-      <div className="flex w-full justify-between border p-6 bg-white rounded-xl shadow-md">
+      <div className="flex w-full justify-between p-6 bg-white rounded-xl shadow-md">
         Liste der deportierten Personen aus dem Kanton Pallasovka der Autonomen Sozialistischen Sowjetrepublik der Wolgadeutschen (ASSRdW) in die Region Altai (Zug Nr. 858). Start des Zuges am 04.09.1941 an der Station Pallasovka; Ankunft des Zuges am 14.09.1941 an der Station Tretjakovo (Третьяково); Verteilung der Deportierten im Smeinogorskij Rayon (Змеиногорский pайон); Anzahl der deportierten Personen: 2314.
       </div>
       <div className="mt-4">
