@@ -16,14 +16,14 @@ export default function Statistics({
   averageAge,
 }: StatisticsProps) {
   return (
-    <div className="w-full mb-4">
+    <div className="w-full">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard title="Personen" value={totalPersons} />
         <StatCard title="Seiten" value={totalPages} />
         {maleCount !== undefined && femaleCount !== undefined && (
-          <StatCard 
-            title="Geschlecht" 
-            value={`${maleCount} männlich / ${femaleCount} weiblich`} 
+          <StatCard
+            title="Geschlecht"
+            value={`${maleCount} männlich / ${femaleCount} weiblich`}
           />
         )}
         {averageAge !== undefined && (

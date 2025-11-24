@@ -1,5 +1,3 @@
-import { createClient } from '@/utils/supabase/server';
-import { redirect } from 'next/navigation';
 import {
   fetchAgeDistribution,
   fetchYoungestPerson,
@@ -14,14 +12,6 @@ import AgeDistributionChart from './components/AgeDistributionChart';
 import FamilyNameTable from './components/FamilyNameTable';
 
 export default async function Page() {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getUser();
-  const user = data.user;
-
-  if (!user) {
-    return redirect('/signin');
-  }
-
   // Fetch all dashboard data in parallel
   const [
     totalPersons,
