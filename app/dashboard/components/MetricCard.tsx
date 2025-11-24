@@ -28,11 +28,11 @@ export default function MetricCard({
   const Icon = iconName ? iconMap[iconName] : null;
 
   return (
-    <div className="rounded-xl bg-white p-6 shadow-md hover:shadow-lg transition-shadow duration-200 border border-gray-100">
+    <div className="rounded-xl bg-white p-5 shadow-md hover:shadow-lg transition-shadow duration-200 border border-gray-100">
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <h3 className="text-sm font-medium text-gray-500 mb-1">{title}</h3>
-          <p className="text-3xl font-bold text-gray-900">{value}</p>
+          <p className="text-2xl font-bold text-gray-900">{value}</p>
           {subtitle && (
             <p className="text-xs text-gray-400 mt-1">{subtitle}</p>
           )}

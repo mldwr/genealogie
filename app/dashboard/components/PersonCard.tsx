@@ -24,9 +24,9 @@ export default function PersonCard({
   }
 
   return (
-    <div className="rounded-xl bg-white p-6 shadow-md hover:shadow-lg transition-shadow duration-200 border border-gray-100">
+    <div className="rounded-xl bg-white p-5 shadow-md hover:shadow-lg transition-shadow duration-200 border border-gray-100">
       <h3 className="text-sm font-medium text-gray-500 mb-4">{title}</h3>
-      
+
       <div className="space-y-3">
         {/* Name and Age */}
         <div className="flex items-start gap-3">
