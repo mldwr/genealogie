@@ -266,23 +266,51 @@ export async function fetchTotalPersons(): Promise<number> {
   }
 }
 
-// Family Structure Types for React Flow visualization
+// =============================================================================
+// Family Structure Types for React Flow Network Visualization
+// =============================================================================
+// These types define the data structure for the interactive family network
+// diagram component (FamilyStructureChart). The structure is optimized for
+// React Flow's node-based rendering model.
+
+/**
+ * FamilyMember: Represents a single person within a family group.
+ *
+ * Fields are intentionally nullable to handle incomplete historical records
+ * from the deportation database. The id field is required as it serves as
+ * the unique node identifier in React Flow.
+ */
 export interface FamilyMember {
-  id: string;
-  Vorname: string | null;
-  Familienname: string | null;
-  Familienrolle: string | null;
-  Geschlecht: string | null;
-  Geburtsjahr: string | null;
-  Familiennr: number | null;
+  id: string;                    // Unique identifier (maps to deport.id), used as React Flow node id
+  Vorname: string | null;        // First name, displayed in node label
+  Familienname: string | null;   // Family surname, used for family group naming
+  Familienrolle: string | null;  // Role: Familienoberhaupt, Ehefrau, Sohn, Tochter - determines node color
+  Geschlecht: string | null;     // Gender: männlich/weiblich - determines gender icon
+  Geburtsjahr: string | null;    // Birth year, used for sorting children and display
+  Familiennr: number | null;     // Family number - links members to their family group
 }
 
+/**
+ * FamilyGroup: Represents a family unit with all its members.
+ *
+ * Groups persons by their shared Familiennr. The familienname is derived
+ * from the first member's surname (typically the Familienoberhaupt).
+ * Members are pre-sorted: parents first, then children by birth year.
+ */
 export interface FamilyGroup {
-  familiennr: number;
-  familienname: string;
-  members: FamilyMember[];
+  familiennr: number;           // Unique family identifier from the source data
+  familienname: string;         // Display name for the family (e.g., "Schmidt")
+  members: FamilyMember[];      // Array of family members, sorted by role and age
 }
 
+/**
+ * FamilyStructureData: Root data structure returned by fetchFamilyStructureData().
+ *
+ * Contains all information needed to render the family network visualization:
+ * - families: Array of family groups for creating React Flow nodes
+ * - totalFamilies: Count for statistics display
+ * - totalMembers: Count for statistics display
+ */
 export interface FamilyStructureData {
   families: FamilyGroup[];
   totalFamilies: number;
@@ -290,39 +318,65 @@ export interface FamilyStructureData {
 }
 
 /**
- * Fetch family structure data for network visualization
- * Groups persons by Familiennr and returns data suitable for React Flow
+ * fetchFamilyStructureData: Fetches and processes family data for network visualization.
+ *
+ * This function queries the deport table, groups persons by their Familiennr,
+ * and returns a structured format optimized for the React Flow visualization.
+ *
+ * Query Logic:
+ * - valid_to IS NULL: Only fetch current/active records (historization pattern)
+ * - Familiennr NOT NULL: Only persons with assigned family numbers can be visualized
+ * - Ordered by Familiennr for efficient grouping
+ *
+ * @returns FamilyStructureData with families array and aggregate counts
  */
 export async function fetchFamilyStructureData(): Promise<FamilyStructureData> {
+  // noStore() prevents caching - ensures fresh data on each request
+  // Important for dashboard that should reflect current database state
   noStore();
 
   try {
     const supabase = await createClient();
 
-    // Fetch all persons with family numbers
+    // Query the deport table for persons with family assignments
+    // Select only the fields needed for visualization to minimize data transfer
     const { data, error } = await supabase
       .from('deport')
       .select('id, Vorname, Familienname, Familienrolle, Geschlecht, Geburtsjahr, Familiennr')
+      // valid_to IS NULL: Historization filter - only current records
+      // When a record is updated, the old version gets a valid_to timestamp,
+      // so null indicates the current/active version
       .is('valid_to', null)
+      // Familiennr NOT NULL: Only include persons assigned to a family
+      // Orphan records without family numbers cannot be visualized in the network
       .not('Familiennr', 'is', null)
+      // Primary sort by Familiennr groups family members together in the result
       .order('Familiennr', { ascending: true })
+      // Secondary sort by Familienrolle helps with consistent ordering
       .order('Familienrolle', { ascending: true });
 
     if (error) throw error;
+
+    // Handle empty dataset gracefully
     if (!data || data.length === 0) {
       return { families: [], totalFamilies: 0, totalMembers: 0 };
     }
 
-    // Group by Familiennr
+    // Grouping Algorithm: Use Map to organize persons by Familiennr
+    // Map<familiennr, FamilyMember[]> provides O(1) lookup and efficient grouping
     const familyMap = new Map<number, FamilyMember[]>();
 
     data.forEach((person) => {
       const familiennr = person.Familiennr;
       // Skip records without id or Familiennr
+      // id is required as it becomes the React Flow node identifier
+      // Double-check Familiennr even though query filtered - defensive coding
       if (familiennr !== null && person.id !== null) {
+        // Initialize array for new family numbers
         if (!familyMap.has(familiennr)) {
           familyMap.set(familiennr, []);
         }
+        // Add person to their family's member array
         familyMap.get(familiennr)!.push({
           id: person.id,
           Vorname: person.Vorname,
@@ -335,28 +389,37 @@ export async function fetchFamilyStructureData(): Promise<FamilyStructureData> {
       }
     });
 
-    // Convert to array of family groups
+    // Convert Map to array of FamilyGroup objects
     const families: FamilyGroup[] = [];
     familyMap.forEach((members, familiennr) => {
-      // Sort members: Familienoberhaupt first, then Ehefrau, then children by birth year
+      // Sorting Logic: Arrange family members in hierarchical display order
+      // 1. Familienoberhaupt (head of household) - displayed top-left
+      // 2. Ehefrau (wife) - displayed top-right
+      // 3. Children (Sohn/Tochter) - displayed below parents, sorted by birth year
       const sortedMembers = members.sort((a, b) => {
+        // Define role priority (lower number = higher priority)
         const roleOrder: Record<string, number> = {
-          'Familienoberhaupt': 1,
-          'Ehefrau': 2,
-          'Sohn': 3,
+          'Familienoberhaupt': 1,  // Head of household first
+          'Ehefrau': 2,            // Wife second
+          'Sohn': 3,               // Sons and daughters share same priority
           'Tochter': 3,
         };
-        const roleA = roleOrder[a.Familienrolle || ''] || 99;
+        const roleA = roleOrder[a.Familienrolle || ''] || 99; // Unknown roles last
         const roleB = roleOrder[b.Familienrolle || ''] || 99;
 
+        // Primary sort: by role priority
         if (roleA !== roleB) return roleA - roleB;
 
-        // For same role (children), sort by birth year
-        const yearA = parseInt(a.Geburtsjahr || '9999');
+        // Secondary sort (for same role, i.e., children): by birth year
+        // This orders siblings from oldest to youngest
+        const yearA = parseInt(a.Geburtsjahr || '9999'); // Unknown years sort last
         const yearB = parseInt(b.Geburtsjahr || '9999');
         return yearA - yearB;
       });
 
+      // Determining the family name:
+      // Use the surname of the first member (after sorting, this is the Familienoberhaupt)
+      // This ensures the family is named after the head of household
       families.push({
         familiennr,
         familienname: sortedMembers[0]?.Familienname || 'Unbekannt',
@@ -364,13 +427,14 @@ export async function fetchFamilyStructureData(): Promise<FamilyStructureData> {
       });
     });
 
-    // Sort families by familiennr
+    // Sort families by familiennr for consistent display order
+    // This ensures families appear in the same order across page refreshes
     families.sort((a, b) => a.familiennr - b.familiennr);
 
     return {
       families,
       totalFamilies: families.length,
-      totalMembers: data.length,
+      totalMembers: data.length, // Use original data length (before grouping)
     };
   } catch (error) {
     console.error('Database Error:', error);

@@ -5,16 +5,24 @@ import {
   fetchAverageChildren,
   fetchFamilyNameStatistics,
   fetchTotalPersons,
+  // fetchFamilyStructureData: Fetches family structure data grouped by Familiennr
+  // for the interactive network diagram visualization. Returns families with their
+  // members organized hierarchically (parents first, then children sorted by birth year).
   fetchFamilyStructureData,
 } from './data';
 import MetricCard from './components/MetricCard';
 import PersonCard from './components/PersonCard';
 import AgeDistributionChart from './components/AgeDistributionChart';
 import FamilyNameTable from './components/FamilyNameTable';
+// FamilyStructureChart: Interactive React Flow visualization component that displays
+// family relationships as a network diagram. Shows family members as nodes with
+// color-coded roles and edges representing parent-child and marriage relationships.
 import FamilyStructureChart from './components/FamilyStructureChart';
 
 export default async function Page() {
-  // Fetch all dashboard data in parallel
+  // Fetch all dashboard data in parallel using Promise.all() for optimal performance.
+  // This allows all independent database queries to execute concurrently rather than
+  // sequentially, significantly reducing the total page load time.
   const [
     totalPersons,
     ageDistribution,
@@ -22,6 +30,10 @@ export default async function Page() {
     oldestPerson,
     averageChildren,
     familyNameStats,
+    // familyStructureData: Contains grouped family data for the network visualization.
+    // Added to the parallel fetch to load family structure data alongside other dashboard
+    // metrics without blocking. The data is pre-processed server-side to minimize
+    // client-side computation when rendering the React Flow diagram.
     familyStructureData,
   ] = await Promise.all([
     fetchTotalPersons(),
@@ -88,7 +100,12 @@ export default async function Page() {
         />
       </div>
 
-      {/* Family Structure Network Diagram */}
+      {/* Family Structure Network Diagram
+          Positioned before the Age Distribution Chart because:
+          1. It provides high-level family relationship context that helps interpret other statistics
+          2. Visual network diagrams are more engaging and draw user attention first
+          3. Family groupings are the primary organizational unit in the deportation records
+          4. Users can identify specific families to explore before diving into demographic details */}
       <FamilyStructureChart data={familyStructureData} />
 
       {/* Age Distribution Chart */}
