@@ -266,3 +266,115 @@ export async function fetchTotalPersons(): Promise<number> {
   }
 }
 
+// Family Structure Types for React Flow visualization
+export interface FamilyMember {
+  id: string;
+  Vorname: string | null;
+  Familienname: string | null;
+  Familienrolle: string | null;
+  Geschlecht: string | null;
+  Geburtsjahr: string | null;
+  Familiennr: number | null;
+}
+
+export interface FamilyGroup {
+  familiennr: number;
+  familienname: string;
+  members: FamilyMember[];
+}
+
+export interface FamilyStructureData {
+  families: FamilyGroup[];
+  totalFamilies: number;
+  totalMembers: number;
+}
+
+/**
+ * Fetch family structure data for network visualization
+ * Groups persons by Familiennr and returns data suitable for React Flow
+ */
+export async function fetchFamilyStructureData(): Promise<FamilyStructureData> {
+  noStore();
+
+  try {
+    const supabase = await createClient();
+
+    // Fetch all persons with family numbers
+    const { data, error } = await supabase
+      .from('deport')
+      .select('id, Vorname, Familienname, Familienrolle, Geschlecht, Geburtsjahr, Familiennr')
+      .is('valid_to', null)
+      .not('Familiennr', 'is', null)
+      .order('Familiennr', { ascending: true })
+      .order('Familienrolle', { ascending: true });
+
+    if (error) throw error;
+    if (!data || data.length === 0) {
+      return { families: [], totalFamilies: 0, totalMembers: 0 };
+    }
+
+    // Group by Familiennr
+    const familyMap = new Map<number, FamilyMember[]>();
+
+    data.forEach((person) => {
+      const familiennr = person.Familiennr;
+      // Skip records without id or Familiennr
+      if (familiennr !== null && person.id !== null) {
+        if (!familyMap.has(familiennr)) {
+          familyMap.set(familiennr, []);
+        }
+        familyMap.get(familiennr)!.push({
+          id: person.id,
+          Vorname: person.Vorname,
+          Familienname: person.Familienname,
+          Familienrolle: person.Familienrolle,
+          Geschlecht: person.Geschlecht,
+          Geburtsjahr: person.Geburtsjahr,
+          Familiennr: person.Familiennr,
+        });
+      }
+    });
+
+    // Convert to array of family groups
+    const families: FamilyGroup[] = [];
+    familyMap.forEach((members, familiennr) => {
+      // Sort members: Familienoberhaupt first, then Ehefrau, then children by birth year
+      const sortedMembers = members.sort((a, b) => {
+        const roleOrder: Record<string, number> = {
+          'Familienoberhaupt': 1,
+          'Ehefrau': 2,
+          'Sohn': 3,
+          'Tochter': 3,
+        };
+        const roleA = roleOrder[a.Familienrolle || ''] || 99;
+        const roleB = roleOrder[b.Familienrolle || ''] || 99;
+
+        if (roleA !== roleB) return roleA - roleB;
+
+        // For same role (children), sort by birth year
+        const yearA = parseInt(a.Geburtsjahr || '9999');
+        const yearB = parseInt(b.Geburtsjahr || '9999');
+        return yearA - yearB;
+      });
+
+      families.push({
+        familiennr,
+        familienname: sortedMembers[0]?.Familienname || 'Unbekannt',
+        members: sortedMembers,
+      });
+    });
+
+    // Sort families by familiennr
+    families.sort((a, b) => a.familiennr - b.familiennr);
+
+    return {
+      families,
+      totalFamilies: families.length,
+      totalMembers: data.length,
+    };
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch family structure data.');
+  }
+}
+

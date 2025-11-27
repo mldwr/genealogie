@@ -5,11 +5,13 @@ import {
   fetchAverageChildren,
   fetchFamilyNameStatistics,
   fetchTotalPersons,
+  fetchFamilyStructureData,
 } from './data';
 import MetricCard from './components/MetricCard';
 import PersonCard from './components/PersonCard';
 import AgeDistributionChart from './components/AgeDistributionChart';
 import FamilyNameTable from './components/FamilyNameTable';
+import FamilyStructureChart from './components/FamilyStructureChart';
 
 export default async function Page() {
   // Fetch all dashboard data in parallel
@@ -20,6 +22,7 @@ export default async function Page() {
     oldestPerson,
     averageChildren,
     familyNameStats,
+    familyStructureData,
   ] = await Promise.all([
     fetchTotalPersons(),
     fetchAgeDistribution(),
@@ -27,6 +30,7 @@ export default async function Page() {
     fetchOldestPerson(),
     fetchAverageChildren(),
     fetchFamilyNameStatistics(),
+    fetchFamilyStructureData(),
   ]);
 
   return (
@@ -83,6 +87,9 @@ export default async function Page() {
           accentColor="bg-orange-500"
         />
       </div>
+
+      {/* Family Structure Network Diagram */}
+      <FamilyStructureChart data={familyStructureData} />
 
       {/* Age Distribution Chart */}
       <AgeDistributionChart data={ageDistribution} />
