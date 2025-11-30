@@ -133,6 +133,9 @@ const createFlowElements = (families: FamilyGroup[], selectedFamily: number | nu
 
     // Create the family name label node (dark header bar at top of group)
     // Uses parentId to attach to the group, extent: 'parent' constrains movement
+    // Display format: "Familie [Name] (#[Order Number]) - [Member Count] Mitglieder"
+    const memberCount = family.members.length;
+    const memberLabel = memberCount === 1 ? '1 Mitglied' : `${memberCount} Mitglieder`;
     nodes.push({
       id: `family-label-${family.familiennr}`,
       type: 'default',
@@ -142,10 +145,10 @@ const createFlowElements = (families: FamilyGroup[], selectedFamily: number | nu
       draggable: false, // Label should not be movable
       style: {
         width: FAMILY_WIDTH - 20, background: '#1f2937', color: 'white',
-        borderRadius: '8px', padding: '8px 12px', fontSize: '12px', fontWeight: 600,
+        borderRadius: '8px', padding: '8px 12px', fontSize: '11px', fontWeight: 600,
         border: 'none', textAlign: 'center',
       },
-      data: { label: `Familie ${family.familienname} (#${family.familiennr})` },
+      data: { label: `#${family.familiennr} ${family.familienname} (${memberLabel})` },
     });
 
     // Create parent nodes - positioned side by side below the label
@@ -251,8 +254,16 @@ export default function FamilyStructureChart({ data }: FamilyStructureChartProps
 
   // Build dropdown options list from family data
   // Memoized to prevent recalculating on every render
+  // Display format: "#[Order Number] [Family Name] ([Member Count] Mitglieder)"
   const familyOptions = useMemo(() =>
-    data.families.map(f => ({ value: f.familiennr, label: `${f.familienname} (#${f.familiennr})` })),
+    data.families.map(f => {
+      const memberCount = f.members?.length ?? 0;
+      const memberLabel = memberCount === 1 ? '1 Mitglied' : `${memberCount} Mitglieder`;
+      return {
+        value: f.familiennr,
+        label: `#${f.familiennr} ${f.familienname} (${memberLabel})`
+      };
+    }),
     [data.families]
   );
 
