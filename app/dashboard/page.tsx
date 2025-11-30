@@ -9,6 +9,10 @@ import {
   // for the interactive network diagram visualization. Returns families with their
   // members organized hierarchically (parents first, then children sorted by birth year).
   fetchFamilyStructureData,
+  // fetchGeographicDistributionData: Fetches and aggregates Geburtsort (birthplace)
+  // and Arbeitsort (workplace) location data for the geographic distribution visualization.
+  // Returns separate arrays for birthplaces and workplaces with occurrence counts.
+  fetchGeographicDistributionData,
 } from './data';
 import MetricCard from './components/MetricCard';
 import PersonCard from './components/PersonCard';
@@ -18,6 +22,10 @@ import FamilyNameTable from './components/FamilyNameTable';
 // family relationships as a network diagram. Shows family members as nodes with
 // color-coded roles and edges representing parent-child and marriage relationships.
 import FamilyStructureChart from './components/FamilyStructureChart';
+// GeographicDistributionMap: Visualization component showing the frequency of birthplaces
+// (Geburtsort) and workplaces (Arbeitsort) from deportation records. Users can toggle
+// between viewing birthplace or workplace data, with a ranked list showing location counts.
+import GeographicDistributionMap from './components/GeographicDistributionMap';
 
 export default async function Page() {
   // Fetch all dashboard data in parallel using Promise.all() for optimal performance.
@@ -35,6 +43,10 @@ export default async function Page() {
     // metrics without blocking. The data is pre-processed server-side to minimize
     // client-side computation when rendering the React Flow diagram.
     familyStructureData,
+    // geographicDistributionData: Contains aggregated birthplace (Geburtsort) and
+    // workplace (Arbeitsort) location data. Loaded in parallel with other data to
+    // avoid blocking. Data is pre-sorted by frequency for efficient rendering.
+    geographicDistributionData,
   ] = await Promise.all([
     fetchTotalPersons(),
     fetchAgeDistribution(),
@@ -43,6 +55,8 @@ export default async function Page() {
     fetchAverageChildren(),
     fetchFamilyNameStatistics(),
     fetchFamilyStructureData(),
+    // Fetch geographic distribution data for the location frequency visualization
+    fetchGeographicDistributionData(),
   ]);
 
   return (
@@ -107,6 +121,14 @@ export default async function Page() {
           3. Family groupings are the primary organizational unit in the deportation records
           4. Users can identify specific families to explore before diving into demographic details */}
       <FamilyStructureChart data={familyStructureData} />
+
+      {/* Geographic Distribution Map
+          Positioned after the Family Structure Chart because:
+          1. Location data provides geographic context to complement the family network view
+          2. Users can explore where families originated (Geburtsort) or worked (Arbeitsort)
+          3. Toggle allows switching between birthplace and workplace views
+          4. Ranked list shows most common locations with frequency bars for easy comparison */}
+      <GeographicDistributionMap data={geographicDistributionData} />
 
       {/* Age Distribution Chart */}
       <AgeDistributionChart data={ageDistribution} />

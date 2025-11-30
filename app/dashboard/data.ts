@@ -442,3 +442,127 @@ export async function fetchFamilyStructureData(): Promise<FamilyStructureData> {
   }
 }
 
+// =============================================================================
+// Geographic Distribution Types for Map Visualization
+// =============================================================================
+// These types define the data structure for the interactive geographic map
+// component (GeographicDistributionMap). The structure separates birthplace
+// and workplace locations for toggle filtering.
+
+/**
+ * LocationData: Represents a single location with its occurrence count.
+ *
+ * The location name comes from the database fields Geburtsort (birthplace)
+ * or Arbeitsort (workplace). Coordinates are optional and would require
+ * geocoding to convert place names to lat/lng values.
+ */
+export interface LocationData {
+  location: string;           // Location name (city/town)
+  count: number;              // Number of persons at this location
+  coordinates?: {             // Optional geocoded coordinates for map display
+    lat: number;
+    lng: number;
+  };
+}
+
+/**
+ * GeographicDistributionData: Root data structure returned by fetchGeographicDistributionData().
+ *
+ * Contains separate arrays for birthplaces and workplaces, allowing the UI
+ * to toggle between them. Includes aggregate statistics for display.
+ */
+export interface GeographicDistributionData {
+  birthplaces: LocationData[];   // Aggregated Geburtsort locations with counts
+  workplaces: LocationData[];    // Aggregated Arbeitsort locations with counts
+  totalBirthplaces: number;      // Total unique birthplace locations
+  totalWorkplaces: number;       // Total unique workplace locations
+  totalPersons: number;          // Total persons with at least one location
+}
+
+/**
+ * fetchGeographicDistributionData: Fetches and aggregates location data for map visualization.
+ *
+ * This function queries the deport table for Geburtsort and Arbeitsort fields,
+ * aggregates occurrences of each unique location, and returns them sorted by
+ * frequency (most common first).
+ *
+ * Query Logic:
+ * - valid_to IS NULL: Only fetch current/active records (historization pattern)
+ * - Aggregates locations server-side for efficiency
+ * - Filters out null/empty location values
+ *
+ * @returns GeographicDistributionData with birthplaces and workplaces arrays
+ */
+export async function fetchGeographicDistributionData(): Promise<GeographicDistributionData> {
+  noStore();
+
+  try {
+    const supabase = await createClient();
+
+    // Fetch Geburtsort and Arbeitsort fields from all current records
+    // Select only location fields to minimize data transfer
+    const { data, error } = await supabase
+      .from('deport')
+      .select('Geburtsort, Arbeitsort')
+      .is('valid_to', null); // Only current records (historization pattern)
+
+    if (error) throw error;
+
+    // Handle empty dataset gracefully
+    if (!data || data.length === 0) {
+      return {
+        birthplaces: [],
+        workplaces: [],
+        totalBirthplaces: 0,
+        totalWorkplaces: 0,
+        totalPersons: 0,
+      };
+    }
+
+    // Aggregate birthplaces (Geburtsort)
+    // Map<location_name, count> for efficient counting
+    const birthplaceMap = new Map<string, number>();
+    data.forEach((person) => {
+      const location = person.Geburtsort?.trim();
+      // Filter out null, empty, and whitespace-only values
+      if (location && location.length > 0) {
+        birthplaceMap.set(location, (birthplaceMap.get(location) || 0) + 1);
+      }
+    });
+
+    // Aggregate workplaces (Arbeitsort)
+    const workplaceMap = new Map<string, number>();
+    data.forEach((person) => {
+      const location = person.Arbeitsort?.trim();
+      if (location && location.length > 0) {
+        workplaceMap.set(location, (workplaceMap.get(location) || 0) + 1);
+      }
+    });
+
+    // Convert Maps to sorted arrays (highest count first)
+    // This ordering puts the most common locations at the top for better UX
+    const birthplaces: LocationData[] = Array.from(birthplaceMap.entries())
+      .map(([location, count]) => ({ location, count }))
+      .sort((a, b) => b.count - a.count);
+
+    const workplaces: LocationData[] = Array.from(workplaceMap.entries())
+      .map(([location, count]) => ({ location, count }))
+      .sort((a, b) => b.count - a.count);
+
+    // Count persons with at least one location field populated
+    const personsWithLocation = data.filter(
+      (p) => (p.Geburtsort?.trim() || p.Arbeitsort?.trim())
+    ).length;
+
+    return {
+      birthplaces,
+      workplaces,
+      totalBirthplaces: birthplaces.length,
+      totalWorkplaces: workplaces.length,
+      totalPersons: personsWithLocation,
+    };
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch geographic distribution data.');
+  }
+}
