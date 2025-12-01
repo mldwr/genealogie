@@ -19,9 +19,6 @@ export default function Header({ initialUser }: NavlinksProps) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Define routes where the Header should NOT be displayed
-  const hideHeaderRoutes = ['/signin', '/signup']; 
-
   const handleSignOut = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     await signOut();
@@ -29,8 +26,6 @@ export default function Header({ initialUser }: NavlinksProps) {
 
   return (
     <>
-    {/* Conditionally render Header, it will be not shown on signup and signin pages */}
-    {!hideHeaderRoutes.includes(pathname) && 
       <header className="fixed top-2 z-30 w-full lg:top-6">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="relative flex h-14 items-center justify-between sm:gap-3 rounded-2xl bg-white/90 sm:px-3 shadow-lg shadow-black/3 backdrop-blur-sm before:pointer-events-none before:absolute before:inset-0 before:rounded-[inherit] before:border before:border-transparent before:[background:linear-gradient(var(--color-gray-100),var(--color-gray-200))_border-box] before:[mask-composite:exclude_!important] before:[mask:linear-gradient(white_0_0)_padding-box,linear-gradient(white_0_0)]">
@@ -195,7 +190,6 @@ export default function Header({ initialUser }: NavlinksProps) {
           </div>
         </div>
       </header>
-    }
     </>
   );
 }

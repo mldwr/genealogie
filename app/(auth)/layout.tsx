@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Logo from "@/components/ui/logo";
 import AuthBg from "@/public/images/auth-bg.svg";
 
 export default function AuthLayout({
@@ -9,16 +8,8 @@ export default function AuthLayout({
 }) {
   return (
     <>
-      <header className="absolute z-30 w-full">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <div className="flex h-16 items-center justify-between md:h-20">
-            {/* Site branding */}
-            <div className="mr-4 shrink-0">
-              <Logo />
-            </div>
-          </div>
-        </div>
-      </header>
+      {/* Spacer for fixed header */}
+      <div className="h-16 md:h-20 lg:h-24"></div>
 
       <main className="relative flex grow">
         <div
