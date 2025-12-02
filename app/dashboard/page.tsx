@@ -13,6 +13,9 @@ import {
   // and Arbeitsort (workplace) location data for the geographic distribution visualization.
   // Returns separate arrays for birthplaces and workplaces with occurrence counts.
   fetchGeographicDistributionData,
+  // fetchBirthYearTimeline: Fetches birth year data aggregated into 5-year intervals
+  // for the area chart visualization showing demographic patterns over time.
+  fetchBirthYearTimeline,
 } from './data';
 import MetricCard from './components/MetricCard';
 import PersonCard from './components/PersonCard';
@@ -26,6 +29,9 @@ import FamilyStructureChart from './components/FamilyStructureChart';
 // (Geburtsort) and workplaces (Arbeitsort) from deportation records. Users can toggle
 // between viewing birthplace or workplace data, with a ranked list showing location counts.
 import GeographicDistributionMap from './components/GeographicDistributionMap';
+// BirthYearTimeline: Area chart visualization showing birth counts aggregated by 5-year
+// intervals. Includes historical event markers for contextualizing demographic patterns.
+import BirthYearTimeline from './components/BirthYearTimeline';
 
 export default async function Page() {
   // Fetch all dashboard data in parallel using Promise.all() for optimal performance.
@@ -47,6 +53,9 @@ export default async function Page() {
     // workplace (Arbeitsort) location data. Loaded in parallel with other data to
     // avoid blocking. Data is pre-sorted by frequency for efficient rendering.
     geographicDistributionData,
+    // birthYearTimelineData: Contains birth year counts aggregated by 5-year intervals.
+    // Used for the area chart showing demographic patterns over time.
+    birthYearTimelineData,
   ] = await Promise.all([
     fetchTotalPersons(),
     fetchAgeDistribution(),
@@ -57,6 +66,8 @@ export default async function Page() {
     fetchFamilyStructureData(),
     // Fetch geographic distribution data for the location frequency visualization
     fetchGeographicDistributionData(),
+    // Fetch birth year timeline data for the temporal visualization
+    fetchBirthYearTimeline(),
   ]);
 
   return (
@@ -129,6 +140,14 @@ export default async function Page() {
           3. Toggle allows switching between birthplace and workplace views
           4. Ranked list shows most common locations with frequency bars for easy comparison */}
       <GeographicDistributionMap data={geographicDistributionData} />
+
+      {/* Birth Year Timeline
+          Area chart showing demographic patterns over time:
+          1. Groups births by 5-year intervals for meaningful pattern recognition
+          2. Includes historical event markers (WWI, WWII, etc.) for context
+          3. Shows percentage and count in tooltips
+          4. Helps identify generational patterns and population trends */}
+      <BirthYearTimeline data={birthYearTimelineData} />
 
       {/* Age Distribution Chart */}
       <AgeDistributionChart data={ageDistribution} />

@@ -1,5 +1,9 @@
 import { unstable_noStore as noStore } from 'next/cache';
 import { createClient } from '@/utils/supabase/server';
+import type { BirthYearTimelineData, HistoricalEvent } from './types';
+
+// Re-export types from types.ts for backward compatibility
+export type { BirthYearTimelineData, HistoricalEvent } from './types';
 
 export interface AgeDistributionData {
   ageRange: string;
@@ -564,5 +568,106 @@ export async function fetchGeographicDistributionData(): Promise<GeographicDistr
   } catch (error) {
     console.error('Database Error:', error);
     throw new Error('Failed to fetch geographic distribution data.');
+  }
+}
+
+// =============================================================================
+// Birth Year Timeline Data Fetching
+// =============================================================================
+
+// Re-export HISTORICAL_EVENTS from types.ts for backward compatibility
+export { HISTORICAL_EVENTS } from './types';
+
+/**
+ * fetchBirthYearTimeline: Fetches and aggregates birth year data for timeline visualization.
+ *
+ * This function queries the deport table for Geburtsjahr (birth year) values,
+ * groups them into 5-year intervals, and returns a sorted array optimized
+ * for the Recharts AreaChart component.
+ *
+ * Query Logic:
+ * - valid_to IS NULL: Only fetch current/active records (historization pattern)
+ * - Geburtsjahr NOT NULL: Only include records with birth year data
+ * - Groups by 5-year intervals for meaningful demographic patterns
+ * - Filters out years outside expected range (1800-DEPORTATION_YEAR)
+ *
+ * @returns BirthYearTimelineData[] sorted chronologically by startYear
+ */
+export async function fetchBirthYearTimeline(): Promise<BirthYearTimelineData[]> {
+  noStore();
+
+  try {
+    const supabase = await createClient();
+
+    // Fetch all persons with valid birth years
+    const { data, error } = await supabase
+      .from('deport')
+      .select('Geburtsjahr')
+      .is('valid_to', null) // Only current records (historization pattern)
+      .not('Geburtsjahr', 'is', null); // Only records with birth year
+
+    if (error) throw error;
+
+    // Handle empty dataset gracefully
+    if (!data || data.length === 0) {
+      return [];
+    }
+
+    // Aggregate births into 5-year interval bins
+    // Map<startYear, count> for efficient counting
+    const intervalBins = new Map<number, number>();
+
+    // Track valid birth years for determining range
+    const validYears: number[] = [];
+
+    data.forEach((person) => {
+      const birthYear = parseInt(person.Geburtsjahr || '');
+
+      // Validate birth year is within expected range
+      // 1800 is a reasonable lower bound for historical records
+      // DEPORTATION_YEAR (1941) is the upper bound since deportees must be born before
+      if (!isNaN(birthYear) && birthYear >= 1800 && birthYear < DEPORTATION_YEAR) {
+        validYears.push(birthYear);
+
+        // Calculate 5-year interval start year
+        // e.g., 1867 -> 1865, 1890 -> 1890, 1923 -> 1920
+        const intervalStart = Math.floor(birthYear / 5) * 5;
+        intervalBins.set(intervalStart, (intervalBins.get(intervalStart) || 0) + 1);
+      }
+    });
+
+    // Handle case where no valid birth years found
+    if (validYears.length === 0) {
+      return [];
+    }
+
+    // Determine the range of intervals to include
+    const minYear = Math.min(...validYears);
+    const maxYear = Math.max(...validYears);
+    const minInterval = Math.floor(minYear / 5) * 5;
+    const maxInterval = Math.floor(maxYear / 5) * 5;
+
+    // Build the result array with all intervals in range
+    // Include zero-count intervals to show gaps in the timeline
+    const result: BirthYearTimelineData[] = [];
+
+    for (let startYear = minInterval; startYear <= maxInterval; startYear += 5) {
+      const count = intervalBins.get(startYear) || 0;
+      const endYear = startYear + 4;
+
+      result.push({
+        period: `${startYear}-${endYear}`,
+        count,
+        startYear,
+      });
+    }
+
+    // Sort by startYear (chronological order)
+    result.sort((a, b) => a.startYear - b.startYear);
+
+    return result;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch birth year timeline data.');
   }
 }
