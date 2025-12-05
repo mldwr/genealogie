@@ -60,7 +60,8 @@ export const config = {
      * - /signup
      * - /reset-password
      * - /change-password
+     * - /auth/callback (auth callback route)
      */
-    '/((?!_next/static|_next/image|favicon.ico|signin|signup|reset-password|change-password).*)',
+    '/((?!_next/static|_next/image|favicon.ico|signin|signup|reset-password|change-password|auth/callback).*)',
   ],
 };

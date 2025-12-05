@@ -22,19 +22,28 @@ export default function SignIn() {
     setLoading(true);
 
     try {
-      const { error, data } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
-        setError(error.message);
+        // Translate common error messages to German
+        if (error.message.includes('Invalid login credentials')) {
+          setError('E-Mail oder Passwort ist falsch.');
+        } else if (error.message.includes('Email not confirmed')) {
+          setError('Bitte bestätigen Sie zuerst Ihre E-Mail-Adresse.');
+        } else if (error.message.includes('rate limit')) {
+          setError('Zu viele Anmeldeversuche. Bitte versuchen Sie es später erneut.');
+        } else {
+          setError('Ein Fehler ist bei der Anmeldung aufgetreten. Bitte versuchen Sie es erneut.');
+        }
       } else {
         router.push('/');
         router.refresh();
       }
     } catch (err) {
-      setError('An error occurred during sign in');
+      setError('Ein Fehler ist bei der Anmeldung aufgetreten.');
     }
 
     setLoading(false);
@@ -43,12 +52,15 @@ export default function SignIn() {
   return (
     <>
       <div className="mb-10">
-        <h1 className="text-4xl font-bold">Sign in to your account</h1>
+        <h1 className="text-4xl font-bold">Anmelden</h1>
       </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-          {error}
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg flex items-start">
+          <svg className="w-5 h-5 mr-2 mt-0.5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>{error}</span>
         </div>
       )}
 
@@ -59,16 +71,17 @@ export default function SignIn() {
               className="mb-1 block text-sm font-medium text-gray-700"
               htmlFor="email"
             >
-              Email
+              E-Mail-Adresse
             </label>
             <input
               id="email"
               className="form-input w-full py-2"
               type="email"
-              placeholder="name@email.com"
+              placeholder="ihre@email.de"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoFocus
             />
           </div>
           <div>
@@ -76,14 +89,14 @@ export default function SignIn() {
               className="mb-1 block text-sm font-medium text-gray-700"
               htmlFor="password"
             >
-              Password
+              Passwort
             </label>
             <input
               id="password"
               className="form-input w-full py-2"
               type="password"
-              autoComplete="on"
-              placeholder="******"
+              autoComplete="current-password"
+              placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -96,7 +109,7 @@ export default function SignIn() {
             disabled={loading}
             className="btn w-full bg-linear-to-t from-blue-600 to-blue-500 bg-size-[100%_100%] bg-bottom text-white shadow hover:bg-size-[100%_150%] disabled:opacity-50"
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? 'Wird angemeldet...' : 'Anmelden'}
           </button>
         </div>
       </form>
@@ -105,7 +118,7 @@ export default function SignIn() {
           className="text-sm text-gray-700 underline hover:no-underline"
           href="/reset-password"
         >
-          Forgot password
+          Passwort vergessen?
         </Link>
       </div>
     </>

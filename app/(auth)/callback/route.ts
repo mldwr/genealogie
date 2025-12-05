@@ -8,8 +8,9 @@ export async function GET(request: NextRequest) {
   // by the `@supabase/ssr` package. It exchanges an auth code for the user's session.
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
+  const type = requestUrl.searchParams.get('type');
 
-  console.log('callback GET',code,requestUrl);
+  console.log('callback GET', code, type, requestUrl);
 
   if (code) {
     const supabase = await createClient();
@@ -17,6 +18,16 @@ export async function GET(request: NextRequest) {
     const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
 
     if (exchangeError) {
+      // Handle password recovery specific errors
+      if (type === 'recovery') {
+        return NextResponse.redirect(
+          getErrorRedirect(
+            `${requestUrl.origin}/reset-password`,
+            'Link ungültig',
+            'Der Link zum Zurücksetzen des Passworts ist ungültig oder abgelaufen. Bitte fordern Sie einen neuen Link an.'
+          )
+        );
+      }
       return NextResponse.redirect(
         getErrorRedirect(
           `${requestUrl.origin}/signin`,
@@ -24,6 +35,11 @@ export async function GET(request: NextRequest) {
           "Sorry, we weren't able to log you in. Please try again."
         )
       );
+    }
+
+    // If this is a password recovery flow, redirect to change-password page
+    if (type === 'recovery') {
+      return NextResponse.redirect(`${requestUrl.origin}/change-password`);
     }
 
     // Successfully exchanged code for session, now get user details and ensure profile exists
@@ -61,6 +77,20 @@ export async function GET(request: NextRequest) {
     }
   } else {
     // Handle case where 'code' is missing in the request URL
+    // Check for error parameters that Supabase might send for failed recovery links
+    const error = requestUrl.searchParams.get('error');
+    const errorDescription = requestUrl.searchParams.get('error_description');
+
+    if (error || type === 'recovery') {
+      return NextResponse.redirect(
+        getErrorRedirect(
+          `${requestUrl.origin}/reset-password`,
+          'Link ungültig',
+          errorDescription || 'Der Link zum Zurücksetzen des Passworts ist ungültig oder abgelaufen. Bitte fordern Sie einen neuen Link an.'
+        )
+      );
+    }
+
     return NextResponse.redirect(
       getErrorRedirect(
         `${requestUrl.origin}/signin`,
