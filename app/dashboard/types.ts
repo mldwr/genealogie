@@ -69,3 +69,33 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
   },
 ];
 
+// =============================================================================
+// Patronymic Analysis Types
+// =============================================================================
+
+/**
+ * PatronymicData: Represents a single patronymic (Vatersname) with its occurrence count.
+ *
+ * Used for the patronymic analysis visualization showing naming patterns.
+ * Gender-specific counts allow filtering by male/female naming conventions.
+ */
+export interface PatronymicData {
+  name: string;         // The patronymic (father's name)
+  count: number;        // Total occurrences
+  maleCount: number;    // Occurrences for male persons
+  femaleCount: number;  // Occurrences for female persons
+}
+
+/**
+ * PatronymicAnalysisData: Root data structure for the patronymic analysis visualization.
+ *
+ * Contains aggregated patronymic data with statistics for the dashboard.
+ */
+export interface PatronymicAnalysisData {
+  patronymics: PatronymicData[];  // List of patronymics sorted by frequency (descending)
+  totalPersons: number;           // Total persons with patronymic data
+  uniquePatronymics: number;      // Count of unique patronymics
+  totalMale: number;              // Total male persons with patronymic data
+  totalFemale: number;            // Total female persons with patronymic data
+}
+

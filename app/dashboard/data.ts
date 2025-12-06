@@ -671,3 +671,101 @@ export async function fetchBirthYearTimeline(): Promise<BirthYearTimelineData[]>
     throw new Error('Failed to fetch birth year timeline data.');
   }
 }
+
+// =============================================================================
+// Patronymic Analysis Data Fetching
+// =============================================================================
+
+// Re-export patronymic types from types.ts
+export type { PatronymicData, PatronymicAnalysisData } from './types';
+
+/**
+ * fetchPatronymicData: Fetches and aggregates Vatersname (patronymic/father's name) data.
+ *
+ * This function queries the deport table for Vatersname values, counts occurrences,
+ * and tracks gender distribution for each patronymic. Returns data optimized for
+ * visualizing naming patterns and conventions.
+ *
+ * Query Logic:
+ * - valid_to IS NULL: Only fetch current/active records (historization pattern)
+ * - Vatersname NOT NULL: Only include records with patronymic data
+ * - Aggregates by patronymic name with gender breakdown
+ *
+ * @returns PatronymicAnalysisData with sorted patronymics and statistics
+ */
+export async function fetchPatronymicData(): Promise<import('./types').PatronymicAnalysisData> {
+  noStore();
+
+  try {
+    const supabase = await createClient();
+
+    // Fetch Vatersname and Geschlecht for gender filtering
+    const { data, error } = await supabase
+      .from('deport')
+      .select('Vatersname, Geschlecht')
+      .is('valid_to', null) // Only current records (historization pattern)
+      .not('Vatersname', 'is', null); // Only records with patronymic
+
+    if (error) throw error;
+
+    // Handle empty dataset gracefully
+    if (!data || data.length === 0) {
+      return {
+        patronymics: [],
+        totalPersons: 0,
+        uniquePatronymics: 0,
+        totalMale: 0,
+        totalFemale: 0,
+      };
+    }
+
+    // Aggregate patronymics with gender counts
+    // Map<patronymic, { total, male, female }>
+    const patronymicMap = new Map<string, { total: number; male: number; female: number }>();
+
+    let totalMale = 0;
+    let totalFemale = 0;
+
+    data.forEach((person) => {
+      // Normalize patronymic: trim whitespace and convert to title case for consistency
+      const patronymic = person.Vatersname?.trim();
+      if (!patronymic) return;
+
+      const gender = person.Geschlecht?.toLowerCase().trim();
+      const isMale = gender === 'm' || gender === 'männlich' || gender === 'male';
+      const isFemale = gender === 'w' || gender === 'f' || gender === 'weiblich' || gender === 'female';
+
+      // Update gender totals
+      if (isMale) totalMale++;
+      if (isFemale) totalFemale++;
+
+      // Get or create entry for this patronymic
+      const existing = patronymicMap.get(patronymic) || { total: 0, male: 0, female: 0 };
+      existing.total++;
+      if (isMale) existing.male++;
+      if (isFemale) existing.female++;
+      patronymicMap.set(patronymic, existing);
+    });
+
+    // Convert map to sorted array (descending by total count)
+    const patronymics = Array.from(patronymicMap.entries())
+      .map(([name, counts]) => ({
+        name,
+        count: counts.total,
+        maleCount: counts.male,
+        femaleCount: counts.female,
+      }))
+      .sort((a, b) => b.count - a.count);
+
+    return {
+      patronymics,
+      totalPersons: data.length,
+      uniquePatronymics: patronymics.length,
+      totalMale,
+      totalFemale,
+    };
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch patronymic analysis data.');
+  }
+}

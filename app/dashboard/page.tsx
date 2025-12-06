@@ -16,6 +16,9 @@ import {
   // fetchBirthYearTimeline: Fetches birth year data aggregated into 5-year intervals
   // for the area chart visualization showing demographic patterns over time.
   fetchBirthYearTimeline,
+  // fetchPatronymicData: Fetches and aggregates Vatersname (patronymic/father's name) data
+  // for the patronymic analysis visualization showing naming patterns and conventions.
+  fetchPatronymicData,
 } from './data';
 import MetricCard from './components/MetricCard';
 import PersonCard from './components/PersonCard';
@@ -32,6 +35,10 @@ import GeographicDistributionMap from './components/GeographicDistributionMap';
 // BirthYearTimeline: Area chart visualization showing birth counts aggregated by 5-year
 // intervals. Includes historical event markers for contextualizing demographic patterns.
 import BirthYearTimeline from './components/BirthYearTimeline';
+// PatronymicAnalysisChart: Horizontal bar chart visualization showing the frequency of
+// Vatersname (patronymic/father's name) values. Includes gender filtering to analyze
+// different naming patterns for male/female persons.
+import PatronymicAnalysisChart from './components/PatronymicAnalysisChart';
 
 export default async function Page() {
   // Fetch all dashboard data in parallel using Promise.all() for optimal performance.
@@ -56,6 +63,9 @@ export default async function Page() {
     // birthYearTimelineData: Contains birth year counts aggregated by 5-year intervals.
     // Used for the area chart showing demographic patterns over time.
     birthYearTimelineData,
+    // patronymicData: Contains aggregated Vatersname (patronymic) data with gender counts.
+    // Used for the horizontal bar chart showing naming patterns and conventions.
+    patronymicData,
   ] = await Promise.all([
     fetchTotalPersons(),
     fetchAgeDistribution(),
@@ -68,6 +78,8 @@ export default async function Page() {
     fetchGeographicDistributionData(),
     // Fetch birth year timeline data for the temporal visualization
     fetchBirthYearTimeline(),
+    // Fetch patronymic data for the naming pattern visualization
+    fetchPatronymicData(),
   ]);
 
   return (
@@ -151,6 +163,14 @@ export default async function Page() {
 
       {/* Age Distribution Chart */}
       <AgeDistributionChart data={ageDistribution} />
+
+      {/* Patronymic Analysis Chart
+          Horizontal bar chart showing patronymic (Vatersname) frequency:
+          1. Provides cultural insight into naming conventions
+          2. Gender filter allows analyzing different patterns for male/female persons
+          3. Configurable display count (Top 10/15/20/30)
+          4. Shows statistics: unique patronymics, total persons, most common name */}
+      <PatronymicAnalysisChart data={patronymicData} />
 
       {/* Family Name Statistics Table */}
       <FamilyNameTable data={familyNameStats} />
