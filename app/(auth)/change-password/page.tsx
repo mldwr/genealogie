@@ -5,6 +5,12 @@ import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
 import Link from 'next/link';
 
+// Constants for rate limiting
+const MAX_ATTEMPTS = 5;
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+const DEBOUNCE_TIME_MS = 3000; // 3 seconds
+const STORAGE_KEY = 'password_change_attempts';
+
 // Password validation rules
 interface PasswordValidation {
   minLength: boolean;
@@ -39,7 +45,75 @@ export default function ChangePassword() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // Rate limiting state
+  const [isDebouncing, setIsDebouncing] = useState(false);
+  const [rateLimitError, setRateLimitError] = useState<string | null>(null);
+  const [retryAfter, setRetryAfter] = useState<Date | null>(null);
+  const [timeLeft, setTimeLeft] = useState<string | null>(null);
+
   const passwordValidation = validatePassword(newPassword);
+
+  // Initialize rate limiting state from localStorage
+  useEffect(() => {
+    const checkStoredRateLimit = () => {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          const { attempts, firstAttempt } = JSON.parse(stored);
+          const now = Date.now();
+
+          // Clear old attempts if window expired
+          if (now - firstAttempt > RATE_LIMIT_WINDOW_MS) {
+            localStorage.removeItem(STORAGE_KEY);
+            setRateLimitError(null);
+            setRetryAfter(null);
+            return;
+          }
+
+          if (attempts >= MAX_ATTEMPTS) {
+            const resetTime = new Date(firstAttempt + RATE_LIMIT_WINDOW_MS);
+            setRetryAfter(resetTime);
+            setRateLimitError(`Zu viele Versuche. Bitte versuchen Sie es erneut in ${Math.ceil((resetTime.getTime() - now) / 60000)} Minuten.`);
+          }
+        }
+      } catch (e) {
+        console.error('Error reading rate limit from storage', e);
+      }
+    };
+
+    checkStoredRateLimit();
+    // Check every minute to update the error message if needed
+    const interval = setInterval(checkStoredRateLimit, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Countdown timer effect
+  useEffect(() => {
+    if (!retryAfter) {
+      setTimeLeft(null);
+      return;
+    }
+
+    const timer = setInterval(() => {
+      const now = new Date().getTime();
+      const distance = retryAfter.getTime() - now;
+
+      if (distance < 0) {
+        setRateLimitError(null);
+        setRetryAfter(null);
+        setTimeLeft(null);
+        localStorage.removeItem(STORAGE_KEY);
+        clearInterval(timer);
+        return;
+      }
+
+      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+      setTimeLeft(`${minutes}:${seconds < 10 ? '0' : ''}${seconds}`);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [retryAfter]);
 
   // Check if user has a valid recovery session (from password reset link)
   // This page should ONLY be used for password recovery via email link
@@ -92,10 +166,58 @@ export default function ChangePassword() {
     checkRecoverySession();
   }, [supabase.auth, router]);
 
+  const checkAndRecordRateLimit = (): boolean => {
+    try {
+      const now = Date.now();
+      const stored = localStorage.getItem(STORAGE_KEY);
+
+      let data = { attempts: 0, firstAttempt: now };
+
+      if (stored) {
+        data = JSON.parse(stored);
+
+        // Reset if window expired
+        if (now - data.firstAttempt > RATE_LIMIT_WINDOW_MS) {
+          data = { attempts: 0, firstAttempt: now };
+        }
+      }
+
+      // Check limit
+      if (data.attempts >= MAX_ATTEMPTS) {
+        const resetTime = new Date(data.firstAttempt + RATE_LIMIT_WINDOW_MS);
+        setRetryAfter(resetTime);
+        setRateLimitError(`Zu viele Versuche. Bitte warten Sie bis der Timer abläuft.`);
+        return false;
+      }
+
+      // Increment
+      data.attempts++;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      return true;
+    } catch (e) {
+      console.error('Rate limit error', e);
+      // Fail safe - allow attempt if storage fails
+      return true;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
+    setRateLimitError(null);
+
+    // Check client-side rate limit
+    if (!checkAndRecordRateLimit()) {
+      return;
+    }
+
     setLoading(true);
+    setIsDebouncing(true);
+
+    // Debounce timer - enable button after delay regardless of outcome
+    setTimeout(() => {
+      setIsDebouncing(false);
+    }, DEBOUNCE_TIME_MS);
 
     // Validate password strength
     if (!isPasswordValid(passwordValidation)) {
@@ -117,8 +239,12 @@ export default function ChangePassword() {
       });
 
       if (error) {
+        // Handle Supabase rate limiting specific error (429)
+        if (error.status === 429) {
+          setError('Zu viele Anfragen. Bitte warten Sie einen Moment.');
+        }
         // Translate common Supabase error messages
-        if (error.message.includes('same password')) {
+        else if (error.message.includes('same password')) {
           setError('Das neue Passwort muss sich vom aktuellen Passwort unterscheiden.');
         } else if (error.message.includes('session')) {
           setError('Ihre Sitzung ist abgelaufen. Bitte fordern Sie einen neuen Link an.');
@@ -128,7 +254,8 @@ export default function ChangePassword() {
           setError('Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.');
         }
       } else {
-        // Sign out user after password change for security
+        // Successful password change
+        localStorage.removeItem(STORAGE_KEY); // Clear failure attempts on success
         await supabase.auth.signOut();
         setSuccess(true);
       }
@@ -233,7 +360,21 @@ export default function ChangePassword() {
         </p>
       </div>
 
-      {error && (
+      {rateLimitError && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg flex items-center justify-between">
+          <div className="flex items-start">
+            <svg className="w-5 h-5 mr-2 mt-0.5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div>
+              <p className="font-medium">{rateLimitError}</p>
+              {timeLeft && <p className="text-sm mt-1">Nächster Versuch in: <span className="font-bold">{timeLeft}</span></p>}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {error && !rateLimitError && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg flex items-start">
           <svg className="w-5 h-5 mr-2 mt-0.5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -256,6 +397,7 @@ export default function ChangePassword() {
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 required
+                disabled={!!rateLimitError}
                 autoFocus
                 autoComplete="new-password"
               />
@@ -264,6 +406,7 @@ export default function ChangePassword() {
                 className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
                 onClick={() => setShowPassword(!showPassword)}
                 tabIndex={-1}
+                disabled={!!rateLimitError}
                 aria-label={showPassword ? 'Passwort verbergen' : 'Passwort anzeigen'}
                 aria-pressed={showPassword}
               >
@@ -350,6 +493,7 @@ export default function ChangePassword() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
+                disabled={!!rateLimitError}
                 autoComplete="new-password"
               />
               <button
@@ -357,6 +501,7 @@ export default function ChangePassword() {
                 className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 tabIndex={-1}
+                disabled={!!rateLimitError}
                 aria-label={showConfirmPassword ? 'Passwort verbergen' : 'Passwort anzeigen'}
                 aria-pressed={showConfirmPassword}
               >
@@ -388,10 +533,19 @@ export default function ChangePassword() {
         <div className="mt-6">
           <button
             type="submit"
-            disabled={loading || !isPasswordValid(passwordValidation) || newPassword !== confirmPassword}
-            className="btn w-full bg-linear-to-t from-blue-600 to-blue-500 bg-size-[100%_100%] bg-bottom text-white shadow hover:bg-size-[100%_150%] disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={loading || isDebouncing || !!rateLimitError || !isPasswordValid(passwordValidation) || newPassword !== confirmPassword}
+            className="btn w-full bg-linear-to-t from-blue-600 to-blue-500 bg-size-[100%_100%] bg-bottom text-white shadow hover:bg-size-[100%_150%] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
           >
-            {loading ? 'Wird gespeichert...' : 'Passwort speichern'}
+            {loading ? (
+              <>
+                <div className="mr-2 animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                Wird gespeichert...
+              </>
+            ) : isDebouncing ? (
+              'Bitte warten...'
+            ) : (
+              'Passwort speichern'
+            )}
           </button>
         </div>
       </form>
