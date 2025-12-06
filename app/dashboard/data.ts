@@ -769,3 +769,129 @@ export async function fetchPatronymicData(): Promise<import('./types').Patronymi
     throw new Error('Failed to fetch patronymic analysis data.');
   }
 }
+
+// =============================================================================
+// Family Role Distribution Data Fetching
+// =============================================================================
+
+/**
+ * FamilyRoleData: Represents a single family role with its occurrence count and percentage.
+ *
+ * Used for the family role distribution visualization showing role distribution
+ * within deportation records. Includes both count and calculated percentage.
+ */
+export interface FamilyRoleData {
+  role: string;        // The family role (Familienrolle)
+  count: number;       // Number of persons with this role
+  percentage: number;  // Percentage of total persons (calculated)
+}
+
+/**
+ * FamilyRoleDistributionData: Root data structure for the family role distribution visualization.
+ *
+ * Contains aggregated family role data with statistics for the donut chart.
+ */
+export interface FamilyRoleDistributionData {
+  roles: FamilyRoleData[];       // List of family roles with counts and percentages
+  totalPersons: number;          // Total persons included in the analysis
+  uniqueRoles: number;           // Number of distinct family roles
+}
+
+/**
+ * fetchFamilyRoleDistribution: Fetches and aggregates Familienrolle (family role) data.
+ *
+ * This function queries the deport table for Familienrolle values, counts occurrences
+ * of each role, and calculates percentages for the donut chart visualization.
+ *
+ * Query Logic:
+ * - valid_to IS NULL: Only fetch current/active records (historization pattern)
+ * - Handles null and empty Familienrolle values appropriately
+ * - Calculates percentages client-side for display
+ *
+ * @returns FamilyRoleDistributionData with role distribution statistics
+ */
+export async function fetchFamilyRoleDistribution(): Promise<FamilyRoleDistributionData> {
+  noStore();
+
+  try {
+    const supabase = await createClient();
+
+    // Fetch Familienrolle from all current records
+    const { data, error } = await supabase
+      .from('deport')
+      .select('Familienrolle')
+      .is('valid_to', null); // Only current records (historization pattern)
+
+    if (error) throw error;
+
+    // Handle empty dataset gracefully
+    if (!data || data.length === 0) {
+      return {
+        roles: [],
+        totalPersons: 0,
+        uniqueRoles: 0,
+      };
+    }
+
+    // Aggregate family roles
+    const roleMap = new Map<string, number>();
+
+    // Count occurrences of each family role
+    data.forEach((person) => {
+      const role = person.Familienrolle?.trim();
+      if (role && role.length > 0) {
+        // Normalize common variations
+        const normalizedRole = normalizeFamilyRole(role);
+        roleMap.set(normalizedRole, (roleMap.get(normalizedRole) || 0) + 1);
+      }
+    });
+
+    const totalPersons = data.length;
+    const uniqueRoles = roleMap.size;
+
+    // Convert to array and calculate percentages
+    const roles: FamilyRoleData[] = Array.from(roleMap.entries())
+      .map(([role, count]) => ({
+        role,
+        count,
+        percentage: Math.round((count / totalPersons) * 100 * 10) / 10, // Round to 1 decimal
+      }))
+      .sort((a, b) => b.count - a.count); // Sort by count descending
+
+    return {
+      roles,
+      totalPersons,
+      uniqueRoles,
+    };
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch family role distribution data.');
+  }
+}
+
+/**
+ * normalizeFamilyRole: Normalizes common family role variations to standard terms.
+ *
+ * @param role The raw family role string from the database
+ * @returns Normalized role name for consistent visualization
+ */
+function normalizeFamilyRole(role: string): string {
+  const lowerRole = role.toLowerCase().trim();
+
+  // Normalize common variations
+  if (lowerRole === 'familienoberhaupt' || lowerRole === 'familienoberhaupta') {
+    return 'Familienoberhaupt';
+  }
+  if (lowerRole === 'ehefrau' || lowerRole === 'frau') {
+    return 'Ehefrau';
+  }
+  if (lowerRole === 'sohn' || lowerRole === 'son') {
+    return 'Sohn';
+  }
+  if (lowerRole === 'tochter' || lowerRole === 'daughter') {
+    return 'Tochter';
+  }
+
+  // Unknown roles remain as-is (capitalized)
+  return role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
+}

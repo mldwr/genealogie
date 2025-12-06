@@ -19,6 +19,9 @@ import {
   // fetchPatronymicData: Fetches and aggregates Vatersname (patronymic/father's name) data
   // for the patronymic analysis visualization showing naming patterns and conventions.
   fetchPatronymicData,
+  // fetchFamilyRoleDistribution: Fetches and aggregates Familienrolle (family role) data
+  // for the donut chart visualization showing family role distribution in deportation records.
+  fetchFamilyRoleDistribution,
 } from './data';
 import MetricCard from './components/MetricCard';
 import PersonCard from './components/PersonCard';
@@ -39,6 +42,9 @@ import BirthYearTimeline from './components/BirthYearTimeline';
 // Vatersname (patronymic/father's name) values. Includes gender filtering to analyze
 // different naming patterns for male/female persons.
 import PatronymicAnalysisChart from './components/PatronymicAnalysisChart';
+// FamilyRoleDistributionChart: Donut chart visualization showing the distribution of
+// family roles (Familienrolle) in deportation records with counts and percentages.
+import FamilyRoleDistributionChart from './components/FamilyRoleDistributionChart';
 
 export default async function Page() {
   // Fetch all dashboard data in parallel using Promise.all() for optimal performance.
@@ -66,6 +72,9 @@ export default async function Page() {
     // patronymicData: Contains aggregated Vatersname (patronymic) data with gender counts.
     // Used for the horizontal bar chart showing naming patterns and conventions.
     patronymicData,
+    // familyRoleDistributionData: Contains aggregated family role (Familienrolle) data
+    // with counts and percentages. Used for the donut chart visualization.
+    familyRoleDistributionData,
   ] = await Promise.all([
     fetchTotalPersons(),
     fetchAgeDistribution(),
@@ -80,6 +89,8 @@ export default async function Page() {
     fetchBirthYearTimeline(),
     // Fetch patronymic data for the naming pattern visualization
     fetchPatronymicData(),
+    // Fetch family role distribution data for the donut chart visualization
+    fetchFamilyRoleDistribution(),
   ]);
 
   return (
@@ -160,6 +171,14 @@ export default async function Page() {
           3. Shows percentage and count in tooltips
           4. Helps identify generational patterns and population trends */}
       <BirthYearTimeline data={birthYearTimelineData} />
+
+      {/* Family Role Distribution Chart
+          Donut chart showing family role distribution:
+          1. Visualizes the breakdown of family roles (Familienoberhaupt, Ehefrau, Sohn, Tochter, etc.)
+          2. Shows both count and percentage for each role category
+          3. Uses consistent colors for easy identification
+          4. Provides insight into family composition and structure in the deported community */}
+      <FamilyRoleDistributionChart data={familyRoleDistributionData} />
 
       {/* Age Distribution Chart */}
       <AgeDistributionChart data={ageDistribution} />
