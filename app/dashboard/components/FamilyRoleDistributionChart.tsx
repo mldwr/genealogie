@@ -33,14 +33,19 @@ const renderCustomLabel = (entry: any) => {
 };
 
 // Custom tooltip for detailed information
-const CustomTooltip = ({ active, payload }: any) => {
+const CustomTooltip = ({ active, payload, data }: any) => {
   if (active && payload && payload.length) {
-    const data = payload[0].payload;
+    const dataEntry = payload[0].payload;
+    // Find the color from the displayData array by matching the role
+    const displayDataEntry = data.find((d: any) => d.role === dataEntry.role);
+    const roleIndex = data.indexOf(displayDataEntry);
+    const color = COLORS[roleIndex % COLORS.length] || payload[0].color;
+
     return (
       <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
-        <p className="text-sm font-medium text-gray-900">{data.role}</p>
-        <p className="text-sm text-blue-600">
-          {data.count} Personen ({data.percentage.toFixed(1)}%)
+        <p className="text-sm font-medium" style={{ color: color }}>{dataEntry.role}</p>
+        <p className="text-sm" style={{ color: color }}>
+          {dataEntry.count} Personen ({dataEntry.percentage.toFixed(1)}%)
         </p>
       </div>
     );
@@ -51,8 +56,31 @@ const CustomTooltip = ({ active, payload }: any) => {
 // Functions cleaned up - using inline implementations
 
 export default function FamilyRoleDistributionChart({ data }: FamilyRoleDistributionChartProps) {
-  // Create display data for the chart (only show roles with data)
-  const displayData = data.roles.filter(role => role.count > 0);
+  // Prepare display data: show top 5 roles and group remaining as "Others"
+  const processedRoles = data.roles
+    .filter(role => role.count > 0)
+    .sort((a, b) => b.count - a.count); // Sort by count descending
+
+  let displayData;
+  if (processedRoles.length <= 6) { // If 6 or fewer, show all
+    displayData = processedRoles;
+  } else {
+    // Take top 5 and sum up the rest as "Others"
+    const top5 = processedRoles.slice(0, 5);
+    const remaining = processedRoles.slice(5);
+
+    const othersCount = remaining.reduce((sum, role) => sum + role.count, 0);
+    const othersPercentage = remaining.reduce((sum, role) => sum + role.percentage, 0);
+
+    displayData = [
+      ...top5,
+      {
+        role: 'Andere',
+        count: othersCount,
+        percentage: Math.round(othersPercentage * 10) / 10, // Round to 1 decimal
+      },
+    ].sort((a, b) => b.count - a.count); // Ensure sorting by count descending
+  }
 
   return (
     <div className="rounded-xl bg-white p-6 shadow-md border border-gray-100">
@@ -73,13 +101,13 @@ export default function FamilyRoleDistributionChart({ data }: FamilyRoleDistribu
         </div>
       ) : (
         <ResponsiveContainer width="100%" height={350}>
-          <PieChart>
+          <PieChart margin={{ top: 20, right: 180, bottom: 20, left: 20 }}>
             <Pie
               data={displayData as any}
-              cx="40%"
+              cx="35%"
               cy="50%"
               innerRadius={60} // Creates donut effect
-              outerRadius={100}
+              outerRadius={95}
               paddingAngle={2} // Small gap between segments
               dataKey="count"
               nameKey="role"
@@ -99,7 +127,7 @@ export default function FamilyRoleDistributionChart({ data }: FamilyRoleDistribu
             </Pie>
 
             <Tooltip
-              content={<CustomTooltip />}
+              content={<CustomTooltip data={displayData} />}
               isAnimationActive={false}
               cursor={false}
               offset={8}
@@ -116,9 +144,32 @@ export default function FamilyRoleDistributionChart({ data }: FamilyRoleDistribu
               formatter={(value) => {
                 const roleData = displayData.find(role => role.role === value);
                 if (!roleData) return value;
-                return `${value}\n${roleData.count} (${roleData.percentage.toFixed(1)}%)`;
+                return `${value} ${roleData.count} (${roleData.percentage.toFixed(1)}%)`;
               }}
               iconType="circle"
+              content={(props: any) => {
+                const { payload } = props;
+                return (
+                  <ul className="recharts-legend-wrapper">
+                    {displayData
+                      .sort((a, b) => b.count - a.count) // Ensure descending order
+                      .map((entry, index) => {
+                        const roleData = entry;
+                        const value = roleData.role;
+                        return (
+                          <li key={`legend-item-${index}`} className="recharts-legend-item" style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+                            <svg className="recharts-legend-icon" width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ marginRight: '6px' }}>
+                              <circle cx="6" cy="6" r="6" fill={COLORS[index % COLORS.length]} />
+                            </svg>
+                            <span className="recharts-legend-item-text" style={{ fontSize: '12px', fontWeight: '500' }}>
+                              {value} {roleData.count} ({roleData.percentage.toFixed(1)}%)
+                            </span>
+                          </li>
+                        );
+                      })}
+                  </ul>
+                );
+              }}
             />
           </PieChart>
         </ResponsiveContainer>
