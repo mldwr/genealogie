@@ -22,6 +22,9 @@ import {
   // fetchFamilyRoleDistribution: Fetches and aggregates Familienrolle (family role) data
   // for the donut chart visualization showing family role distribution in deportation records.
   fetchFamilyRoleDistribution,
+  // fetchAgePyramidData: Fetches and aggregates age spread data split by gender
+  // for the population pyramid visualization.
+  fetchAgePyramidData,
 } from './data';
 import MetricCard from './components/MetricCard';
 import PersonCard from './components/PersonCard';
@@ -45,6 +48,9 @@ import PatronymicAnalysisChart from './components/PatronymicAnalysisChart';
 // FamilyRoleDistributionChart: Donut chart visualization showing the distribution of
 // family roles (Familienrolle) in deportation records with counts and percentages.
 import FamilyRoleDistributionChart from './components/FamilyRoleDistributionChart';
+// AgePyramidChart: Population pyramid visualization showing demographic distribution
+// by age and gender in 1941. Custom tooltip shows detailed counts.
+import AgePyramidChart from './components/AgePyramidChart';
 
 export default async function Page() {
   // Fetch all dashboard data in parallel using Promise.all() for optimal performance.
@@ -75,6 +81,9 @@ export default async function Page() {
     // familyRoleDistributionData: Contains aggregated family role (Familienrolle) data
     // with counts and percentages. Used for the donut chart visualization.
     familyRoleDistributionData,
+    // agePyramidData: Contains age distribution data grouped by 5-year intervals and gender.
+    // Used for the mirrored bar chart (population pyramid).
+    agePyramidData,
   ] = await Promise.all([
     fetchTotalPersons(),
     fetchAgeDistribution(),
@@ -91,6 +100,8 @@ export default async function Page() {
     fetchPatronymicData(),
     // Fetch family role distribution data for the donut chart visualization
     fetchFamilyRoleDistribution(),
+    // Fetch age pyramid data for demographic visualization
+    fetchAgePyramidData(),
   ]);
 
   return (
@@ -179,6 +190,14 @@ export default async function Page() {
           3. Uses consistent colors for easy identification
           4. Provides insight into family composition and structure in the deported community */}
       <FamilyRoleDistributionChart data={familyRoleDistributionData} />
+
+      {/* Age Pyramid Chart
+          Population pyramid showing age/gender distribution:
+          1. Visualizes demographic structure of the deported population
+          2. Mirrored bar chart (Males left, Females right)
+          3. 5-year age intervals
+          4. Helps identify imbalances in age groups or genders */}
+      <AgePyramidChart data={agePyramidData} />
 
       {/* Age Distribution Chart */}
       <AgeDistributionChart data={ageDistribution} />

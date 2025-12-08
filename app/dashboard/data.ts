@@ -33,7 +33,7 @@ export async function fetchAgeDistribution(): Promise<AgeDistributionData[]> {
 
   try {
     const supabase = await createClient();
-    
+
     // Fetch all persons with valid birth years
     const { data, error } = await supabase
       .from('deport')
@@ -60,7 +60,7 @@ export async function fetchAgeDistribution(): Promise<AgeDistributionData[]> {
       const birthYear = parseInt(person.Geburtsjahr || '');
       if (!isNaN(birthYear) && birthYear > 1800 && birthYear < DEPORTATION_YEAR) {
         const age = DEPORTATION_YEAR - birthYear;
-        
+
         if (age <= 10) ageBins['0-10']++;
         else if (age <= 20) ageBins['11-20']++;
         else if (age <= 30) ageBins['21-30']++;
@@ -92,7 +92,7 @@ export async function fetchYoungestPerson(): Promise<PersonDetails | null> {
 
   try {
     const supabase = await createClient();
-    
+
     const { data, error } = await supabase
       .from('deport')
       .select('Vorname, Familienname, Geburtsjahr, Geburtsort, Familienrolle')
@@ -129,7 +129,7 @@ export async function fetchOldestPerson(): Promise<PersonDetails | null> {
 
   try {
     const supabase = await createClient();
-    
+
     const { data, error } = await supabase
       .from('deport')
       .select('Vorname, Familienname, Geburtsjahr, Geburtsort, Familienrolle')
@@ -894,4 +894,99 @@ function normalizeFamilyRole(role: string): string {
 
   // Unknown roles remain as-is (capitalized)
   return role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
+}
+
+// =============================================================================
+// Age Pyramid Data Fetching
+// =============================================================================
+
+// Re-export AgePyramidData from types.ts
+export type { AgePyramidData } from './types';
+
+/**
+ * fetchAgePyramidData: Fetches and aggregates data for the age pyramid visualization.
+ * 
+ * This function queries the deport table for birth year and gender, calculates
+ * age at deportation (1941), and groups the population into 5-year age buckets
+ * split by gender.
+ * 
+ * Query Logic:
+ * - valid_to IS NULL: Only fetch current/active records
+ * - Aggregates data server-side
+ * - Handles gender normalization
+ * 
+ * @returns AgePyramidData[] sorted by age group (youngest to oldest)
+ */
+export async function fetchAgePyramidData(): Promise<import('./types').AgePyramidData[]> {
+  noStore();
+
+  try {
+    const supabase = await createClient();
+
+    const { data, error } = await supabase
+      .from('deport')
+      .select('Geburtsjahr, Geschlecht')
+      .is('valid_to', null)
+      .not('Geburtsjahr', 'is', null);
+
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      return [];
+    }
+
+    // Initialize bins for 5-year age groups (0-100+)
+    const ageGroups = new Map<string, { male: number; female: number }>();
+
+    // Create standard 5-year buckets up to 90+
+    for (let i = 0; i < 90; i += 5) {
+      ageGroups.set(`${i}-${i + 4}`, { male: 0, female: 0 });
+    }
+    ageGroups.set('90+', { male: 0, female: 0 });
+
+    data.forEach((person) => {
+      const birthYear = parseInt(person.Geburtsjahr || '');
+
+      // Validate birth year
+      if (isNaN(birthYear) || birthYear < 1800 || birthYear > DEPORTATION_YEAR) return;
+
+      const age = DEPORTATION_YEAR - birthYear;
+
+      // Determine age group
+      let groupKey = '90+';
+      if (age < 90) {
+        const lowerBound = Math.floor(age / 5) * 5;
+        groupKey = `${lowerBound}-${lowerBound + 4}`;
+      }
+
+      // Determine gender
+      const gender = person.Geschlecht?.toLowerCase().trim();
+      const isMale = gender === 'm' || gender === 'männlich' || gender === 'male';
+      const isFemale = gender === 'w' || gender === 'f' || gender === 'weiblich' || gender === 'female';
+
+      const counts = ageGroups.get(groupKey);
+      if (counts) {
+        if (isMale) counts.male++;
+        if (isFemale) counts.female++;
+      }
+    });
+
+    // Convert to array format for Recharts
+    // Note: We'll make male counts negative in the component or here.
+    // For now, let's keep positive values and handle negative display in the component
+    // to pass correct absolute values to tooltips easily.
+    // Actually, Recharts needs negative values to stack bars to the left.
+    // So we will return:
+    // male: -count (for chart), maleLabel: count (for tooltip)
+    return Array.from(ageGroups.entries()).map(([group, counts]) => ({
+      ageGroup: group,
+      male: -counts.male, // Negative for left side of pyramid
+      female: counts.female,
+      maleLabel: counts.male // Positive value for tooltip
+    }));
+
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch age pyramid data.');
+  }
 }

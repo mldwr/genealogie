@@ -99,3 +99,21 @@ export interface PatronymicAnalysisData {
   totalFemale: number;            // Total female persons with patronymic data
 }
 
+// =============================================================================
+// Age Pyramid Types
+// =============================================================================
+
+/**
+ * AgePyramidData: Represents a single age group bin for the population pyramid.
+ * 
+ * Used for the age pyramid visualization showing demographic distribution.
+ * Contains counts for both genders to allow mirrored bar chart display.
+ */
+export interface AgePyramidData {
+  ageGroup: string;     // Age range label (e.g., "0-4", "5-9")
+  male: number;         // Count of males (stored as positive, displayed as negative)
+  female: number;       // Count of females
+  maleLabel: number;    // Absolute count for males (for tooltips)
+}
+
+
