@@ -25,6 +25,8 @@ import {
   // fetchAgePyramidData: Fetches and aggregates age spread data split by gender
   // for the population pyramid visualization.
   fetchAgePyramidData,
+  // fetchFamilySizeDistribution: Fetches family size buckets and average size.
+  fetchFamilySizeDistribution,
 } from './data';
 import MetricCard from './components/MetricCard';
 import PersonCard from './components/PersonCard';
@@ -51,6 +53,8 @@ import FamilyRoleDistributionChart from './components/FamilyRoleDistributionChar
 // AgePyramidChart: Population pyramid visualization showing demographic distribution
 // by age and gender in 1941. Custom tooltip shows detailed counts.
 import AgePyramidChart from './components/AgePyramidChart';
+// FamilySizeChart: Bar chart showing distribution of family sizes (members per family).
+import FamilySizeChart from './components/FamilySizeChart';
 
 export default async function Page() {
   // Fetch all dashboard data in parallel using Promise.all() for optimal performance.
@@ -84,6 +88,7 @@ export default async function Page() {
     // agePyramidData: Contains age distribution data grouped by 5-year intervals and gender.
     // Used for the mirrored bar chart (population pyramid).
     agePyramidData,
+    familySizeData,
   ] = await Promise.all([
     fetchTotalPersons(),
     fetchAgeDistribution(),
@@ -102,6 +107,7 @@ export default async function Page() {
     fetchFamilyRoleDistribution(),
     // Fetch age pyramid data for demographic visualization
     fetchAgePyramidData(),
+    fetchFamilySizeDistribution(),
   ]);
 
   return (
@@ -198,6 +204,9 @@ export default async function Page() {
           3. 5-year age intervals
           4. Helps identify imbalances in age groups or genders */}
       <AgePyramidChart data={agePyramidData} />
+
+      {/* Family Size Distribution Chart */}
+      <FamilySizeChart data={familySizeData} />
 
       {/* Age Distribution Chart */}
       <AgeDistributionChart data={ageDistribution} />

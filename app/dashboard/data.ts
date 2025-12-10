@@ -990,3 +990,100 @@ export async function fetchAgePyramidData(): Promise<import('./types').AgePyrami
     throw new Error('Failed to fetch age pyramid data.');
   }
 }
+
+// =============================================================================
+// Family Size Distribution Data Fetching
+// =============================================================================
+
+/**
+ * FamilySizeData: Represents a family size bucket and its count.
+ */
+export interface FamilySizeData {
+  range: string;
+  count: number;
+}
+
+/**
+ * FamilySizeDistributionData: Root data structure for family size visualization.
+ */
+export interface FamilySizeDistributionData {
+  rows: FamilySizeData[];
+  averageSize: number;
+  totalFamilies: number;
+}
+
+/**
+ * fetchFamilySizeDistribution: Fetches and aggregates family size data.
+ *
+ * Calculates the number of members in each family and groups them into size buckets.
+ * Also calculates the average family size.
+ */
+export async function fetchFamilySizeDistribution(): Promise<FamilySizeDistributionData> {
+  noStore();
+
+  try {
+    const supabase = await createClient();
+
+    // Fetch all persons with a family number
+    const { data, error } = await supabase
+      .from('deport')
+      .select('Familiennr')
+      .is('valid_to', null)
+      .not('Familiennr', 'is', null);
+
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      return {
+        rows: [],
+        averageSize: 0,
+        totalFamilies: 0,
+      };
+    }
+
+    // group by Familiennr and count members
+    const familySizes = new Map<number, number>();
+    data.forEach((p) => {
+      if (p.Familiennr) {
+        familySizes.set(p.Familiennr, (familySizes.get(p.Familiennr) || 0) + 1);
+      }
+    });
+
+    const totalFamilies = familySizes.size;
+    let totalMembers = 0;
+    const sizeBins: Record<string, number> = {
+      '1-2 Mitglieder': 0,
+      '3-4 Mitglieder': 0,
+      '5-6 Mitglieder': 0,
+      '7-8 Mitglieder': 0,
+      '9+ Mitglieder': 0,
+    };
+
+    familySizes.forEach((size) => {
+      totalMembers += size;
+      if (size <= 2) sizeBins['1-2 Mitglieder']++;
+      else if (size <= 4) sizeBins['3-4 Mitglieder']++;
+      else if (size <= 6) sizeBins['5-6 Mitglieder']++;
+      else if (size <= 8) sizeBins['7-8 Mitglieder']++;
+      else sizeBins['9+ Mitglieder']++;
+    });
+
+    const averageSize = totalFamilies > 0 ? Math.round((totalMembers / totalFamilies) * 10) / 10 : 0;
+
+    const rows = Object.entries(sizeBins).map(([range, count]) => ({
+      range,
+      count,
+    }));
+
+    return {
+      rows,
+      averageSize,
+      totalFamilies,
+    };
+
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch family size distribution.');
+  }
+}
+
