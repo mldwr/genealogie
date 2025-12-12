@@ -6,6 +6,7 @@ import { Suspense } from 'react';
 import Header from "@/components/ui/header";
 import { createClient } from '@/utils/supabase/server';
 import { AuthProvider } from '@/components/providers/AuthProvider';
+import { Analytics } from "@vercel/analytics/react"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -43,6 +44,7 @@ export default async function RootLayout({
             <Toaster />
           </Suspense>
         </AuthProvider>
+        <Analytics />
       </body>
     </html>
   );
