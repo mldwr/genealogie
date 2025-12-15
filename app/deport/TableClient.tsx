@@ -4,7 +4,7 @@ import { useAuth } from '@/components/providers/AuthProvider';
 import { PencilIcon, PlusIcon, TrashIcon, StopIcon, CheckIcon, ChevronDownIcon, ChevronUpIcon, DocumentArrowUpIcon } from '@heroicons/react/24/outline';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { fetchDeported, updateDeportedPerson, createDeportedPerson, deleteDeportedPerson, getDeportedPersonByLaufendenr, hasHistoricalVersions, fetchFieldSuggestions, getMaxFamiliennr } from '@/app/deport/data';
+import { fetchDeported, updateDeportedPerson, createDeportedPerson, deleteDeportedPerson, getDeportedPersonByLaufendenr, batchHasHistoricalVersions, fetchFieldSuggestions, getMaxFamiliennr } from '@/app/deport/data';
 import { useToast } from '@/components/ui/Toasts/use-toast';
 import { createClient } from '@/utils/supabase/client';
 
@@ -292,28 +292,34 @@ export default function TableClient({ people: initialPeople, currentPage = 1, qu
   // Update local people state when initialPeople changes
   useEffect(() => {
     setPeople(initialPeople);
-    
-    // Check which records have historical versions
+
+    // Check which records have historical versions using batch query (optimized N+1 fix)
     const checkHistoricalRecords = async () => {
-      const historyStatus: Record<number, boolean> = {};
-      
-      // Process in batches to avoid too many parallel requests
-      for (let i = 0; i < initialPeople.length; i++) {
-        const person = initialPeople[i];
-        if (person.Laufendenr) {
-          try {
-            const hasHistory = await hasHistoricalVersions(person.Laufendenr);
-            historyStatus[person.Laufendenr] = hasHistory;
-          } catch (error) {
-            console.error(`Error checking history for Laufendenr ${person.Laufendenr}:`, error);
-            historyStatus[person.Laufendenr] = false;
-          }
-        }
+      // Collect all Laufendenr values from the current page
+      const laufendenrList = initialPeople
+        .map(person => person.Laufendenr)
+        .filter((laufendenr): laufendenr is number => laufendenr !== null);
+
+      if (laufendenrList.length === 0) {
+        setRecordsWithHistory({});
+        return;
       }
-      
-      setRecordsWithHistory(historyStatus);
+
+      try {
+        // Single batch query instead of N individual queries
+        const historyStatus = await batchHasHistoricalVersions(laufendenrList);
+        setRecordsWithHistory(historyStatus);
+      } catch (error) {
+        console.error('Error batch checking historical records:', error);
+        // On error, set all to false to avoid broken UI
+        const fallbackStatus: Record<number, boolean> = {};
+        laufendenrList.forEach(laufendenr => {
+          fallbackStatus[laufendenr] = false;
+        });
+        setRecordsWithHistory(fallbackStatus);
+      }
     };
-    
+
     checkHistoricalRecords();
   }, [initialPeople]);
 

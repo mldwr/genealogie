@@ -253,6 +253,52 @@ export async function hasHistoricalVersions(laufendenr: number): Promise<boolean
   }
 }
 
+/**
+ * Batch check if multiple records have historical versions (optimized N+1 fix)
+ * @param laufendenrList Array of Laufendenr values (business keys) to check
+ * @returns Record mapping each Laufendenr to a boolean indicating if it has historical versions
+ */
+export async function batchHasHistoricalVersions(laufendenrList: number[]): Promise<Record<number, boolean>> {
+  try {
+    if (laufendenrList.length === 0) {
+      return {};
+    }
+
+    // Single query to fetch all records for the given Laufendenr values
+    // This replaces N individual queries with 1 batch query
+    const { data, error } = await supabase
+      .from('deport')
+      .select('Laufendenr')
+      .in('Laufendenr', laufendenrList);
+
+    if (error) {
+      throw new Error(`Failed to batch check for historical versions: ${error.message}`);
+    }
+
+    // Count occurrences of each Laufendenr
+    // If count > 1, the record has historical versions
+    const counts: Record<number, number> = {};
+    (data || []).forEach((record) => {
+      const key = record.Laufendenr;
+      if (key !== null) {
+        counts[key] = (counts[key] || 0) + 1;
+      }
+    });
+
+    // Convert counts to boolean map
+    // hasHistory = count > 1 (current record + at least one historical version)
+    const result: Record<number, boolean> = {};
+    laufendenrList.forEach((laufendenr) => {
+      result[laufendenr] = (counts[laufendenr] || 0) > 1;
+    });
+
+    return result;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw error;
+  }
+}
+
 export async function deleteDeportedPerson(id: string, userEmail: string) {
   // Perform logical deletion by updating the record instead of deleting it
   const now = new Date().toISOString();
