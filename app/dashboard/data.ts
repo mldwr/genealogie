@@ -400,7 +400,8 @@ export async function fetchFamilyStructureData(): Promise<FamilyStructureData> {
       // 1. Familienoberhaupt (head of household) - displayed top-left
       // 2. Ehefrau (wife) - displayed top-right
       // 3. Children (Sohn/Tochter) - displayed below parents, sorted by birth year
-      const sortedMembers = members.sort((a, b) => {
+      // Note: Create a copy with spread operator to avoid mutating potentially frozen arrays
+      const sortedMembers = [...members].sort((a, b) => {
         // Define role priority (lower number = higher priority)
         const roleOrder: Record<string, number> = {
           'Familienoberhaupt': 1,  // Head of household first
