@@ -151,7 +151,7 @@ export default function FamilyRoleDistributionChart({ data }: FamilyRoleDistribu
                 const { payload } = props;
                 return (
                   <ul className="recharts-legend-wrapper">
-                    {displayData
+                    {[...displayData]
                       .sort((a, b) => b.count - a.count) // Ensure descending order
                       .map((entry, index) => {
                         const roleData = entry;
