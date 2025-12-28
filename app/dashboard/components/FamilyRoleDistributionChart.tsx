@@ -118,7 +118,7 @@ export default function FamilyRoleDistributionChart({ data }: FamilyRoleDistribu
         </div>
       ) : (
         <ResponsiveContainer width="100%" height={350}>
-          <PieChart margin={isMobile ? { top: 10, right: 10, bottom: 10, left: 10 } : { top: 20, right: 180, bottom: 20, left: 20 }}>
+          <PieChart margin={isMobile ? { top: 10, right: 0, bottom: 10, left: 0 } : { top: 20, right: 180, bottom: 20, left: 20 }}>
             <Pie
               data={displayData as any}
               cx={isMobile ? "50%" : "35%"}

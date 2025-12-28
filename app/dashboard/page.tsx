@@ -111,7 +111,7 @@ export default async function Page() {
   ]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 lg:pt-32 pb-8 space-y-6">
+    <div className="max-w-7xl mx-auto lg:px-8 pt-24 lg:pt-32 pb-8 space-y-6">
       {/* Header */}
       <div className="mb-8">
         <p className="text-gray-600">
