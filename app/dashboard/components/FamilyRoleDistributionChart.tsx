@@ -8,6 +8,7 @@ import {
   Tooltip,
   Legend,
 } from 'recharts';
+import { useState, useEffect } from 'react';
 import { FamilyRoleDistributionData } from '../data';
 
 interface FamilyRoleDistributionChartProps {
@@ -56,6 +57,22 @@ const CustomTooltip = ({ active, payload, data }: any) => {
 // Functions cleaned up - using inline implementations
 
 export default function FamilyRoleDistributionChart({ data }: FamilyRoleDistributionChartProps) {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    // Initial check
+    checkMobile();
+
+    // Add event listener
+    window.addEventListener('resize', checkMobile);
+
+    // Cleanup
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   // Prepare display data: show top 5 roles and group remaining as "Others"
   const processedRoles = data.roles
     .filter(role => role.count > 0)
@@ -101,10 +118,10 @@ export default function FamilyRoleDistributionChart({ data }: FamilyRoleDistribu
         </div>
       ) : (
         <ResponsiveContainer width="100%" height={350}>
-          <PieChart margin={{ top: 20, right: 180, bottom: 20, left: 20 }}>
+          <PieChart margin={isMobile ? { top: 10, right: 10, bottom: 10, left: 10 } : { top: 20, right: 180, bottom: 20, left: 20 }}>
             <Pie
               data={displayData as any}
-              cx="35%"
+              cx={isMobile ? "50%" : "35%"}
               cy="50%"
               innerRadius={60} // Creates donut effect
               outerRadius={95}
@@ -134,10 +151,14 @@ export default function FamilyRoleDistributionChart({ data }: FamilyRoleDistribu
             />
 
             <Legend
-              layout="vertical"
-              verticalAlign="middle"
-              align="right"
-              wrapperStyle={{
+              layout={isMobile ? "horizontal" : "vertical"}
+              verticalAlign={isMobile ? "bottom" : "middle"}
+              align={isMobile ? "center" : "right"}
+              wrapperStyle={isMobile ? {
+                paddingTop: '20px',
+                fontSize: '11px',
+                width: '100%'
+              } : {
                 paddingLeft: '20px',
                 fontSize: '12px'
               }}
