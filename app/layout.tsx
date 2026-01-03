@@ -47,6 +47,7 @@ export default async function RootLayout({
           </Suspense>
         </AuthProvider>
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
