@@ -66,7 +66,7 @@ export default function HeroHome() {
               </div>
             </div>
             <h1
-              className="mb-6 border-y text-4xl font-bold [border-image:linear-gradient(to_right,transparent,--theme(--color-slate-300/.8),transparent)1] sm:text-5xl md:text-6xl hyphens-auto break-words"
+              className="mb-6 border-y text-4xl font-bold [border-image:linear-gradient(to_right,transparent,--theme(--color-slate-300/.8),transparent)1] sm:text-5xl md:text-6xl hyphens-auto wrap-break-word"
               data-aos="zoom-y-out"
               data-aos-delay={150}
             >
