@@ -8,8 +8,8 @@ export const metadata: Metadata = {
 import Hero from "@/components/hero-home";
 import BusinessCategories from "@/components/business-categories";
 import FeaturesPlanet from "@/components/features-planet";
-import LargeTestimonial from "@/components/large-testimonial";
-import Cta from "@/components/cta";
+//import LargeTestimonial from "@/components/large-testimonial";
+//import Cta from "@/components/cta";
 import { DialogExamples } from "@/components/ui/example-dialog";
 
 export default function Home() {
